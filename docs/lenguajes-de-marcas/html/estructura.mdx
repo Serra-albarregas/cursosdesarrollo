@@ -1,0 +1,167 @@
+---
+sidebar_position: 2
+title: "Estructura básica de un documento HTML"
+---
+
+import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+import HtmlCssJsPlayground from '@site/src/components/Playground/HtmlCssJsPlayground';
+
+# Estructura básica de un documento HTML
+Cómo se organiza un documento HTML y cuáles son sus principales etiquetas de estructura.
+
+## La plantilla mínima de un documento HTML
+Todo documento HTML debe seguir una estructura básica que indica al navegador cómo interpretar el contenido. La plantilla mínima es la siguiente:
+
+<HtmlPlayground initialHtml="<!doctype html>
+ <html lang=&quot;es&quot;>
+   <head>
+     <meta charset=&quot;UTF-8&quot;>
+     <title>Título de la página</title>
+   </head>
+   <body>
+     <h1>Encabezado principal</h1>
+     <p>Aquí va el contenido de la página.</p>
+   </body>
+ </html>" />
+
+## `<!doctype html>`
+Indica al navegador que el documento sigue el estándar **HTML5**.
+
+```html
+<!doctype html>
+```
+
+## `<html>`
+Elemento raíz que contiene todo el documento. El atributo `lang` indica el idioma.
+
+```html
+<html lang=&quot;es&quot;>
+   <!-- Aquí van <head> y <body> -->
+ </html>
+```
+
+## `<head>`
+Contiene los **metadatos** y enlaces a recursos externos.
+
+```html
+<head>
+   <meta charset=&quot;UTF-8&quot;>
+   <title>Mi primera página</title>
+   <link rel=&quot;stylesheet&quot; href=&quot;styles.css&quot;>
+ </head>
+```
+
+## `<body>`
+Contiene el contenido visible de la página.
+
+<HtmlPlayground initialHtml="<body>
+   <h1>Bienvenido</h1>
+   <p>Este es el contenido visible de la página.</p>
+ </body>" />
+
+## Encabezados `<h1>` a `<h6>`
+Organizan el contenido en títulos y subtítulos con jerarquía.
+
+<HtmlPlayground initialHtml="<h1>Manual de HTML</h1>
+ <h2>Capítulo 1: Introducción</h2>
+ <h3>Sección 1.1: Historia</h3>
+ <h4>Subsección 1.1.1: Primeros navegadores</h4>" />
+
+## `<p>` (Párrafos)
+Define bloques de texto corrido.
+
+<HtmlPlayground initialHtml="<p>HTML es el lenguaje estándar para crear páginas web.</p>" />
+
+## `<header>`, `<nav>`, `<main>`
+Etiquetas semánticas que estructuran la página en zonas.
+
+<HtmlPlayground initialHtml="<header>
+   <h1>Blog de programación</h1>
+   <nav>
+     <a href=&quot;index.html&quot;>Inicio</a>
+     <a href=&quot;articulos.html&quot;>Artículos</a>
+   </nav>
+ </header>
+ 
+
+ <main>
+   <section>
+     <h2>Bienvenidos</h2>
+     <p>Este es el contenido principal.</p>
+   </section>
+ </main>" />
+
+## `<section>`, `<article>`, `<aside>`
+Dividen el contenido en partes temáticas o complementarias.
+
+<HtmlPlayground initialHtml="<section>
+   <h2>Capítulo 1</h2>
+   <p>Introducción a HTML.</p>
+ </section>
+ 
+
+ <article>
+   <h2>Cómo usar etiquetas semánticas</h2>
+   <p>Ayudan a que los buscadores comprendan el contenido.</p>
+ </article>
+ 
+
+ <aside>
+   <h3>Recursos</h3>
+    <a href=&quot;#&quot;>Guía oficial</a>
+    <a href=&quot;#&quot;>Curso CSS</a>
+ </aside>" />
+
+## `<footer>`
+Contiene el pie de página, normalmente con derechos de autor o enlaces secundarios.
+
+<HtmlPlayground initialHtml="<footer>
+   <p>&copy; 2025 Mi página web</p>
+ </footer>" />
+
+## Ejemplo completo
+
+<HtmlPlayground initialHtml="<!doctype html>
+ <html lang=&quot;es&quot;>
+ <head>
+   <meta charset=&quot;UTF-8&quot;>
+   <title>Ejemplo completo</title>
+ </head>
+ <body>
+   <header>
+     <h1>Mi sitio web</h1>
+     <nav>
+       <a href=&quot;#&quot;>Inicio</a>
+       <a href=&quot;#&quot;>Servicios</a>
+       <a href=&quot;#&quot;>Contacto</a>
+     </nav>
+   </header>
+ 
+   <main>
+     <section>
+       <h2>Bienvenidos</h2>
+       <p>Este es el contenido principal.</p>
+     </section>
+ 
+     <article>
+       <h2>Última noticia</h2>
+       <p>Hoy hemos aprendido la estructura de HTML.</p>
+     </article>
+   </main>
+
+   <aside>
+     <h3>Recursos recomendados</h3>
+     <a href=&quot;#&quot;>Guía oficial de HTML</a>
+     <a href=&quot;#&quot;>Curso gratuito de CSS</a> 
+   </aside>
+
+   <footer>
+     <p>&copy; 2025 - Todos los derechos reservados</p>
+   </footer>
+ </body>
+ </html>" />
+
+<footer>
+&copy; 2025 - Todos los derechos reservados
+</footer>
