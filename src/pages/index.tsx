@@ -20,7 +20,7 @@ export default function Home(): ReactNode {
             <div>
               <Link
                 className="button button--secondary button--lg"
-                to="/docs/lenguajes-de-marcas/html/introduccion"
+                to="/lenguajes-de-marcas/html/introduccion"
               >
                 Comenzar con Lenguajes de Marcas
               </Link>
