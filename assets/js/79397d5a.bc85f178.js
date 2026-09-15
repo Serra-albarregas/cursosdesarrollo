@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkcursos=self.webpackChunkcursos||[]).push([["9981"],{4837(s){s.exports=JSON.parse('{"name":"docusaurus-plugin-content-docs","id":"marcas"}')}}]);
