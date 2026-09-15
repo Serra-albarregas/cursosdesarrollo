@@ -1,0 +1,274 @@
+---
+id: metodos-http
+title: 4. Métodos de petición HTTP
+sidebar_label: 4. Métodos de petición
+sidebar_position: 4
+description: Semántica de GET, POST, PUT, PATCH, DELETE y el resto de métodos; seguridad, idempotencia, cacheabilidad y su mapeo en Spring Boot.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 4. Métodos de petición HTTP
+
+El **método** (o *verbo*) expresa la **intención** de la petición sobre el recurso indicado en la
+ruta. Elegirlo bien no es una formalidad: de él dependen el comportamiento de las cachés, de los
+proxies, de los navegadores y de los mecanismos de reintento.
+
+## 4.1. Tabla de referencia
+
+| Método | Intención | ¿Seguro? | ¿Idempotente? | ¿Cacheable? | ¿Cuerpo en petición? |
+|--------|-----------|:--------:|:-------------:|:-----------:|:--------------------:|
+| `GET` | Obtener un recurso | ✅ | ✅ | ✅ | No |
+| `HEAD` | Como GET, sólo cabeceras | ✅ | ✅ | ✅ | No |
+| `OPTIONS` | Consultar capacidades | ✅ | ✅ | ❌ | No |
+| `TRACE` | Eco de diagnóstico | ✅ | ✅ | ❌ | No |
+| `POST` | Crear / procesar | ❌ | ❌ | Raramente | Sí |
+| `PUT` | Reemplazar por completo | ❌ | ✅ | ❌ | Sí |
+| `PATCH` | Modificar parcialmente | ❌ | ❌* | ❌ | Sí |
+| `DELETE` | Eliminar | ❌ | ✅ | ❌ | Opcional |
+
+\* `PATCH` puede diseñarse idempotente, pero el protocolo no lo garantiza.
+
+## 4.2. Las tres propiedades que hay que entender
+
+### Seguro (*safe*)
+
+📌 Un método es **seguro** si **no modifica el estado** del servidor. Es de sólo lectura.
+
+Consecuencia práctica: un buscador, un antivirus corporativo o el pre-cargador del navegador pueden
+lanzar `GET` a cualquier enlace sin avisar. Por eso esto es un desastre:
+
+```html
+<!-- ❌ NUNCA -->
+<a href="/alumnos/42/borrar">Eliminar alumno</a>
+```
+
+Bastaría con que un rastreador siguiera el enlace para borrar el registro.
+
+### Idempotente
+
+📌 Un método es **idempotente** si ejecutarlo **N veces produce el mismo estado final** que
+ejecutarlo una sola vez.
+
+- `DELETE /alumnos/42` — el alumno queda borrado; repetirlo no cambia nada más. Idempotente.
+- `POST /alumnos` — cada llamada crea un alumno nuevo. **No** idempotente.
+
+Esto importa cuando la red falla: si un cliente no recibe respuesta, sólo puede **reintentar sin
+riesgo** una operación idempotente.
+
+### Cacheable
+
+📌 Una respuesta es **cacheable** si puede almacenarse y reutilizarse en peticiones posteriores.
+`GET` lo es por defecto; los métodos de escritura, no.
+
+:::note Todo depende de tu implementación
+Que `GET` sea "seguro" es una **convención del protocolo**, no una garantía técnica. Si programas un
+`@GetMapping` que borra registros, nada te lo impide — y habrás roto el contrato de HTTP con
+consecuencias muy difíciles de depurar.
+:::
+
+## 4.3. Los métodos uno a uno
+
+### GET
+
+Solicita la representación de un recurso. Los parámetros van en la *query string*, nunca en el
+cuerpo.
+
+```http
+GET /api/alumnos?curso=2DAW&orden=nombre HTTP/1.1
+Host: api.centro.es
+Accept: application/json
+```
+
+⚠️ La query string queda registrada en los *logs* del servidor, en el historial del navegador y en
+proxies intermedios: **nunca envíes contraseñas o tokens por ahí**.
+
+### POST
+
+Envía datos para que el servidor los procese. Es el método "comodín": creación de recursos,
+formularios, inicios de sesión, operaciones que no encajan en el resto.
+
+```http
+POST /api/alumnos HTTP/1.1
+Content-Type: application/json
+
+{"nombre":"Lucía Márquez","curso":"2DAW"}
+```
+
+Respuesta correcta a una creación:
+
+```http
+HTTP/1.1 201 Created
+Location: /api/alumnos/42
+```
+
+### PUT
+
+Sustituye **por completo** el recurso. Los campos que no envíes se consideran ausentes.
+
+```http
+PUT /api/alumnos/42 HTTP/1.1
+Content-Type: application/json
+
+{"nombre":"Lucía Márquez","email":"lucia@centro.es","curso":"2DAW"}
+```
+
+### PATCH
+
+Aplica una **modificación parcial**:
+
+```http
+PATCH /api/alumnos/42 HTTP/1.1
+Content-Type: application/merge-patch+json
+
+{"curso":"2DAM"}
+```
+
+| | `PUT` | `PATCH` |
+|---|---|---|
+| Alcance | Recurso completo | Campos indicados |
+| Campos omitidos | Se borran/resetean | Se mantienen |
+| Idempotencia | Garantizada | No garantizada |
+
+### DELETE
+
+```http
+DELETE /api/alumnos/42 HTTP/1.1
+```
+
+Respuestas habituales: `204 No Content` (borrado sin cuerpo) o `200 OK` (devolviendo el recurso
+eliminado).
+
+### HEAD y OPTIONS
+
+- `HEAD`: idéntico a `GET` pero el servidor devuelve **sólo cabeceras**. Útil para comprobar si un
+  recurso existe o su tamaño sin descargarlo.
+- `OPTIONS`: informa de qué métodos admite un recurso. Es la base de las **peticiones de
+  comprobación previa (*preflight*) de CORS**.
+
+```http
+OPTIONS /api/alumnos HTTP/1.1
+---
+HTTP/1.1 204 No Content
+Allow: GET, POST, OPTIONS
+```
+
+## 4.4. Mapeo en Spring Boot
+
+<Tabs>
+<TabItem value="rest" label="API REST completa" default>
+
+```java
+@RestController
+@RequestMapping("/api/alumnos")
+public class AlumnoController {
+
+    private final AlumnoService servicio;
+
+    public AlumnoController(AlumnoService servicio) {
+        this.servicio = servicio;
+    }
+
+    @GetMapping
+    public List<AlumnoDTO> listar(@RequestParam(required = false) String curso) {
+        return servicio.buscar(curso);
+    }
+
+    @GetMapping("/{id}")
+    public AlumnoDTO obtener(@PathVariable Long id) {
+        return servicio.obtener(id);   // lanza 404 si no existe
+    }
+
+    @PostMapping
+    public ResponseEntity<AlumnoDTO> crear(@Valid @RequestBody AltaAlumnoRequest req) {
+        AlumnoDTO creado = servicio.crear(req);
+        return ResponseEntity
+                .created(URI.create("/api/alumnos/" + creado.id()))  // 201 + Location
+                .body(creado);
+    }
+
+    @PutMapping("/{id}")
+    public AlumnoDTO reemplazar(@PathVariable Long id,
+                                @Valid @RequestBody AlumnoRequest req) {
+        return servicio.reemplazar(id, req);
+    }
+
+    @PatchMapping("/{id}")
+    public AlumnoDTO modificar(@PathVariable Long id,
+                               @RequestBody Map<String, Object> cambios) {
+        return servicio.modificarParcial(id, cambios);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)     // 204
+    public void eliminar(@PathVariable Long id) {
+        servicio.eliminar(id);
+    }
+}
+```
+
+</TabItem>
+<TabItem value="origen" label="De dónde salen los datos">
+
+| Anotación | Origen del valor | Ejemplo |
+|-----------|------------------|---------|
+| `@PathVariable` | Segmento de la ruta | `/alumnos/{id}` |
+| `@RequestParam` | Query string o formulario | `?curso=2DAW` |
+| `@RequestBody` | Cuerpo de la petición | JSON deserializado |
+| `@RequestHeader` | Una cabecera concreta | `Accept-Language` |
+| `@CookieValue` | Una cookie | `JSESSIONID` |
+| `@RequestPart` | Parte de un `multipart` | Subida de ficheros |
+
+```java
+@GetMapping("/{id}/notas")
+public List<NotaDTO> notas(
+        @PathVariable Long id,
+        @RequestParam(defaultValue = "2026") int curso,
+        @RequestHeader("Accept-Language") String idioma,
+        @CookieValue(value = "tema", defaultValue = "claro") String tema) {
+    // ...
+}
+```
+
+</TabItem>
+<TabItem value="formularios" label="Formularios HTML">
+
+Un formulario HTML sólo admite `GET` y `POST`:
+
+```html
+<form action="/alumnos" method="post">
+  <input name="nombre" required />
+  <button type="submit">Guardar</button>
+</form>
+```
+
+Para simular `PUT` o `DELETE` desde un formulario se usa el filtro
+`HiddenHttpMethodFilter` de Spring junto a un campo oculto `_method`, o bien se envía la petición
+desde JavaScript con `fetch`.
+
+</TabItem>
+</Tabs>
+
+## 4.5. Diseño de rutas: buenas prácticas
+
+| ❌ Evita | ✅ Prefiere |
+|---------|-----------|
+| `/getAlumnos` | `GET /alumnos` |
+| `/alumnos/crearAlumno` | `POST /alumnos` |
+| `/borrarAlumno?id=42` | `DELETE /alumnos/42` |
+| `/alumno` (singular) | `/alumnos` (plural, colección) |
+| `/api/v1/Alumnos` | `/api/v1/alumnos` (minúsculas) |
+
+📌 **Regla mnemotécnica.** El **sustantivo** va en la URL; el **verbo**, en el método HTTP.
+
+## 4.6. Actividades
+
+🔧 **A4.1.** Diseña la tabla completa de endpoints (método + ruta + código de respuesta esperado)
+para gestionar `cursos`, `alumnos` y la matriculación entre ambos.
+
+🔧 **A4.2.** Explica con un ejemplo real por qué recargar una página tras un `POST` provoca el aviso
+"¿reenviar formulario?" del navegador, y cómo lo resuelve el patrón **POST/Redirect/GET**.
+
+🔧 **A4.3.** Para cada uno de estos casos, indica el método correcto y justifícalo: iniciar sesión,
+consultar el saldo, transferir dinero, cerrar sesión, cambiar el idioma de la interfaz.

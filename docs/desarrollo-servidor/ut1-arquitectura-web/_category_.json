@@ -1,0 +1,13 @@
+{
+  "label": "UT1 - Arquitectura web y fundamentos",
+  "position": 1,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "doc",
+    "id": "ut1-arquitectura-web/index"
+  },
+  "customProps": {
+    "description": "Cómo funciona una aplicación web, cliente vs servidor, HTTP y programación orientada a aspectos."
+  }
+}

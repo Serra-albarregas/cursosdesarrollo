@@ -1,0 +1,84 @@
+---
+sidebar_position: 3
+title: "Enlaces"
+---
+
+import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+import HtmlCssJsPlayground from '@site/src/components/Playground/HtmlCssJsPlayground';
+
+# Enlaces
+
+En HTML, los enlaces permiten conectar diferentes recursos o secciones dentro y fuera de una página web. Utilizando la etiqueta `<a>`, es posible navegar a otras páginas, descargar archivos, o interactuar con servicios como el envío de correos electrónicos. La flexibilidad de esta etiqueta hacen que sea una de las herramientas más importantes para crear sitios web dinámicos e interactivos.
+
+## Estructura de `<a>`
+
+La etiqueta `<a>` es fundamental para crear enlaces en HTML. Esta etiqueta, junto con el atributo href, permite especificar la dirección del destino del enlace, que puede ser otra página, un archivo o incluso una sección dentro del mismo documento. Su estructura básica incluye un texto visible o un contenido interactivo que se convierte en clicable, proporcionando una navegación clara e intuitiva para el usuario.
+## `href`
+
+El atributo `href` define el destino del enlace. Puede apuntar a páginas web, archivos, direcciones de correo o ubicaciones dentro del mismo documento. Este atributo es obligatorio para que un enlace sea funcional, y puede aceptar rutas absolutas (que incluyen el dominio completo) o relativas (basadas en la ubicación del documento actual).
+
+<HtmlPlayground initialHtml="<a href=&quot;enlaces/destino.html&quot;>Ejemplo de enlace</a>" />
+
+## Enlaces internos y externos
+
+Un enlace interno es aquel que apunta a recursos dentro del mismo sitio web, como páginas adicionales o secciones específicas del documento actual. Estos enlaces utilizan rutas relativas para mantener la referencia dentro de la estructura del proyecto, facilitando la navegación entre páginas relacionadas.
+
+Por otro lado, un enlace externo dirige al usuario a un recurso que se encuentra fuera del sitio web actual, generalmente en otro dominio. Estos enlaces requieren rutas absolutas que incluyan el protocolo (http:// o https://) y el nombre completo del dominio de destino.
+
+<HtmlPlayground initialHtml="<p><a href=&quot;enlaces/destino.html&quot;>Enlace interno</a></p>
+<p><a href=&quot;https://www.example.com/&quot;>Enlace externo</a></p>" />
+
+## Enlaces a secciones
+
+Los enlaces a secciones dentro de una misma página permiten a los usuarios navegar directamente a partes específicas del documento. Para crear este tipo de enlaces, se deben seguir estos pasos:
+
+- Asegúrate de que las secciones del documento tengan identificadores únicos. Esto se hace añadiendo el atributo `id` a los elementos que deseas enlazar. Por ejemplo, un encabezado podría tener `id="seccion1"`.
+- Crea un enlace que apunte al identificador correspondiente usando el símbolo `#` seguido del nombre del id. Por ejemplo, `<a href="#seccion1">Ir a la sección 1</a>`.
+- Cuando el usuario hace clic en el enlace, el navegador desplazará automáticamente la vista hasta la sección indicada, mejorando la experiencia de navegación en documentos largos.
+
+<HtmlPlayground initialHtml="<p><a href=&quot;#seccion1&quot;>Enlace a la sección 1</a></p>
+<p><a href=&quot;#seccion2&quot;>Enlace a la sección 2</a></p>
+<h3 id=&quot;seccion1&quot;>Sección 1</h3>
+<p>Esto es la sección 1</p>
+<h3 id=&quot;seccion2&quot;>Sección 2</h3>
+<p>Esto es la sección 2</p>" />
+
+## Rutas relativas y absolutas
+
+Las rutas en los enlaces pueden ser absolutas o relativas.
+
+- **Rutas absolutas**: Estas rutas comienzan desde la raíz del sitio web e incluyen el camino completo al recurso. Por ejemplo, `/index.html` apunta al archivo `index.html`, comenzando desde la raíz del sitio.
+- **Rutas relativas**: Estas rutas son relativas a la ubicación del archivo actual y no necesitan comenzar desde la raíz. Existen varias formas de definirlas:
+  - **Relativa explícita**: Incluye `./` para referirse al directorio actual. Por ejemplo, `./enlaces/destino.html`.
+  - **Relativa implícita**: Omite `./` y apunta directamente al archivo o carpeta en el directorio actual. Es equivalente al anterior. Por ejemplo, `enlaces/destino.html`.
+  - **Subir niveles**: Usa `../` para subir uno o más niveles en la jerarquía de carpetas. Por ejemplo, `../../index.html` sube dos niveles antes de buscar el archivo.
+La elección entre rutas absolutas y relativas depende del contexto y de cómo se organiza el sitio web. Generalmente, las rutas relativas son preferibles en entornos donde la estructura de carpetas es estable, ya que hacen que los archivos sean más portables.
+
+<HtmlPlayground initialHtml="<p><a href=&quot;/index.html&quot;>Enlace absoluto</a></p>
+<p><a href=&quot;./enlaces/destino.html&quot;>Enlace relativo explícito</a></p>
+<p><a href=&quot;enlaces/destino.html&quot;>Enlace relativo implícito</a></p>
+<p><a href=&quot;../../index.html&quot;>Enlace a 2 carpetas anteriores</a></p>" />
+
+## Enlaces a recursos y `download`
+
+Los enlaces también pueden apuntar a recursos como imágenes, documentos o archivos multimedia. Al agregar el atributo `download` a un enlace, se permite a los usuarios descargar directamente el recurso en lugar de abrirlo en el navegador, lo que es útil para proporcionar contenido descargable como PDFs o imágenes.
+
+<HtmlPlayground initialHtml="<p><a href=&quot;../../recursos/paisaje.jpg&quot;>Enlace a una imagen</a></p>
+<p><a href=&quot;../../recursos/paisaje.jpg&quot; download>Enlace a una imagen con descarga</a></p>
+<p><a href=&quot;../../recursos/paisaje.jpg&quot; download=&quot;imagen-paisaje.jpg&quot;>Enlace a una imagen con descarga con nombre editado</a></p>" />
+
+## `target`
+
+El atributo `target` especifica cómo se abrirá el destino de un enlace. Los valores comunes incluyen:
+
+- `_self`: Abre el enlace en la misma pestaña o ventana (comportamiento predeterminado).
+- `_blank`: Abre el enlace en una nueva pestaña o ventana.
+
+<HtmlPlayground initialHtml="<p><a href=&quot;./enlaces/destino.html&quot; target=&quot;_self&quot;>Abierto en la misma pestaña</a></p>
+<p><a href=&quot;./enlaces/destino.html&quot; target=&quot;_blank&quot;>Abierto en una pestaña nueva</a></p>" />
+
+## Enlace a un correo electrónico
+
+El protocolo `mailto:` permite crear enlaces que abren directamente el cliente de correo del usuario para enviar un mensaje a una dirección específica. Este tipo de enlaces puede incluir opciones adicionales, como un asunto predeterminado o texto en el cuerpo del correo, utilizando parámetros en la URL del enlace.
+<HtmlPlayground initialHtml="<a href=&quot;mailto:correo@ejemplo.com&quot;>Enviar correo</a>" />

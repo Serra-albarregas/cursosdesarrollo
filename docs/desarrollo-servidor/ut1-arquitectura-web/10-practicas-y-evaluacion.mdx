@@ -1,0 +1,162 @@
+---
+id: practicas-y-evaluacion
+title: 10. Prácticas de unidad y evaluación
+sidebar_label: 10. Prácticas y evaluación
+sidebar_position: 10
+description: Práctica integradora de la UT1, cuestionario de autoevaluación, rúbrica, glosario y recursos de ampliación.
+---
+
+# 10. Prácticas de unidad y evaluación
+
+## 10.1. Práctica integradora: *Inspector HTTP*
+
+**Objetivo.** Construir una pequeña aplicación Spring Boot que sirva simultáneamente como API REST y
+como laboratorio para observar todo lo estudiado en la unidad.
+
+### Requisitos funcionales
+
+| # | Requisito | Contenido relacionado |
+|---|-----------|----------------------|
+| R1 | Endpoint `GET /eco` que devuelva método, ruta, cabeceras y parámetros recibidos | Cap. 3, 5 |
+| R2 | CRUD completo de `alumnos` en memoria con los métodos y códigos correctos | Cap. 4, 6 |
+| R3 | `201 Created` con cabecera `Location` al crear | Cap. 6 |
+| R4 | `204 No Content` al borrar y `404` si el id no existe | Cap. 6 |
+| R5 | Validación con Bean Validation y respuesta `400` en formato `ProblemDetail` | Cap. 6 |
+| R6 | `@RestControllerAdvice` que centralice al menos tres excepciones | Cap. 6 |
+| R7 | Endpoint que lea y escriba una cookie de preferencia de tema | Cap. 7 |
+| R8 | Configuración de CORS para un origen concreto | Cap. 7 |
+| R9 | Filtro que añada `X-Peticion-Id` a todas las respuestas | Cap. 5, 8 |
+| R10 | Aspecto `@Around` que registre tiempo de ejecución de los `@Service` | Cap. 9 |
+| R11 | Anotación propia `@Auditable` con su aspecto y endpoint de consulta | Cap. 9 |
+
+### Entregables
+
+1. Repositorio Git con historial de *commits* significativos.
+2. Colección de peticiones (`.http`, Postman o Bruno) que ejerza **todos** los endpoints.
+3. Documento de 2-3 páginas: capturas de las peticiones con sus cabeceras, explicación de cada
+   código de estado devuelto y esquema del recorrido de una petición por el sistema.
+4. `README.md` con instrucciones de arranque.
+
+### Estructura de proyecto sugerida
+
+```text
+src/main/java/es/centro/inspector/
+├── InspectorApplication.java
+├── config/
+│   ├── ConfiguracionCors.java
+│   └── CabeceraTrazaFilter.java
+├── aspecto/
+│   ├── TrazaAspecto.java
+│   ├── AuditoriaAspecto.java
+│   └── Auditable.java
+├── controlador/
+│   ├── EcoController.java
+│   ├── AlumnoController.java
+│   └── ManejadorErrores.java
+├── servicio/
+│   └── AlumnoService.java
+├── modelo/
+│   └── Alumno.java
+└── dto/
+    ├── AlumnoDTO.java
+    └── AltaAlumnoRequest.java
+```
+
+## 10.2. Rúbrica de evaluación
+
+| Criterio | Peso | Insuficiente (0-4) | Suficiente (5-6) | Notable (7-8) | Sobresaliente (9-10) |
+|----------|:----:|---------------------|------------------|----------------|-----------------------|
+| Uso correcto de métodos HTTP | 15 % | Usa `GET`/`POST` para todo | Usa los métodos básicos | Usa los cinco con criterio | Distingue `PUT`/`PATCH` y justifica |
+| Códigos de estado | 20 % | Siempre `200` o `500` | Códigos básicos correctos | Cubre errores de cliente | Usa `409`, `422`, `Location`, `Retry-After` |
+| Manejo de errores | 15 % | Traza expuesta al cliente | `try/catch` local | `@RestControllerAdvice` | `ProblemDetail` completo y coherente |
+| Cabeceras y CORS | 15 % | No las gestiona | Lee alguna cabecera | Filtro y CORS funcionando | Cabeceras de seguridad y caché |
+| Aspectos (POA) | 20 % | No implementados | Un `@Around` simple | Aspecto + anotación propia | Varios aspectos ordenados y documentados |
+| Documentación y entrega | 15 % | Ausente | Mínima | Clara y completa | Excelente, con evidencias y razonamiento |
+
+## 10.3. Autoevaluación
+
+Responde sin mirar los apuntes. Las respuestas están al final.
+
+1. ¿Qué significa que HTTP sea *stateless* y qué consecuencia práctica tiene?
+2. Diferencia entre método **seguro** e **idempotente**. Da un ejemplo de método idempotente pero no seguro.
+3. ¿Cuál es la diferencia entre `401` y `403`?
+4. ¿Por qué `PUT` es idempotente y `POST` no?
+5. ¿Qué cabecera indica el formato que desea el cliente? ¿Y el que envía realmente el servidor?
+6. ¿Qué hace exactamente el atributo `HttpOnly` de una cookie y de qué ataque protege?
+7. ¿CORS protege al servidor? Justifica la respuesta.
+8. ¿Qué código devuelve un servidor cuando la copia en caché del cliente sigue siendo válida?
+9. Nombra las tres partes de un JWT. ¿Va cifrado el payload?
+10. Define *pointcut* y *advice*.
+11. ¿Por qué `@Transactional` no funciona en una llamada interna dentro de la misma clase?
+12. ¿Qué diferencia hay entre un filtro de servlet y un aspecto de Spring?
+13. ¿Qué es el `DispatcherServlet` y qué patrón de diseño implementa?
+14. ¿Qué debe devolver un endpoint de listado cuando no hay resultados?
+15. Cita tres preocupaciones transversales y la anotación de Spring que las resuelve.
+
+<details>
+<summary>Ver respuestas</summary>
+
+1. El servidor no recuerda peticiones anteriores; toda la información de contexto debe viajar en
+   cada petición (cookies, tokens) o guardarse en un almacén externo.
+2. **Seguro**: no modifica el estado. **Idempotente**: repetirlo deja el mismo estado final.
+   `DELETE` es idempotente pero no seguro.
+3. `401`: no estás autenticado o la credencial es inválida. `403`: estás autenticado pero careces de
+   permiso.
+4. `PUT` reemplaza el recurso completo con un contenido concreto; repetirlo deja el mismo resultado.
+   `POST` crea un recurso nuevo en cada llamada.
+5. `Accept` en la petición; `Content-Type` en la respuesta.
+6. Impide que JavaScript acceda a la cookie mediante `document.cookie`; mitiga el robo de sesión
+   por XSS.
+7. No. Es una restricción aplicada por el **navegador**. Herramientas como `curl` la ignoran; la
+   autorización real debe implementarla el backend.
+8. `304 Not Modified`.
+9. Header, payload y firma. El payload va **codificado en Base64URL, no cifrado**: es legible.
+10. *Pointcut*: expresión que selecciona los puntos donde aplicar el aspecto. *Advice*: el código que
+    se ejecuta en esos puntos.
+11. Porque la llamada interna es un `this.metodo()` que no atraviesa el proxy generado por Spring.
+12. El filtro actúa a nivel de la API Servlet, antes de Spring MVC, y no conoce el controlador
+    destino. El aspecto actúa sobre cualquier *bean* de Spring y conoce método y argumentos.
+13. El *front controller* de Spring MVC: único punto de entrada que orquesta el enrutado, la
+    invocación del controlador y la generación de la respuesta.
+14. `200 OK` con una colección vacía.
+15. Transacciones (`@Transactional`), caché (`@Cacheable`), seguridad (`@PreAuthorize`), entre otras.
+
+</details>
+
+## 10.4. Glosario
+
+| Término | Definición breve |
+|---------|------------------|
+| **Advice** | Código que ejecuta un aspecto en un punto de unión |
+| **CORS** | Mecanismo que permite peticiones entre orígenes distintos |
+| **CSRF** | Ataque que aprovecha las credenciales automáticas del navegador |
+| **DispatcherServlet** | *Front controller* de Spring MVC |
+| **ETag** | Identificador de versión de un recurso para validación de caché |
+| **Idempotente** | Repetir la operación no cambia el estado final |
+| **JWT** | Token firmado con información de autenticación |
+| **MIME** | Identificador del tipo de contenido |
+| **Pointcut** | Expresión que selecciona dónde aplicar un aspecto |
+| **Preflight** | Petición `OPTIONS` previa que exige CORS en ciertos casos |
+| **Proxy inverso** | Servidor intermedio que recibe peticiones y las reenvía al backend |
+| **Servlet** | Clase Java que atiende peticiones HTTP en un contenedor |
+| **SOP** | Política del mismo origen aplicada por el navegador |
+| **Tejido (weaving)** | Combinación de aspectos con el código base |
+| **XSS** | Inyección de scripts en el navegador de otro usuario |
+
+## 10.5. Recursos para ampliar
+
+| Recurso | Para qué |
+|---------|----------|
+| MDN Web Docs — sección HTTP | Referencia de cabeceras, métodos y códigos |
+| RFC 9110 (*HTTP Semantics*) | Especificación actual del protocolo |
+| RFC 9457 (*Problem Details*) | Formato estándar de errores en APIs |
+| Documentación de Spring Framework — *Aspect Oriented Programming* | Referencia oficial de Spring AOP |
+| `httpbin.org` | Servicio de pruebas para lanzar peticiones |
+| Herramienta `curl --trace-ascii` | Ver el tráfico HTTP en bruto |
+
+:::tip Antes de pasar a la UT2
+Si eres capaz de explicar, sin apuntes, el recorrido completo de un `POST /api/alumnos` desde que el
+usuario pulsa el botón hasta que se pinta la respuesta — pasando por DNS, TCP, TLS, filtros,
+`DispatcherServlet`, controlador, servicio, aspecto y repositorio — estás listo para empezar con
+Spring Boot en serio.
+:::

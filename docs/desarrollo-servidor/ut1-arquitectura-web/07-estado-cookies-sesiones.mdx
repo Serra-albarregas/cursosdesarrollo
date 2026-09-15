@@ -1,0 +1,225 @@
+---
+id: estado-cookies-sesiones
+title: 7. Gestión del estado, cookies, sesiones y tokens
+sidebar_label: 7. Estado y sesiones
+sidebar_position: 7
+description: Por qué HTTP no tiene memoria y qué mecanismos existen para simularla; cookies, sesiones de servidor, tokens JWT, almacenamiento en cliente y CORS.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 7. Gestión del estado: cookies, sesiones y tokens
+
+## 7.1. El problema
+
+HTTP es **sin estado**. El servidor trata cada petición como si fuera la primera vez que ve a ese
+cliente. Pero casi todas las aplicaciones necesitan recordar algo: quién eres, qué has metido en el
+carrito, en qué idioma quieres la interfaz.
+
+📌 **Todo mecanismo de estado en la web consiste en lo mismo**: que el cliente devuelva en cada
+petición una pieza de información que le permita al servidor reconstruir el contexto.
+
+## 7.2. Cookies
+
+Una **cookie** es un pequeño par clave-valor que el servidor pide almacenar al navegador y que este
+reenvía automáticamente en cada petición al mismo dominio.
+
+```mermaid
+sequenceDiagram
+    Cliente->>Servidor: POST /login (usuario + contraseña)
+    Servidor-->>Cliente: 200 OK<br/>Set-Cookie: JSESSIONID=9A3F...; HttpOnly
+    Note over Cliente: El navegador guarda la cookie
+    Cliente->>Servidor: GET /perfil<br/>Cookie: JSESSIONID=9A3F...
+    Servidor-->>Cliente: 200 OK (contenido personalizado)
+```
+
+### Atributos de una cookie
+
+```http
+Set-Cookie: sesion=abc123; Domain=centro.es; Path=/; Max-Age=3600;
+            Secure; HttpOnly; SameSite=Lax
+```
+
+| Atributo | Efecto |
+|----------|--------|
+| `Domain` | Dominio al que se enviará (incluye subdominios) |
+| `Path` | Ruta a partir de la cual se envía |
+| `Expires` / `Max-Age` | Caducidad. Sin ellos, es una **cookie de sesión** que muere al cerrar el navegador |
+| `Secure` | Sólo viaja por HTTPS |
+| `HttpOnly` | **Inaccesible desde JavaScript**: mitiga el robo por XSS |
+| `SameSite` | `Strict`, `Lax` (por defecto) o `None`: controla el envío entre sitios; mitiga CSRF |
+
+:::danger Tres reglas no negociables
+1. Toda cookie de autenticación lleva `HttpOnly` y `Secure`.
+2. `SameSite=None` **exige** `Secure`, y sólo se usa cuando hay una necesidad real entre dominios.
+3. Nunca guardes datos sensibles en el valor de la cookie: guarda un identificador opaco.
+:::
+
+### Cookies en Spring Boot
+
+```java
+// Escribir
+ResponseCookie cookie = ResponseCookie.from("tema", "oscuro")
+        .path("/")
+        .maxAge(Duration.ofDays(30))
+        .httpOnly(false)     // este valor sí lo lee el JS de la interfaz
+        .secure(true)
+        .sameSite("Lax")
+        .build();
+
+return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, cookie.toString())
+        .body(dto);
+```
+
+```java
+// Leer
+@GetMapping("/panel")
+public String panel(@CookieValue(value = "tema", defaultValue = "claro") String tema) {
+    return "panel-" + tema;
+}
+```
+
+## 7.3. Sesiones de servidor
+
+En el modelo clásico, el servidor guarda los datos del usuario en memoria y la cookie sólo lleva un
+**identificador de sesión** (`JSESSIONID`).
+
+```mermaid
+flowchart LR
+    C["Cliente<br/>Cookie: JSESSIONID=9A3F"] -->|petición| S["Servidor"]
+    S --> M[("Almacén de sesiones<br/>9A3F → usuario=lucia, rol=ADMIN")]
+```
+
+```java
+@PostMapping("/login")
+public String login(@RequestParam String usuario,
+                    @RequestParam String clave,
+                    HttpSession sesion) {
+    Usuario u = autenticador.validar(usuario, clave);
+    sesion.setAttribute("usuario", u);
+    sesion.setMaxInactiveInterval(1800);   // 30 minutos
+    return "redirect:/panel";
+}
+
+@PostMapping("/logout")
+public String logout(HttpSession sesion) {
+    sesion.invalidate();
+    return "redirect:/";
+}
+```
+
+**Ventajas**: sencillo, revocación inmediata (basta con invalidar la sesión), el cliente no ve nada.
+
+**Inconvenientes**: consume memoria del servidor y complica el escalado horizontal — si hay varias
+instancias, la petición debe llegar siempre a la que guarda la sesión (*sticky sessions*) o las
+sesiones deben externalizarse (Redis, base de datos) con **Spring Session**.
+
+## 7.4. Tokens (JWT)
+
+En el modelo *stateless*, el servidor **no guarda nada**: entrega al cliente un token firmado que
+contiene la información necesaria, y lo valida en cada petición comprobando la firma.
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWNpYSIsInJvbCI6IkFETUlOIn0.firma
+```
+
+Un **JWT** tiene tres partes separadas por puntos y codificadas en Base64URL:
+
+| Parte | Contenido |
+|-------|-----------|
+| **Header** | Algoritmo y tipo |
+| **Payload** | *Claims*: `sub`, `exp`, `iat`, roles, etc. |
+| **Signature** | Firma que garantiza que no se ha manipulado |
+
+⚠️ **Muy importante**: el payload va **codificado, no cifrado**. Cualquiera puede leerlo. Nunca
+metas dentro datos sensibles.
+
+<Tabs>
+<TabItem value="comparativa" label="Sesión vs Token" default>
+
+| | Sesión de servidor | Token JWT |
+|---|---|---|
+| Estado en servidor | Sí | No |
+| Escalado horizontal | Requiere almacén compartido | Trivial |
+| Revocación | Inmediata | Difícil (lista negra o expiración corta) |
+| Tamaño en cada petición | Pequeño (un id) | Mayor (el token entero) |
+| Ideal para | Aplicaciones web con SSR | APIs, móviles, microservicios |
+
+</TabItem>
+<TabItem value="donde" label="¿Dónde guardar el token?">
+
+| Ubicación | Riesgo XSS | Riesgo CSRF | Valoración |
+|-----------|-----------|-------------|-----------|
+| `localStorage` | **Alto** (JS lo lee) | Bajo | Habitual, pero discutido |
+| `sessionStorage` | Alto | Bajo | Igual, con menor vida |
+| Cookie `HttpOnly` + `SameSite` | Bajo | Mitigable | **Recomendado** |
+| Variable en memoria JS | Medio | Bajo | Se pierde al recargar |
+
+</TabItem>
+</Tabs>
+
+## 7.5. Otros mecanismos de estado en cliente
+
+| Mecanismo | Capacidad | Se envía al servidor | Persistencia |
+|-----------|-----------|----------------------|--------------|
+| Cookie | ~4 KB | **Sí, siempre** | Configurable |
+| `localStorage` | ~5-10 MB | No | Indefinida |
+| `sessionStorage` | ~5-10 MB | No | Hasta cerrar la pestaña |
+| IndexedDB | Cientos de MB | No | Indefinida |
+| Campo oculto de formulario | Variable | Sólo al enviar | Una petición |
+| Reescritura de URL | Muy pequeña | Sí | Frágil e insegura |
+
+## 7.6. CORS: el mismo origen y sus excepciones
+
+📌 Un **origen** es la terna `esquema + host + puerto`. La **política del mismo origen**
+(*Same-Origin Policy*) impide que el JavaScript de un origen lea respuestas de otro distinto.
+
+`https://app.centro.es` y `https://api.centro.es` son **orígenes distintos**: hará falta CORS.
+
+```mermaid
+sequenceDiagram
+    participant N as JS en app.centro.es
+    participant A as api.centro.es
+    N->>A: OPTIONS /alumnos (preflight)<br/>Origin, Access-Control-Request-Method
+    A-->>N: 204 + Access-Control-Allow-Origin/Methods/Headers
+    N->>A: PUT /alumnos/42
+    A-->>N: 200 OK + Access-Control-Allow-Origin
+```
+
+```java
+@Configuration
+public class ConfiguracionCors implements WebMvcConfigurer {
+
+    @Override
+    public void addCorsMappings(CorsRegistry registro) {
+        registro.addMapping("/api/**")
+                .allowedOrigins("https://app.centro.es")
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
+}
+```
+
+:::warning Dos malentendidos frecuentes
+- CORS **no es una protección del servidor**: es una restricción que aplica el **navegador**.
+  `curl` ignora CORS por completo. La autorización real la hace tu backend.
+- `allowedOrigins("*")` junto a `allowCredentials(true)` es inválido y el navegador lo rechazará.
+:::
+
+## 7.7. Actividades
+
+🔧 **A7.1.** Inspecciona las cookies de tres sitios en DevTools (*Application → Cookies*). Anota
+cuáles llevan `HttpOnly`, `Secure` y qué `SameSite` usan.
+
+🔧 **A7.2.** Decodifica un JWT de ejemplo (por ejemplo en jwt.io) e identifica sus tres partes y sus
+*claims*. Explica por qué no debes guardar ahí el DNI de un usuario.
+
+🔧 **A7.3.** Justifica, para cada caso, si usarías sesión o token: una intranet de centro con SSR;
+una app móvil; un conjunto de microservicios; una web pública con carrito anónimo.
+
+🔧 **A7.4.** Reproduce un error de CORS levantando una página HTML en un puerto y una API en otro.
+Corrígelo con configuración en el backend.
