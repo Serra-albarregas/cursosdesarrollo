@@ -1,0 +1,465 @@
+---
+id: elementos-basicos
+title: 1. Elementos básicos de la programación
+sidebar_label: 1. Elementos básicos
+sidebar_position: 1
+---
+
+Los elementos básicos de un programa en Java: la estructura del programa principal, las palabras reservadas, los comentarios, las variables, las constantes, los operadores y las primeras clases de la API que utilizaremos.
+
+## Programa principal en Java
+
+Un programa en Java parte de un archivo de **código fuente** con extensión `.java`, que contiene una clase con el método `main`. Este método es el punto de entrada: es lo primero que se ejecuta al lanzar el programa.
+
+```java
+public class HolaMundo {
+    public static void main(String[] args) throws Exception {
+        System.out.println("Hello, World!");
+    }
+}
+```
+
+Al compilar, ese código fuente se transforma en **bytecode**, un archivo con extensión `.class` que es lo que realmente ejecuta la máquina virtual de Java (JVM). En un proyecto típico de VS Code encontraremos esta separación:
+
+| Carpeta | Contenido |
+| --- | --- |
+| `src` | Código fuente (`HolaMundo.java`) |
+| `bin` | Bytecode compilado (`HolaMundo.class`) |
+| `lib` | Librerías externas del proyecto |
+
+Al ejecutar el programa, la salida aparece en la **terminal integrada**, en nuestro ejemplo el texto `Hello, World!`.
+
+:::note[Código fuente y bytecode]
+El código fuente es el que escribimos y leemos las personas; el bytecode es el que entiende la JVM. Nunca editamos el `.class` directamente: se regenera cada vez que compilamos.
+:::
+
+## Palabras reservadas
+
+Las palabras reservadas son identificadores que el lenguaje se reserva para sí mismo. **No pueden usarse como nombre de una variable, método o clase.**
+
+| | | | | |
+| --- | --- | --- | --- | --- |
+| `abstract` | `continue` | `for` | `new` | `switch` |
+| `assert` | `default` | `goto` | `package` | `synchronized` |
+| `boolean` | `do` | `if` | `private` | `this` |
+| `break` | `double` | `implements` | `protected` | `throw` |
+| `byte` | `else` | `import` | `public` | `throws` |
+| `case` | `enum` | `instanceof` | `return` | `transient` |
+| `catch` | `extends` | `int` | `short` | `try` |
+| `char` | `final` | `interface` | `static` | `void` |
+| `class` | `finally` | `long` | `strictfp` | `volatile` |
+| `const` | `float` | `native` | `super` | `while` |
+
+Además existen tres **literales reservados**, que tampoco pueden usarse como identificadores: `true`, `false` y `null`.
+
+:::tip
+`goto` y `const` son palabras reservadas pero **no se usan** en Java: están reservadas para evitar confusiones con otros lenguajes y para posibles usos futuros.
+:::
+
+## Comentarios
+
+Los comentarios permiten añadir texto al programa que no será procesado por el compilador, por lo que no forma parte del programa. Se utiliza para que el programador pueda añadir notas al código que le permitan dejar explicaciones de algoritmos complicados o de partes del código que deban ser interpretadas en el futuro por él mismo u otro programador.
+
+```java
+/*
+Este es un comentario que
+ocupa varias líneas
+*/
+
+// Este comentario ocupa solo una línea
+System.out.println("Hello world!"); // comentario al final de la línea
+```
+
+## Variables
+
+Una variable es una porción de memoria a la que se le asigna un nombre (identificador) y es capaz de almacenar un valor que podrá ser utilizado a lo largo del programa (siempre dependiendo de los modificadores y el contexto del mismo). Además, su valor puede ser modificado en cualquier momento para que pueda ser incrementada, decrementado o simplemente reutilizada.
+
+Cada variable tiene un nombre, de modo que podamos acceder a ese dato siempre que lo necesitemos.
+
+### Reglas para los identificadores
+
+- Comienza por **letra** (minúscula), carácter (`_`) o carácter (`$`)
+- Continúa con **letras**, **dígitos**, carácter (`_`) o carácter (`$`)
+- Java es Case Sensitive (**distingue entre mayúsculas y minúsculas**)
+- **No** tiene **longitud máxima**
+
+Ejemplos de identificadores válidos:
+
+```java
+edad
+maxValor
+notaMediaTrimestre
+_usuario
+$departamento
+```
+
+### Tipos de datos
+
+| Tipo | Tamaño | Valor mínimo | Valor máximo |
+| --- | --- | --- | --- |
+| `byte` | 1 byte | -128 | 127 |
+| `short` | 2 bytes | -32768 | 32767 |
+| `int` | 4 bytes | -2147483648 | 2147483647 |
+| `long` | 8 bytes | -9223372036854775808 | 9223372036854775807 |
+| `float` | 4 bytes | -3.402823e38 | 3.402823e38 |
+| `double` | 8 bytes | -1.79769313486232e308 | 1.79769313486232e308 |
+| `char` | 2 bytes | | |
+| `boolean` | 1 byte | `false` | `true` |
+
+En Java, cuando se quiere hacer uso de una variable, se debe escribir el tipo de datos separado del nombre por un espacio. Por ejemplo:
+
+```java
+int numeroEntero;
+long numeroEnteroLargo;
+float numeroDecimal;
+double numeroDecimalDoblePrecision;
+boolean valorBooleano;
+String cadenaDeTexto;
+char unCaracter;
+```
+
+:::warning
+`String` **no** es un tipo primitivo: es una clase. Por eso se escribe con mayúscula inicial, a diferencia de `int`, `double`, `char` o `boolean`.
+:::
+
+### Valores literales
+
+Al disponer Java de varios tipos de datos para representar los números y cadenas de caracteres, nos podemos encontrar con casos en los que un mismo valor pudiera ser válido para varios de los tipos de datos existentes.
+
+**Cualquier valor que esté encerrado entre los caracteres comillas dobles será interpretado como una cadena de caracteres.**
+
+```java
+int numero = "10";       // error, "10" es una cadena de texto
+String numero = "10";    // correcto
+```
+
+**Cualquier valor que esté encerrado entre los caracteres comillas simples será interpretado como un valor de tipo `char`.**
+
+```java
+int numero = '1';        // error, '1' es un caracter
+char caracter = 'c';     // correcto
+```
+
+**Cualquier valor que NO esté encerrado entre ningún tipo de carácter será interpretado como un valor numérico.**
+
+```java
+String cadena = 10;      // error, 10 es un número
+int numero = 20;         // correcto
+```
+
+**Por defecto, cualquier número entero será interpretado como entero (`int`)**, aunque Java permite que sean asignados a variables de tipos más cortos (menor longitud en bits). Por ejemplo, si se quiere representar un valor literal de tipo `long` se puede acompañar con el carácter `l` a la derecha del valor.
+
+```java
+int numero = 50l;                  // error, es un valor long
+long numeroLargo = 1234567890l;    // correcto
+long numeroLargo = 1234567890;     // también es correcto
+```
+
+**Por defecto, cualquier número de coma flotante será interpretado como de doble precisión (`double`).**
+
+```java
+float peso = 10.4;       // error, pérdida de precisión
+double peso = 10.4;      // correcto
+float altura = 1.80f;    // correcto
+```
+
+:::tip[Sufijos de literales]
+Aunque el sufijo de `long` puede escribirse en minúscula (`l`) o mayúscula (`L`), se recomienda **siempre `L`**: la `l` minúscula se confunde visualmente con el número `1`. Es decir, `1234567890L` es más legible que `1234567890l`.
+:::
+
+### Valores por defecto y ámbito
+
+Cuando una variable no recibe un valor inicial de forma explícita, Java le asigna uno por defecto:
+
+- Todos los valores numéricos tomarán el valor `0` por defecto.
+- Las variables booleanas tomarán el valor `false` por defecto.
+- El tipo `char` tomará el carácter nulo por defecto.
+- Los tipos como `String` no tienen valor por defecto (`null`).
+
+:::warning[Matiz importante sobre `char` y `null`]
+El valor por defecto de un `char` **no es `null`**, sino el carácter nulo `'\u0000'` (el carácter cuyo código Unicode es 0). `null` solo puede asignarse a tipos **no primitivos** como `String`. Confundir ambos es un error frecuente: `char c = null;` no compila.
+:::
+
+:::note[Solo para atributos]
+Estos valores por defecto se aplican a los **atributos de una clase**. Las **variables locales** (declaradas dentro de un método o bloque) no reciben valor por defecto: el compilador dará error si intentamos usarlas antes de asignarles un valor.
+:::
+
+#### Ámbito de las variables
+
+El alcance de las variables se refiere al ámbito en que éstas pueden ser utilizadas. Como regla general hay que considerar que una variable podrá ser utilizada sólo dentro del bloque de código donde ha sido declarada. Más adelante, a medida que avance el curso, iremos viendo diferentes conceptos de bloque de código o diferentes tipos de ámbito con los que podremos encontrarnos. Por ahora, vamos a suponer que las variables las podremos utilizar a partir de donde han sido declaradas, y nunca antes de hacerlo.
+
+- Las **variables globales** son aquellas que se declaran al inicio del programa y perduran durante toda su ejecución. Pueden ser utilizadas desde cualquier parte del mismo.
+- Las **variables locales** son aquellas que se declaran en algún bloque del programa y perduran solamente dentro de ese bloque. Podrán ser, por tanto, utilizadas solamente dentro del bloque donde fueron declaradas.
+
+```java
+public class Ambito {
+
+    static int variableGlobal = 10;   // disponible en todo el programa
+
+    public static void main(String[] args) {
+        int variableLocal = 5;        // solo dentro de main
+
+        if (variableLocal > 0) {
+            int variableDelBloque = 1;   // solo dentro del if
+            System.out.println(variableGlobal + variableLocal + variableDelBloque);
+        }
+
+        // System.out.println(variableDelBloque);  // error: fuera de su ámbito
+    }
+}
+```
+
+### Conversión de tipos
+
+Por norma general, siempre podremos convertir el valor de una variable a otra variable de distinto tipo, siempre y cuando tenga sentido representar dicho valor como otro tipo de dato.
+
+#### Conversión implícita
+
+Algunas conversiones resultan bastante triviales y las hará Java por nosotros.
+
+```java
+int numero = 3;
+float otroNumero = numero;
+System.out.println(otroNumero);      // 3.0
+```
+
+La conversión implícita solo funciona cuando **no hay pérdida de información**, es decir, cuando el tipo de destino es "más grande" que el de origen. En sentido contrario, Java se niega:
+
+```java
+float numero = 3.45f;
+int otroNumero = numero;             // error: incompatible types
+System.out.println(otroNumero);
+```
+
+#### Conversión explícita
+
+Para poder llevar a cabo por el momento una conversión explícita de tipos sencilla, podemos interponer el tipo de dato al que queramos convertir el valor (encerrado entre paréntesis). Aunque hay que tener en cuenta que esto sólo se podrá hacer entre tipos de datos compatibles.
+
+```java
+float numero = 3.45f;
+int otroNumero = (int) numero;
+System.out.println(otroNumero);      // 3
+```
+
+Para convertir un número a texto podemos usar `String.valueOf()`:
+
+```java
+float numero = 3.45f;
+String cadena = String.valueOf(numero);
+System.out.println(cadena);          // 3.45
+```
+
+Y para el camino inverso —de texto a número— cada tipo ofrece su propio método `parse`:
+
+```java
+String cadena = "1234";
+int numero = Integer.parseInt(cadena);          // correcto
+String otraCadena = "hola";
+int otroNumero = Integer.parseInt(otraCadena);  // error
+```
+
+```java
+String cadena = "1234";
+float numero = Float.parseFloat(cadena);          // correcto
+String otraCadena = "1234f";
+float otroNumero = Float.parseFloat(otraCadena);  // correcto
+```
+
+```java
+String cadena = "true";
+boolean valorBooleano = Boolean.parseBoolean(cadena);          // correcto
+String otraCadena = "hola";
+boolean otroValorBooleano = Boolean.parseBoolean(otraCadena);  // correcto
+```
+
+:::warning[Cuidado con `parseInt` y `parseBoolean`]
+Se comportan de forma muy distinta ante un texto inválido:
+
+- `Integer.parseInt("hola")` **lanza una excepción** (`NumberFormatException`) y detiene el programa.
+- `Boolean.parseBoolean("hola")` **no falla**: simplemente devuelve `false`. Solo devuelve `true` si el texto es `"true"` (sin distinguir mayúsculas). Por eso el último ejemplo es "correcto": compila y se ejecuta, pero puede que no haga lo que esperábamos.
+:::
+
+## Constantes
+
+Las constantes son estructuras que se definen con un valor fijo que no se puede modificar. Se utilizan para evitar tener que escribir números literales a lo largo del código, cuyos valores pueden cambiar en un futuro. De esa manera, colocaremos el nombre de la constante que defina dicho valor y en el momento en que ésta cambie, sólo tendremos que cambiar el valor en el lugar donde fue definida.
+
+Hay que tener en cuenta que Java recomienda utilizar una notación diferente para los identificadores de las constantes. Se recomienda utilizar sólo mayúsculas y si el nombre contiene más de una palabra, se deben de separar con el carácter subrayado `_`.
+
+```java
+// Constantes para uso local
+final float IVA = 0.21f;
+final int NUMERO_PAGINAS = 10;
+
+// Constantes para uso global
+public static final float IVA = 0.21f;
+public static final int NUMERO_PAGINAS = 10;
+```
+
+## Convenciones de nombres
+
+Existen varias convenciones habituales para nombrar identificadores formados por varias palabras:
+
+| Convención | Ejemplo |
+| --- | --- |
+| camelCase | `notaMediaTrimestre` |
+| snake_case | `nota_media_trimestre` |
+| kebab-case | `nota-media-trimestre` |
+
+En Java se utiliza **camelCase** (y su variante con mayúscula inicial, a veces llamada *PascalCase*, para las clases).
+
+| | Clases | Métodos | Variables |
+| --- | --- | --- | --- |
+| **Regla** | Comienzan por mayúscula | Comienzan por minúscula y llevan paréntesis | Comienzan por minúscula |
+| **Ejemplos** | `App`<br/>`LectorArchivos`<br/>`InterfazGrafica` | `sumarNumeros()`<br/>`importarTexto()`<br/>`dibujarFigura()` | `radio`<br/>`resultadoSuma`<br/>`resolucionX` |
+
+Reglas para camelCase:
+
+- Son case sensitive.
+- Cuando están formadas por varias palabras, las siguientes empiezan siempre por mayúscula.
+
+:::note
+`kebab-case` no es válido como identificador en Java, ya que el guion se interpretaría como el operador de resta. Se usa en otros contextos, como los nombres de clases CSS.
+:::
+
+## Operaciones básicas
+
+### Operadores aritméticos
+
+| Símbolo | Descripción |
+| --- | --- |
+| `+` | Suma |
+| `+` | Más unario: positivo |
+| `-` | Resta |
+| `-` | Menos unario: negativo |
+| `*` | Multiplicación |
+| `/` | División |
+| `%` | Módulo |
+| `++` | Incremento en 1 |
+| `--` | Decremento en 1 |
+
+:::warning[División entera]
+Si los dos operandos de una división son enteros, el resultado también es entero y se descarta la parte decimal: `7 / 2` da `3`, no `3.5`. Para obtener el decimal, al menos uno de los operandos debe serlo: `7 / 2.0` da `3.5`.
+:::
+
+### Operadores relacionales
+
+| Símbolo | Descripción |
+| --- | --- |
+| `==` | Igual que |
+| `!=` | Distinto que |
+| `<` | Menor que |
+| `<=` | Menor o igual que |
+| `>` | Mayor que |
+| `>=` | Mayor o igual que |
+
+### Operadores lógicos
+
+| Símbolo | Descripción |
+| --- | --- |
+| `&&` | Operador and: Y |
+| `\|\|` | Operador or: O |
+| `!` | Operador not: negación |
+
+### Operadores de operación y asignación
+
+| Símbolo | Descripción |
+| --- | --- |
+| `+=` | Suma y asigna |
+| `-=` | Resta y asigna |
+| `*=` | Multiplica y asigna |
+| `/=` | Divide y asigna |
+| `%=` | Módulo y asigna |
+
+## API de Java
+
+### Clase Scanner
+
+La clase `Scanner` permite leer una entrada de datos, por ejemplo, la entrada por teclado, para almacenar en una variable lo que el usuario escribe.
+
+```java
+Scanner keyboard = new Scanner(System.in);
+String input = keyboard.nextLine();
+int integerNumber = keyboard.nextInt();
+```
+
+Métodos principales:
+
+- `sc.nextInt()`: lee un número entero (`int`) por teclado.
+- `sc.nextDouble()`: lee un número real (`double`).
+- `sc.nextLine()`: lee una cadena de caracteres (una frase) hasta que se pulsa Intro.
+- `sc.next()`: lee una cadena de caracteres hasta que se encuentra un tabulador, un espacio en blanco o un Intro.
+
+:::warning[Cuidado: no olvides el import]
+```java
+import java.util.Scanner;
+```
+:::
+
+### Clase Math
+
+La clase `Math` es una clase con métodos estáticos para realizar operaciones matemáticas.
+
+- `abs(numero)`: valor absoluto de un número (útil para calcular la diferencia o distancia entre dos valores).
+- `ceil(numero)`: obtiene el siguiente valor entero por encima del que se pasa como parámetro.
+- `floor(numero)`: obtiene el anterior valor entero por debajo del que se pasa como parámetro.
+- `max(numero1, numero2)`: obtiene el máximo de dos valores dados.
+- `min(numero1, numero2)`: obtiene el mínimo de dos valores dados.
+- `random()`: devuelve un número aleatorio entre 0 y 1.
+- `round(numero)`: redondea el número que se pasa como parámetro.
+- `sqrt(numero)`: calcula la raíz cuadrada del número que se pasa como parámetro.
+
+:::note[Sobre el import de `Math`]
+`Math` pertenece al paquete `java.lang`, que Java importa automáticamente, así que **no hace falta ningún `import`** para usar `Math.sqrt()` o `Math.random()`. La línea `import java.lang.Math.*;` que aparece en algunos ejemplos es innecesaria.
+:::
+
+### Clase Random
+
+La clase `Random` permite generar valores pseudoaleatorios algo más cómodos que los generados con `Math.random()` (números enteros, números enteros entre un rango dado, valores booleanos...).
+
+```java
+Random generator = new Random();
+int integerNumber = generator.nextInt(10);
+boolean booleanValue = generator.nextBoolean();
+```
+
+:::warning[Cuidado: no olvides el import]
+```java
+import java.util.Random;
+```
+:::
+
+## Sentencias básicas
+
+### Mostrar un mensaje en pantalla
+
+```java
+System.out.println("Hola que tal");
+// ...
+int cantidad = 10;
+System.out.println("La cantidad es " + cantidad);
+```
+
+### Generar un número aleatorio entre 0 y 9
+
+```java
+Random generador = new Random();
+int numeroAleatorio = generador.nextInt(10);
+```
+
+:::note
+`nextInt(10)` devuelve un número entre `0` y `9`: el límite superior **no se incluye**. Para obtener un número del 0 al 10 habría que escribir `generador.nextInt(11)`.
+:::
+
+### Simular el lanzamiento de una moneda
+
+```java
+Random generador = new Random();
+boolean lanzamientoMoneda = generador.nextBoolean();
+```
+
+### Leer la entrada del usuario por teclado
+
+```java
+Scanner teclado = new Scanner(System.in);
+String entrada = teclado.nextLine();
+```

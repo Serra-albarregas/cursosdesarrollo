@@ -364,46 +364,6 @@ Podría producir:
 
 ---
 
-### 7. Ejemplo de evolución
-
-Una aplicación puede evolucionar desde un monolito MVC hasta una arquitectura de microservicios.
-
-##### Etapa 1: monolito
-
-```mermaid
-flowchart LR
-    Client[Cliente] --> App[Aplicación MVC]
-    App --> DB[(Base de datos)]
-```
-
-##### Etapa 2: monolito con API REST
-
-```mermaid
-flowchart LR
-    Client[Cliente] --> API[API REST]
-    API --> App[Aplicación]
-    App --> DB[(Base de datos)]
-```
-
-##### Etapa 3: microservicios
-
-```mermaid
-flowchart LR
-    Client[Cliente] --> API[API Gateway]
-
-    API --> A[Usuarios]
-    API --> B[Pedidos]
-    API --> C[Pagos]
-
-    A --> DB1[(BD usuarios)]
-    B --> DB2[(BD pedidos)]
-    C --> DB3[(BD pagos)]
-```
-
-La evolución hacia microservicios **no es necesariamente una mejora automática**. Para aplicaciones pequeñas o medianas, un monolito bien diseñado puede ser una solución más sencilla y eficiente.
-
----
-
 ## 1.5. Aplicación web vs. sitio web vs. API
 
 | Tipo | Qué devuelve | Ejemplo |
@@ -413,15 +373,3 @@ La evolución hacia microservicios **no es necesariamente una mejora automática
 | **API web** | Datos estructurados (JSON/XML) | Backend de una app móvil |
 
 Spring Boot sirve para los tres casos. En este módulo trabajaremos sobre todo los dos últimos.
-
-## 1.6. Actividades
-
-🔧 **A1.1.** Abre DevTools en una web que uses a diario, recarga con la caché vacía y responde:
-número total de peticiones, peso transferido, dominios distintos implicados y tiempo hasta el primer
-byte (TTFB).
-
-🔧 **A1.2.** Dibuja el diagrama de capas y niveles de una aplicación que conozcas (Moodle, un
-e-commerce…). Indica qué se ejecuta en cada nivel físico.
-
-🔧 **A1.3.** Argumenta en 10 líneas si dividirías en microservicios una aplicación de gestión
-académica de un centro con 800 alumnos. Justifica en términos de coste/beneficio.

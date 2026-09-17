@@ -1,0 +1,160 @@
+---
+sidebar_position: 4
+title: "Listas"
+draft: true
+---
+
+import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+Las listas sirven para organizar información.
+
+## Listas desordenadas
+
+Las listas desordenadas tienen por defecto un puntito antes de cada elemento.
+
+Una lista desordenada comienza con la etiqueta `<ul>`, posteriormente cada elemento comienza con la etiqueta `<li>`.
+
+<HtmlPlayground initialHtml={`<ul>
+    <li>Gato</li>
+    <li>Perrete</li>
+    <li>Caballo</li>
+    <li>Tortuga</li>
+</ul>`} />
+
+## Listas ordenadas
+
+Las listas ordenadas aparecen numeradas. No se debe confundir con un orden alfabético de los elementos, siendo este dependiente del programador.
+
+Una lista ordenada comienza con la etiqueta `<ol>`, posteriormente cada elemento comienza con la etiqueta `<li>`.
+
+<HtmlPlayground initialHtml={`<ol>
+    <li>Tarta</li>
+    <li>Profiterol</li>
+    <li>Helado</li>
+    <li>Galleta</li>
+</ol>`} />
+
+## Listas de definición
+
+Las listas de definición permiten organizar y listar conceptos junto con una descripción.
+
+Una lista de definición comienza con la etiqueta `<dl>`, posteriormente cada elemento comienza con la etiqueta `<dt>`. Finalmente, la definicón del elemento utiliza la etiqueta `<dd>`.
+
+<HtmlPlayground initialHtml={`<dl>
+    <dt>Coche</dt>
+    <dd>Vehículo con 4 ruedas</dd>
+    <dt>Moto</dt>
+    <dd>Vehículo con 2 ruedas</dd>
+</dl>`} />
+
+## Listas anidadas
+
+Son listas dentro de listas
+
+Una lista anidada se crea al utilizar una etiqueta de tipo `<ul>` o `<ol>` tras cualquier elemento de la lista de nivel superior.
+
+<HtmlPlayground initialHtml={`<ul>
+    <li>Gato</li>
+    <ul>
+        <li>Siames</li>
+        <li>Persa</li>
+    </ul>
+    <li>Perrete</li>
+    <li>Caballo</li>
+    <li>Tortuga</li>
+</ul>`} />
+
+## Estilos en las listas
+
+### Tipo de estilo
+
+<HtmlCssPlayground
+  initialHtml={`<ol>
+    <li>Tarta</li>
+    <li>Profiterol</li>
+    <li>Helado</li>
+    <li>Galleta</li>
+</ol>`}
+  initialCss={`ol li{
+    list-style-type: lower-roman;
+}`}
+/>
+
+### Tipo de estilo con imágenes
+
+export function EstiloImagenDemo() {
+  const gateteUrl = useBaseUrl('/img/gatete.png');
+  return (
+    <HtmlCssPlayground
+      initialHtml={`<ul>
+    <li>Gato</li>
+    <li>Perrete</li>
+    <li>Caballo</li>
+    <li>Tortuga</li>
+</ul>`}
+      initialCss={`ul li{
+    list-style-image: url(${gateteUrl});
+}`}
+    />
+  );
+}
+
+<EstiloImagenDemo />
+
+### Estilos en listas anidadas
+
+<HtmlCssPlayground
+  initialHtml={`<ul>
+  <li>Gato</li>
+  <ul class="anidada">
+    <li>Siames</li>
+    <li>Persa</li>
+  </ul>
+  <li>Perrete</li>
+  <li>Caballo</li>
+  <li>Tortuga</li>
+</ul>`}
+  initialCss={`.anidada li{
+    list-style-type: square;
+}`}
+/>
+
+### Estilos con una sola propiedad
+
+<HtmlCssPlayground
+  initialHtml={`<ol>
+  <li>Crostata</li>
+  <ul class="anidada">
+    <li>La crostata es uno de los dulces tradicionales italianos, se trata de una tarta que tiene como base un tipo especial de masa quebrada, la masa frolla, que se rellena de mermelada, tradicionalmente de melocotón, albaricoque o fresa. </li>
+    <li>Es habitual también elaborar crostatas rellenas de crema pastelera y fruta, lo que los italianos llaman torta di frutta, de queso ricota, crostata di ricotta, o incluso de Nutella.</li>
+  </ul>
+  <li>Profiterol</li>
+  <li>Helado</li>
+  <li>Galleta</li>
+</ol>`}
+  initialCss={`.anidada li{
+    list-style: upper-roman inside;
+}`}
+  layout="stacked"
+/>
+
+### Barra de menú
+
+<HtmlCssPlayground
+  initialHtml={`<ul>
+    <li>Gato</li>
+    <li>Perrete</li>
+    <li>Caballo</li>
+    <li>Tortuga</li>
+</ul>`}
+  initialCss={`ul li {
+    display: inline-block;
+    background-color: #2a9d8f;
+    color: whitesmoke;
+    width: 55px;
+    padding: 10px;
+    margin-left: 3px;
+}`}
+/>

@@ -107,12 +107,12 @@ const config: Config = {
         },
         {
           label: "Programación",
-          to: "/programacion-java/introduccion",
+          to: "/programacion-java/ut1-introduccion/elementos-basicos",
           position: "left",
         },
         {
           label: "Servidor",
-          to: "/desarrollo-servidor/introduccion",
+          to: "/desarrollo-servidor/ut1-arquitectura-web/arquitectura-aplicaciones-web",
           position: "left",
         },
       ],
@@ -126,6 +126,14 @@ const config: Config = {
             {
               label: "Lenguajes de Marcas",
               to: "/lenguajes-de-marcas/html/introduccion",
+            },
+            {
+              label: "Programación",
+              to: "/programacion-java/ut1-introduccion/elementos-basicos",
+            },
+            {
+              label: "Desarrollo web en entorno servidor",
+              to: "/desarrollo-servidor/ut1-arquitectura-web/arquitectura-aplicaciones-web",
             },
           ],
         },

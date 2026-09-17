@@ -1,0 +1,84 @@
+---
+sidebar_position: 7
+title: "Videos"
+draft: true
+---
+
+import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+Como manejar uno de los recursos multimedia más importantes de internet
+
+## Incluir un video
+
+Para incluir un video en HTML, utilizamos la etiqueta `<video>`. Esta etiqueta nos permite añadir diferentes atributos para controlar la reproducción del video, como:
+
+- `muted`: Silencia el video.
+- `loop`: Hace que el video se repita continuamente.
+- `autoplay`: Hace que el video comience a reproducirse automáticamente cuando la página se carga. (Nota: Algunos navegadores requieren que el video esté silenciado si se utiliza `autoplay`).
+
+```html
+<video controls loop muted autoplay src="ruta-del-video.mp4" type="video/mp4"></video>
+```
+
+export function VideoBasicoDemo() {
+  const videoUrl = useBaseUrl('/img/gatovideo.mp4');
+  return (
+    <HtmlCssPlayground
+      initialHtml={`<video controls loop muted src="${videoUrl}" type="video/mp4"></video>`}
+      initialCss={`video {
+    width: 100%;
+}`}
+    />
+  );
+}
+
+<VideoBasicoDemo />
+
+## Video con imagen de portada
+
+La etiqueta `<video>` también permite establecer una imagen de portada o "poster", que se muestra antes de que comience la reproducción del video. Para ello, utilizamos el atributo `poster`.
+
+export function VideoPosterDemo() {
+  const videoUrl = useBaseUrl('/img/gatovideo.mp4');
+  const posterUrl = useBaseUrl('/img/musica.jpg');
+  return (
+    <HtmlCssPlayground
+      initialHtml={`<video controls loop muted src="${videoUrl}" poster="${posterUrl}" type="video/mp4"></video>`}
+      initialCss={`video {
+    width: 100%;
+}`}
+    />
+  );
+}
+
+<VideoPosterDemo />
+
+## Modificar el tamaño del reproductor y añadir bordes
+
+Podemos ajustar el tamaño del reproductor de video añadiendo los atributos `width` y `height` a la etiqueta `<video>`. También es posible personalizar el diseño del reproductor usando CSS para, por ejemplo, añadir bordes.
+
+```html
+<video width="600" height="400" controls loop muted src="ruta-del-video.mp4" type="video/mp4"></video>
+```
+
+Para añadir bordes y otros estilos al video, podemos utilizar las clases de CSS, como en este ejemplo:
+
+export function VideoBordeDemo() {
+  const videoUrl = useBaseUrl('/img/gatovideo.mp4');
+  return (
+    <HtmlCssPlayground
+      initialHtml={`<video controls loop muted src="${videoUrl}" type="video/mp4"></video>`}
+      initialCss={`video {
+        width: 50%;
+        display: block;
+        margin: auto;
+        border: 2px solid rgba(13, 112, 204, 0.247);
+        border-radius: 6px;
+}`}
+    />
+  );
+}
+
+<VideoBordeDemo />

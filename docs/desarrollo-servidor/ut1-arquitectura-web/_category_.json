@@ -5,7 +5,7 @@
   "collapsed": false,
   "link": {
     "type": "doc",
-    "id": "ut1-arquitectura-web/index"
+    "id": "ut1-arquitectura-web/arquitectura-aplicaciones-web"
   },
   "customProps": {
     "description": "Cómo funciona una aplicación web, cliente vs servidor, HTTP y programación orientada a aspectos."

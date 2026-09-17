@@ -10,7 +10,7 @@ description: Anatomía de los mensajes HTTP, estructura de una URL, evolución d
 
 ## 3.1. Qué es HTTP
 
-📌 **Concepto.** **HTTP** (*HyperText Transfer Protocol*) es un protocolo de **capa de aplicación**,
+**HTTP** (*HyperText Transfer Protocol*) es un protocolo de **capa de aplicación**,
 **textual**, **sin estado** y basado en **petición-respuesta**, que define cómo se solicitan y
 transfieren recursos entre un cliente y un servidor.
 
@@ -27,7 +27,6 @@ Sus cuatro propiedades fundamentales:
 | Capa | Protocolo | Función |
 |------|-----------|---------|
 | Aplicación | **HTTP** | Semántica de recursos |
-| Seguridad | TLS | Cifrado y autenticación del servidor |
 | Transporte | TCP (o QUIC en HTTP/3) | Entrega fiable y ordenada |
 | Red | IP | Direccionamiento y enrutado |
 
@@ -50,7 +49,9 @@ esquema      host     puerto     ruta              query          fragmento
 | Query | Parámetros `clave=valor` separados por `&` | Sí |
 | Fragmento | Ancla dentro del documento | **No** |
 
-⚠️ El **fragmento** (`#seccion2`) nunca llega al servidor: lo gestiona exclusivamente el navegador.
+:::warning
+El **fragmento** (`#seccion2`) nunca llega al servidor: lo gestiona exclusivamente el navegador.
+:::
 
 ### Codificación de URL
 
@@ -114,59 +115,20 @@ VERSIÓN    CÓDIGO   FRASE
 HTTP/1.1   201      Created
 ```
 
-📌 La **línea en blanco** que separa cabeceras de cuerpo es obligatoria y es lo que permite al
+:::note
+La **línea en blanco** que separa cabeceras de cuerpo es obligatoria y es lo que permite al
 receptor saber dónde terminan las cabeceras.
+:::
 
 ## 3.4. Practicar con la línea de comandos
 
-🔧 **Práctica guiada.** Ejecuta y observa la salida completa:
+Ejecuta y observa la salida completa. Intenta distinguir la petición de la respuesta.
 
 ```bash
-# Ver cabeceras de petición y respuesta (-v = verbose)
-curl -v https://httpbin.org/get
-
-# Sólo las cabeceras de respuesta
-curl -I https://httpbin.org/get
-
-# POST con cuerpo JSON
-curl -X POST https://httpbin.org/post \
-     -H "Content-Type: application/json" \
-     -d '{"nombre":"Lucía","curso":"2DAW"}'
-
-# Enviar una cabecera personalizada
-curl -H "X-Centro: IES Ejemplo" https://httpbin.org/headers
+curl -v https://informatica.iesalbarregas.com
 ```
 
-Con **HTTPie** la sintaxis es más legible:
-
-```bash
-http POST httpbin.org/post nombre=Lucía curso=2DAW
-```
-
-## 3.5. Evolución del protocolo
-
-| Versión | Año | Aportaciones principales |
-|---------|-----|--------------------------|
-| **HTTP/0.9** | 1991 | Sólo `GET`, sólo HTML, sin cabeceras |
-| **HTTP/1.0** | 1996 | Cabeceras, códigos de estado, `POST`, tipos MIME. Una conexión por petición |
-| **HTTP/1.1** | 1997 | Conexiones persistentes (`keep-alive`), `Host` obligatorio, *chunked transfer*, caché avanzada |
-| **HTTP/2** | 2015 | Binario, multiplexación sobre una conexión, compresión de cabeceras (HPACK), *server push* |
-| **HTTP/3** | 2022 | Sobre **QUIC** (UDP), elimina el bloqueo de cabecera de línea de TCP, conexión más rápida |
-
-### El problema que resolvió HTTP/2
-
-En HTTP/1.1, aunque la conexión sea persistente, las respuestas deben devolverse **en orden**: si la
-primera es lenta, bloquea a las siguientes (*head-of-line blocking*). Los navegadores lo paliaban
-abriendo 6 conexiones por dominio. HTTP/2 multiplexa muchos flujos en una sola conexión, eliminando
-esa limitación y volviendo innecesarios trucos como el *sprite* de imágenes o la concatenación
-agresiva de ficheros.
-
-:::info Para el desarrollador
-La buena noticia: la **semántica** (métodos, cabeceras, códigos) es idéntica en todas las versiones.
-Tu código Spring no cambia entre HTTP/1.1 y HTTP/2; cambia el transporte, no el significado.
-:::
-
-## 3.6. HTTPS
+## 3.5. HTTPS
 
 **HTTPS** es HTTP transportado sobre **TLS**. Aporta tres garantías:
 
@@ -186,21 +148,3 @@ sequenceDiagram
     Note over Cliente,Servidor: Canal cifrado establecido
     Cliente->>Servidor: GET /alumnos HTTP/1.1 (cifrado)
 ```
-
-:::tip HTTPS en desarrollo local
-En local trabajarás normalmente en `http://localhost:8080`. Para probar HTTPS puedes generar un
-certificado autofirmado o usar `mkcert`. En producción, **HTTPS no es opcional**.
-:::
-
-## 3.7. Actividades
-
-🔧 **A3.1.** Captura con `curl -v` una petición a tu web favorita e identifica, señalándolas una a
-una, todas las partes del mensaje de petición y de respuesta.
-
-🔧 **A3.2.** Descompón tres URLs reales y complejas en sus siete componentes.
-
-🔧 **A3.3.** Comprueba con DevTools (columna *Protocol*) qué versión de HTTP usan cinco sitios
-distintos. ¿Alguno usa HTTP/3?
-
-🔧 **A3.4.** Explica por qué la cabecera `Host` se volvió obligatoria en HTTP/1.1. Relaciónalo con
-el *hosting* compartido.

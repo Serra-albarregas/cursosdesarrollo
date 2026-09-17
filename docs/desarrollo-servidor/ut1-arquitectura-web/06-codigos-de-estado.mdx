@@ -22,11 +22,13 @@ madrugada. **Devolver el código correcto es parte del contrato de tu API.**
 | **4xx** | Error del **cliente** | La petición es incorrecta |
 | **5xx** | Error del **servidor** | La petición era válida, pero el servidor falló |
 
-📌 **La regla que hay que interiorizar**: `4xx` = "la has liado tú (cliente)"; `5xx` = "la he liado
+:::info
+`4xx` = "la has liado tú (cliente)"; `5xx` = "la he liado
 yo (servidor)". Devolver un `500` ante datos mal formados del usuario es un error de diseño muy
 común y hace que tus alertas de producción sean ruido inútil.
+:::
 
-## 6.2. Los códigos que realmente usarás
+## 6.2. Los códigos más importantes
 
 ### 2xx — Éxito
 
@@ -34,7 +36,6 @@ común y hace que tus alertas de producción sean ruido inútil.
 |--------|--------|--------|
 | **200** | OK | Éxito general con cuerpo de respuesta |
 | **201** | Created | Recurso creado. Acompañar de `Location` |
-| **202** | Accepted | Aceptado para proceso asíncrono |
 | **204** | No Content | Éxito **sin** cuerpo (típico de `DELETE` y `PUT`) |
 | 206 | Partial Content | Respuesta parcial (`Range`), descargas y vídeo |
 
@@ -65,11 +66,6 @@ común y hace que tus alertas de producción sean ruido inútil.
 | **422** | Unprocessable Content | Sintaxis válida, semántica incorrecta |
 | **429** | Too Many Requests | Límite de peticiones superado; devolver `Retry-After` |
 
-:::tip 401 vs 403 — memorízalo así
-- **401**: *"¿Quién eres?"* → falta o es inválida la credencial.
-- **403**: *"Sé quién eres, y no puedes."* → la credencial es válida pero el permiso no.
-:::
-
 ### 5xx — Error del servidor
 
 | Código | Nombre | Cuándo |
@@ -80,118 +76,7 @@ común y hace que tus alertas de producción sean ruido inútil.
 | **503** | Service Unavailable | Sobrecarga o mantenimiento |
 | **504** | Gateway Timeout | El *upstream* no respondió a tiempo |
 
-## 6.3. Devolver códigos desde Spring Boot
-
-### Tres formas equivalentes
-
-```java
-// 1. Por defecto: 200 OK
-@GetMapping("/{id}")
-public AlumnoDTO obtener(@PathVariable Long id) {
-    return servicio.obtener(id);
-}
-
-// 2. Con la anotación @ResponseStatus
-@PostMapping
-@ResponseStatus(HttpStatus.CREATED)          // 201
-public AlumnoDTO crear(@Valid @RequestBody AltaAlumnoRequest req) {
-    return servicio.crear(req);
-}
-
-// 3. Con ResponseEntity (control total: estado + cabeceras + cuerpo)
-@PostMapping
-public ResponseEntity<AlumnoDTO> crear(@Valid @RequestBody AltaAlumnoRequest req) {
-    AlumnoDTO dto = servicio.crear(req);
-    return ResponseEntity
-            .created(URI.create("/api/alumnos/" + dto.id()))
-            .body(dto);
-}
-```
-
-### Errores mediante excepciones
-
-```java
-public class AlumnoNoEncontradoException extends RuntimeException {
-    public AlumnoNoEncontradoException(Long id) {
-        super("No existe el alumno con id " + id);
-    }
-}
-```
-
-```java
-public AlumnoDTO obtener(Long id) {
-    return repositorio.findById(id)
-            .map(AlumnoDTO::from)
-            .orElseThrow(() -> new AlumnoNoEncontradoException(id));
-}
-```
-
-### Manejador global de errores
-
-En lugar de repetir `try/catch` en cada controlador, se centraliza:
-
-```java
-@RestControllerAdvice
-public class ManejadorErrores {
-
-    @ExceptionHandler(AlumnoNoEncontradoException.class)
-    public ProblemDetail noEncontrado(AlumnoNoEncontradoException ex) {
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
-                HttpStatus.NOT_FOUND, ex.getMessage());
-        pd.setTitle("Alumno no encontrado");
-        pd.setType(URI.create("https://centro.es/errores/alumno-no-encontrado"));
-        return pd;
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail validacion(MethodArgumentNotValidException ex) {
-        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        pd.setTitle("Datos no válidos");
-        pd.setProperty("errores", ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(FieldError::getField,
-                                          FieldError::getDefaultMessage)));
-        return pd;
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ProblemDetail generico(Exception ex) {
-        log.error("Error no controlado", ex);
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.INTERNAL_SERVER_ERROR, "Error interno");
-    }
-}
-```
-
-:::info `@RestControllerAdvice` es POA en la práctica
-Este manejador **intercepta** el flujo normal de todos los controladores sin que ninguno de ellos
-sepa que existe. Ese desacoplamiento — resolver una preocupación transversal desde fuera — es
-precisamente la idea de la programación orientada a aspectos.
-:::
-
-### El formato estándar de error: RFC 9457 (*Problem Details*)
-
-Spring Boot 3 lo implementa con `ProblemDetail`:
-
-```json
-{
-  "type": "https://centro.es/errores/alumno-no-encontrado",
-  "title": "Alumno no encontrado",
-  "status": 404,
-  "detail": "No existe el alumno con id 42",
-  "instance": "/api/alumnos/42"
-}
-```
-
-Se activa globalmente con:
-
-```properties
-spring.mvc.problemdetails.enabled=true
-```
-
-⚠️ **Nunca** devuelvas al cliente la traza de la excepción. Filtra el detalle técnico al log y
-entrega al usuario un mensaje comprensible y un identificador de incidencia.
-
-## 6.4. Tabla de decisión rápida
+## 6.3. Tabla de decisión rápida
 
 | Situación | Código |
 |-----------|--------|
@@ -208,20 +93,3 @@ entrega al usuario un mensaje comprensible y un identificador de incidencia.
 | Email ya registrado | `409` |
 | Se envió XML a una API sólo JSON | `415` |
 | Fallo de conexión con la base de datos | `503` o `500` |
-
-⚠️ **Error típico.** Devolver `200 OK` con un cuerpo `{"error": "no encontrado"}`. El cliente,
-las cachés y los monitores verán un éxito. El código de estado **es** la respuesta.
-
-## 6.5. Actividades
-
-🔧 **A6.1.** Recorre los 12 endpoints diseñados en A4.1 y asigna a cada uno todos los códigos de
-respuesta posibles (éxito y error).
-
-🔧 **A6.2.** Provoca deliberadamente un `405` y un `415` contra una API pública y captura las
-respuestas completas.
-
-🔧 **A6.3.** Escribe un `@RestControllerAdvice` que devuelva `ProblemDetail` para al menos tres
-excepciones distintas.
-
-🔧 **A6.4.** Debate: ¿`404` o `403` cuando un usuario intenta acceder a un recurso ajeno? Busca
-argumentos a favor de cada opción desde el punto de vista de la seguridad (fuga de información).

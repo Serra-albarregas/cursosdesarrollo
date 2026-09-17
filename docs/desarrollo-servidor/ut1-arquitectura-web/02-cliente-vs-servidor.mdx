@@ -26,9 +26,11 @@ significa ese "entorno servidor" y qué queda fuera.
 | Recursos | Limitados e impredecibles | Conocidos y escalables |
 | Fallos | Afectan a un usuario | Pueden afectar a todos |
 
-📌 **Concepto clave.** Todo lo que se ejecuta en el cliente es **no confiable**. El usuario puede
+:::warning
+Todo lo que se ejecuta en el cliente es **no confiable**. El usuario puede
 leerlo, modificarlo, saltárselo o falsificarlo. Toda validación relevante debe repetirse **en el
 servidor**.
+:::
 
 ## 2.2. El mismo problema resuelto en los dos lados
 
@@ -75,7 +77,7 @@ Límite: requiere un viaje de red.
 </TabItem>
 </Tabs>
 
-:::danger Regla de oro
+:::danger
 La validación en cliente es **usabilidad**. La validación en servidor es **seguridad**.
 No son alternativas: se hacen las dos.
 :::
@@ -95,9 +97,6 @@ sequenceDiagram
     Navegador->>Navegador: Pinta directamente
 ```
 
-- ✅ Primer pintado rápido, SEO excelente, funciona sin JS.
-- ❌ Recarga completa en cada navegación; más carga de CPU en servidor.
-
 ### CSR — *Client-Side Rendering*
 
 El servidor envía un HTML casi vacío y un *bundle* de JavaScript; la interfaz se construye en el
@@ -111,26 +110,6 @@ sequenceDiagram
     API-->>Navegador: JSON
     Navegador->>Navegador: Construye el DOM
 ```
-
-- ✅ Navegación fluida tipo aplicación; el backend se reduce a una API reutilizable.
-- ❌ Primer pintado lento, SEO más complicado, dependencia total de JS.
-
-### SSG — *Static Site Generation*
-
-El HTML se genera **en tiempo de compilación**. Es exactamente lo que hace Docusaurus con este
-mismo curso: el resultado son ficheros estáticos servibles desde un CDN.
-
-### Hidratación e híbridos
-
-Los frameworks modernos (Next.js, Nuxt, Qwik) combinan enfoques: HTML renderizado en servidor que
-luego se "hidrata" con JavaScript en cliente para volverse interactivo.
-
-| Estrategia | Primer pintado | SEO | Interactividad | Coste servidor |
-|-----------|----------------|-----|----------------|----------------|
-| SSR | Rápido | Muy bueno | Media | Alto |
-| CSR | Lento | Requiere trabajo | Alta | Bajo |
-| SSG | Muy rápido | Muy bueno | Baja | Mínimo |
-| Híbrido | Rápido | Muy bueno | Alta | Medio |
 
 ## 2.4. ¿Dónde encaja Spring Boot?
 
@@ -182,17 +161,3 @@ primero más `@ResponseBody` en todos sus métodos.
 - Guardar claves de API, secretos o credenciales de base de datos.
 - Calcular precios finales, descuentos o saldos.
 - Confiar en campos ocultos (`<input type="hidden">`) enviados por el formulario.
-
-⚠️ **Error típico de examen.** "Como el botón de borrar sólo se muestra al administrador, el
-endpoint está protegido". Falso: cualquiera puede lanzar `DELETE /api/alumnos/5` con curl.
-
-## 2.6. Actividades
-
-🔧 **A2.1.** Toma un formulario con validación JavaScript y salta la validación enviando la petición
-directamente con `curl`. Documenta el resultado.
-
-🔧 **A2.2.** Clasifica cinco sitios web que uses como SSR, CSR, SSG o híbrido. Justifícalo con
-evidencias de DevTools (¿el HTML inicial ya contiene el contenido?).
-
-🔧 **A2.3.** Enumera cinco tareas que sólo puedan hacerse en el servidor y cinco que sólo tengan
-sentido en el cliente.

@@ -1,0 +1,452 @@
+---
+sidebar_position: 9
+title: "Validación de formularios"
+draft: true
+---
+
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+Los usuarios pueden equivocarse al rellenar un formulario. También podemos necesitar que algunos de los campos cumplan ciertos requisitos, como un cierto número de caracteres a la hora de introducir una contraseña. Esto hace que la validacion de formularios sea una práctica muy habitual.
+
+## Atributos de validación básica
+
+<table>
+  <thead>
+    <tr>
+      <th>atributo</th>
+      <th>actúa sobre</th>
+      <th>descripción</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>maxlength</code></td>
+      <td>texto</td>
+      <td>Da un tamaño máximo para los campos de texto</td>
+    </tr>
+    <tr>
+      <td><code>minlength</code></td>
+      <td>texto</td>
+      <td>Da un tamaño mínimo para los campos de texto</td>
+    </tr>
+    <tr>
+      <td rowSpan="2"><code>min</code></td>
+      <td>numérico</td>
+      <td>Indica el número mínimo permitido</td>
+    </tr>
+    <tr>
+      <td>fecha</td>
+      <td>Indica la fecha menor permitida</td>
+    </tr>
+    <tr>
+      <td rowSpan="2"><code>max</code></td>
+      <td>numérico</td>
+      <td>Indica el número máximo permitido</td>
+    </tr>
+    <tr>
+      <td>fecha</td>
+      <td>Indica la fecha mayor permitida</td>
+    </tr>
+    <tr>
+      <td rowSpan="2"><code>step</code></td>
+      <td>numérico</td>
+      <td>Establece el incremento entre números permitido</td>
+    </tr>
+    <tr>
+      <td>fecha</td>
+      <td>Establece el incremento entre días/segundos</td>
+    </tr>
+    <tr>
+      <td><code>required</code></td>
+      <td>todos</td>
+      <td>El campo debe rellenarse obligatoriamente</td>
+    </tr>
+    <tr>
+      <td><code>disabled</code></td>
+      <td>todos</td>
+      <td>El campo está desactivado y no se puede modificar. No se envía</td>
+    </tr>
+    <tr>
+      <td><code>readonly</code></td>
+      <td>todos</td>
+      <td>El campo es de solo lectura y no se puede modificar. Se envía</td>
+    </tr>
+    <tr>
+      <td><code>pattern</code></td>
+      <td>texto</td>
+      <td>El campo debe cumplir la condición de una expresión regular</td>
+    </tr>
+  </tbody>
+</table>
+
+## CSS para validación
+
+Existen propiedades css para seleccionar y modificar campos que cumplen o no los criterios de validación establecidos. Usaremos estos estilos para visualizar mejor los ejemplos.
+
+```css
+input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}
+```
+
+## Tamaños de texto requeridos
+
+El uso de los atributos `<minlength>` y `<maxlength>` es fundamental cuando queremos limitar el número de caracteres que un usuario puede introducir en un campo de texto. Con `<maxlength>`, podemos establecer un número máximo de caracteres, mientras que con `<minlength>` aseguramos que se introduzca un número mínimo de caracteres.
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <input placeholder="Nombre" type="text" minlength="4" maxlength="10">
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+/>
+
+## Límites numéricos y en fechas
+
+Los atributos `<min>` y `<max>` se usan para establecer valores mínimos y máximos en campos numéricos o de fecha. Esto garantiza que los usuarios solo puedan seleccionar o introducir valores dentro de los límites establecidos.
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <input type="number" min="5" max="10">
+    <input type="date" min="1990-01-01" max="2025-12-31">
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+/>
+
+## Incremento numérico y en fechas
+
+El atributo `<step>` define el intervalo entre los valores permitidos. Para campos numéricos, establece el incremento entre los números que se pueden seleccionar o introducir. Para fechas, define el incremento entre días o unidades de tiempo.
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <input type="number" min="5" max="10" step="2">
+    <input type="date" min="1990-01-01" max="2025-12-31" step="2">
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+/>
+
+## Campos obligatorios
+
+El atributo `<required>` se utiliza para indicar que un campo es obligatorio. Si el usuario intenta enviar el formulario sin rellenar un campo requerido, el navegador mostrará un mensaje de error.
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <input type="text" required>
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+/>
+
+## Campos deshabilitados
+
+El atributo `<disabled>` deshabilita un campo, lo que significa que no puede ser modificado por el usuario ni será enviado como parte del formulario. Es útil para bloquear temporalmente ciertos campos.
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <input type="text" disabled value="Nombre">
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+/>
+
+## Campos de solo lectura
+
+Con el atributo `<readonly>`, el usuario puede ver el contenido del campo, pero no modificarlo. A diferencia de los campos deshabilitados, los campos de solo lectura sí se envían con el formulario.
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <input type="text" readonly value="Nombre">
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+/>
+
+## Coincidencias con patrones
+
+El atributo `<pattern>` permite que el contenido de un campo de texto sea validado en función de una expresión regular. Las expresiones regulares (regex) son secuencias de caracteres que definen un patrón de búsqueda o coincidencia. En los formularios HTML, las regex se utilizan para verificar que los datos introducidos por el usuario cumplan con un formato específico.
+
+A continuación, se muestran las expresiones para formar patrones de entrada más comunes:
+
+- **Comodín `.`**: Coincide con cualquier carácter.
+- **O lógico `A|B`**: Define una elección entre dos opciones. Ejemplo: `A|B` significa que se aceptará "A" o "B".
+- **Agrupación `(A|B)`**: Agrupa varias opciones dentro de una secuencia. Ejemplo: `(AB|CD)` coincide con "AB" o "CD".
+- **Rangos de caracteres `[A-Z]`**: Define un rango de caracteres aceptables. Ejemplo: `[A-Z]` coincide con cualquier letra mayúscula de la A a la Z.
+- **Exclusión `[^0-9]`**: Coincide con cualquier carácter que no esté dentro del rango especificado. Ejemplo: `[^0-9]` excluye cualquier número.
+- **Cuantificadores `*`, `+`, `?`**: Controlan cuántas veces debe repetirse un carácter o secuencia. Ejemplo: `[a-z]*` significa 0 o más letras minúsculas, `[a-z]+` significa 1 o más letras minúsculas, y `[a-z]?` significa 0 o 1 letras.
+- **Cuantificadores exactos `{5}` o con rango `{2,9}`**: Definen cuántas veces debe repetirse un carácter o secuencia. Ejemplo: `[a-z]{2,9}` acepta entre 2 y 9 letras minúsculas.
+- **Escape `\.`**: Escapa un carácter especial para que sea tratado como literal. Ejemplo: `\.` representa un punto "." literal.
+
+<table>
+  <thead>
+    <tr>
+      <th>Expresión</th>
+      <th>Nombre</th>
+      <th>Descripción</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>.</strong></td>
+      <td>Comodín</td>
+      <td>Cualquier carácter</td>
+    </tr>
+    <tr>
+      <td>A<strong>|</strong>B</td>
+      <td>O lógico</td>
+      <td>Operación O (o A o B)</td>
+    </tr>
+    <tr>
+      <td>A<strong>(</strong>B|C<strong>)</strong></td>
+      <td>Agrupación</td>
+      <td>Agrupación alternativa (o AB o AC)</td>
+    </tr>
+    <tr>
+      <td><strong>[</strong>A-Z<strong>]</strong></td>
+      <td>Rango de caracteres</td>
+      <td>Letras de la A mayúscula a la Z mayúscula</td>
+    </tr>
+    <tr>
+      <td>[<strong>^</strong>0-9]</td>
+      <td>Exclusión</td>
+      <td>Todo menos los números del 0 al 9</td>
+    </tr>
+    <tr>
+      <td>[a-z]<strong>*</strong></td>
+      <td>Cuantificador</td>
+      <td>0 o más letras minúsculas</td>
+    </tr>
+    <tr>
+      <td>[a-z]<strong>+</strong></td>
+      <td>Cuantificador</td>
+      <td>1 o más letras minúsculas</td>
+    </tr>
+    <tr>
+      <td>[a-z]<strong>?</strong></td>
+      <td>Cuantificador</td>
+      <td>0 o 1 letras minúsculas</td>
+    </tr>
+    <tr>
+      <td>[a-z]<strong>{'{'}</strong>5<strong>{'}'}</strong></td>
+      <td>Cuantificador exacto</td>
+      <td>Exactamente 5 letras minúsculas</td>
+    </tr>
+    <tr>
+      <td>[a-z]<strong>{'{'}</strong>2,9<strong>{'}'}</strong></td>
+      <td>Cuantificador con rango</td>
+      <td>Entre 2 y 9 letras minúsculas</td>
+    </tr>
+    <tr>
+      <td><strong>\\</strong>.</td>
+      <td>Escape</td>
+      <td>El caracter .</td>
+    </tr>
+  </tbody>
+</table>
+
+### Ejemplo con nombre de usuario
+
+En este ejemplo, el campo de nombre de usuario tiene una longitud mínima y máxima de caracteres, y también puede ser validado con una expresión regular que permite letras y números. Esto garantiza que el nombre de usuario cumpla ciertos requisitos.
+
+<details>
+  <summary>Mostrar detalles</summary>
+
+  En este ejemplo, validamos el campo de nombre de usuario utilizando dos técnicas:
+
+  - **Atributos `minlength` y `maxlength`**: Establecemos que el nombre de usuario debe tener entre 3 y 30 caracteres.
+  - **Atributo `pattern`**: Utilizamos una expresión regular para asegurarnos de que solo se introduzcan letras (mayúsculas o minúsculas) y números. La expresión regular `[A-Za-z0-9]+` significa:
+    - `[A-Za-z]`: Acepta cualquier letra mayúscula (`A-Z`) o minúscula (`a-z`).
+    - `[0-9]`: Acepta cualquier número del 0 al 9.
+    - `+`: Indica que debe haber al menos un carácter válido, pero puede haber más.
+
+  ```html
+  <input type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9]+">
+  ```
+
+  También podemos definir una versión más estricta de la expresión regular que limite la longitud directamente con la regex:
+
+  - La expresión `[A-Za-z0-9]{3,30}` significa que el nombre de usuario debe tener entre 3 y 30 caracteres, todos ellos letras o números.
+
+  ```html
+  <input type="text" pattern="[A-Za-z0-9]{3,30}">
+  ```
+</details>
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <p><input type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9]+"> Minlength y maxlenght</p>
+    <p><input type="text" pattern="[A-Za-z0-9]{3,30}"> Regexp</p>
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+  layout="stacked"
+/>
+
+### Ejemplo con correo electrónico
+
+En este caso, el campo de correo electrónico puede ser validado de dos maneras: mediante un input de tipo `<email>`, que valida automáticamente que el valor introducido tenga el formato de un correo, o mediante una expresión regular para validar correos de servidores específicos.
+
+<details>
+  <summary>Mostrar detalles</summary>
+
+  En este caso, validamos direcciones de correo electrónico de dos maneras:
+
+  - **Con un input de tipo `<email>`**: HTML proporciona validación automática para asegurarse de que el campo contiene una dirección de correo con el formato correcto, es decir, algo como "usuario@dominio.com".
+  - **Con una expresión regular personalizada:** En el segundo ejemplo, usamos el atributo `<pattern>` para especificar que el formato del correo debe ser un conjunto de letras y números seguido de un símbolo "@" y un dominio válido (.es o .com).
+    - La expresión `[A-Za-z0-9]+@[A-Za-z0-9]+\.(es|com)` funciona de la siguiente manera:
+      - `[A-Za-z0-9]+`: Acepta una secuencia de letras o números antes del "@"
+      - `@`: Requiere la presencia del símbolo "@"
+      - `[A-Za-z0-9]+`: Acepta otra secuencia de letras o números para el nombre del dominio
+      - `\.(es|com)`: Después de un punto literal (`\.`), acepta ".es" o ".com" como dominio válido
+
+  ```html
+  <input type="text" required pattern="[A-Za-z0-9]+@[A-Za-z0-9]+\.(es|com)">
+  ```
+
+  En el último ejemplo, hacemos que solo se acepten direcciones de correo de servidores específicos, como Gmail u Outlook. La expresión `[A-Za-z0-9]+@(gmail|outlook)\.(es|com)` funciona igual que la anterior, pero limita el nombre del dominio a "gmail" o "outlook".
+
+  ```html
+  <input type="text" required pattern="[A-Za-z0-9]+@(gmail|outlook)\.(es|com)">
+  ```
+</details>
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <p><input type="email"> Con un input de tipo email</p>
+    <p><input type="text" required pattern="[A-Za-z0-9]+@[A-Za-z0-9]+\\.(es|com)"> Regexp con correo de cualquier servidor</p>
+    <p><input type="text" required pattern="[A-Za-z0-9]+@(gmail|outlook)\\.(es|com)"> Regexp con correo de servidor de google o microsoft</p>
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+  layout="stacked"
+/>
+
+### Ejemplo con número de teléfono
+
+El número de teléfono se puede validar con un input de tipo `<tel>`, pero para una validación más estricta, se pueden usar expresiones regulares. En este caso, se usan patrones para aceptar números sin formato o con formato específico, como el código de España.
+
+<details>
+  <summary>Mostrar detalles</summary>
+
+  Para la validación de números de teléfono, podemos usar el input de tipo `<tel>` o una expresión regular personalizada. Aquí tienes tres ejemplos:
+
+  - **Sin formato:** El patrón `[0-9]{9}` indica que se deben introducir exactamente 9 dígitos numéricos.
+  - **Formato con espacios:** La expresión `\+34 [0-9]{3} [0-9]{2} [0-9]{2} [0-9]{2}` acepta un número de teléfono español con el prefijo "+34" y separa los grupos de dígitos con espacios.
+  - **Varios países:** En este último caso, permitimos números de teléfono con el prefijo de España (+34), Portugal (+351) o Andorra (+376), y el resto del número debe estar en el mismo formato de grupos de 3, 2, 2 y 2 dígitos.
+</details>
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <p><input type="tel"> Con un input de tipo tel</p>
+    <p><input type="text" required pattern="[0-9]{9}"> Regexp con número de teléfono sin formato</p>
+    <p><input type="text" required
+            pattern="\\+34 [0-9]{3} [0-9]{2} [0-9]{2} [0-9]{2}"> Regexp con número de españa separados con espacios</p>
+    <p><input type="text" required
+            pattern="\\+(34|351|376) [0-9]{3} [0-9]{2} [0-9]{2} [0-9]{2}"> Regexp con número de la península separados con espacios</p>
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+  layout="stacked"
+/>
+
+### Avisar del formato requerido
+
+Para que los usuarios comprendan mejor qué formato deben seguir al introducir datos, puedes usar el atributo `<title>`. Este atributo muestra un mensaje de ayuda cuando el campo no cumple con el formato. Por ejemplo, en un número de teléfono internacional, puedes dar indicaciones sobre el prefijo y el formato correcto:
+
+<HtmlCssPlayground
+  initialHtml={`<form method="get">
+    <p><input type="text" required
+            pattern="\\+(34|351|376) [0-9]{3} [0-9]{2} [0-9]{2} [0-9]{2}"
+            title="Prefijo +34, +351 o +376 Formato +xx xxx xx xx xx"> Regexp con número de la península separados con espacios</p>
+    <input type="submit" value="Enviar">
+</form>`}
+  initialCss={`input:invalid {
+    border: 2px solid red;
+    background-color: rgb(255, 176, 176);
+}
+
+input:valid {
+    border: 2px solid green;
+    background-color: rgb(137, 247, 137);
+}`}
+  layout="stacked"
+/>

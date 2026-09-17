@@ -16,43 +16,87 @@ export default function Home(): ReactNode {
             <p className="hero__subtitle">
               Cursos de programación y desarrollo web
             </p>
-
-            <div>
-              <Link
-                className="button button--secondary button--lg"
-                to="/lenguajes-de-marcas/html/introduccion"
-              >
-                Comenzar con Lenguajes de Marcas
-              </Link>
-            </div>
           </div>
         </header>
 
         <section className="container margin-vert--xl">
           <div className="row">
-            <div className="col col--4">
-              <h2>Lenguajes de Marcas</h2>
-              <p>
-                Aprende HTML, CSS, JavaScript y otras tecnologías
-                relacionadas con el desarrollo web.
-              </p>
+
+            {/* Lenguajes de Marcas */}
+            <div className="col col--4 margin-bottom--lg">
+              <div className="card">
+                <div className="card__header">
+                  <h2>Lenguajes de Marcas</h2>
+                </div>
+
+                <div className="card__body">
+                  <p>
+                    Aprende HTML, CSS y otras tecnologías relacionadas
+                    con el desarrollo web.
+                  </p>
+                </div>
+
+                <div className="card__footer">
+                  <Link
+                    className="button button--primary button--block"
+                    to="/lenguajes-de-marcas/html/introduccion"
+                  >
+                    Entrar al curso
+                  </Link>
+                </div>
+              </div>
             </div>
 
-            <div className="col col--4">
-              <h2>Programación Java</h2>
-              <p>
-                Fundamentos de programación, orientación a objetos,
-                colecciones y mucho más.
-              </p>
+            {/* Programación */}
+            <div className="col col--4 margin-bottom--lg">
+              <div className="card">
+                <div className="card__header">
+                  <h2>Programación</h2>
+                </div>
+
+                <div className="card__body">
+                  <p>
+                    Aprende los fundamentos de programación con Java,
+                    orientación a objetos, colecciones y mucho más.
+                  </p>
+                </div>
+
+                <div className="card__footer">
+                  <Link
+                    className="button button--primary button--block"
+                    to="/programacion-java/introduccion"
+                  >
+                    Entrar al curso
+                  </Link>
+                </div>
+              </div>
             </div>
 
-            <div className="col col--4">
-              <h2>Desarrollo en Entorno Servidor</h2>
-              <p>
-                Desarrollo de aplicaciones web utilizando Java,
-                Spring y tecnologías relacionadas.
-              </p>
+            {/* Desarrollo en Entorno Servidor */}
+            <div className="col col--4 margin-bottom--lg">
+              <div className="card">
+                <div className="card__header">
+                  <h2>Desarrollo en Entorno Servidor</h2>
+                </div>
+
+                <div className="card__body">
+                  <p>
+                    Aprende desarrollo de aplicaciones web en entorno
+                    servidor y las tecnologías relacionadas.
+                  </p>
+                </div>
+
+                <div className="card__footer">
+                  <Link
+                    className="button button--primary button--block"
+                    to="/desarrollo-servidor/ut1-arquitectura-web/arquitectura-aplicaciones-web"
+                  >
+                    Entrar al curso
+                  </Link>
+                </div>
+              </div>
             </div>
+
           </div>
         </section>
       </main>
