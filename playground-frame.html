@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Resultado</title>
+  </head>
+  <body>
+    <script>
+      window.addEventListener('message', function (e) {
+        if (e.data && e.data.type === 'playground:render') {
+          document.open();
+          document.write(e.data.doc);
+          document.close();
+        }
+      });
+    </script>
+  </body>
+</html>
