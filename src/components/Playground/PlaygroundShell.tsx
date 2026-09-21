@@ -1,13 +1,18 @@
-// src/components/Playground/PlaygroundShell.tsx
 import React from 'react';
 
+export type Layout = 'side-by-side' | 'stacked';
+
 type PlaygroundShellProps = {
-  layout: 'side-by-side' | 'stacked';
+  layout: Layout;
   codePanel: React.ReactNode;
   resultPanel: React.ReactNode;
 };
 
-export function PlaygroundShell({layout, codePanel, resultPanel}: PlaygroundShellProps) {
+export function PlaygroundShell({
+  layout,
+  codePanel,
+  resultPanel,
+}: PlaygroundShellProps) {
   const isStacked = layout === 'stacked';
 
   return (

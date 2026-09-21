@@ -1,4 +1,3 @@
-// src/components/Playground/CodeBlock.tsx
 import React, {useState} from 'react';
 import Editor from 'react-simple-code-editor';
 import {highlight, languages} from 'prismjs';
@@ -67,15 +66,18 @@ export function CodeBlock({code, onChange, language}: CodeBlockProps) {
             fontSize: '12px',
           }}
         >
-          {copied ? (
-            <CheckIcon />
-          ) : (
-            <CopyIcon />
-          )}
+          {copied ? <CheckIcon /> : <CopyIcon />}
           {copied ? 'Copiado' : ''}
         </button>
 
-        <span style={{marginLeft: 'auto', color: '#888', fontSize: '12px', fontFamily: 'monospace'}}>
+        <span
+          style={{
+            marginLeft: 'auto',
+            color: '#888',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+          }}
+        >
           {LABELS[language]}
         </span>
       </div>
@@ -85,6 +87,9 @@ export function CodeBlock({code, onChange, language}: CodeBlockProps) {
         onValueChange={onChange}
         highlight={(text) => highlight(text, languages[language], language)}
         padding={16}
+        tabSize={2}
+        insertSpaces={false}
+        ignoreTabKey={false}
         style={{
           fontFamily: '"Fira Code", "Fira Mono", Consolas, monospace',
           fontSize: 15,
@@ -93,6 +98,7 @@ export function CodeBlock({code, onChange, language}: CodeBlockProps) {
           minHeight: 220,
           backgroundColor: '#1e1e1e',
           color: '#f8f8f2',
+          tabSize: 2,
         }}
       />
     </div>
@@ -101,7 +107,14 @@ export function CodeBlock({code, onChange, language}: CodeBlockProps) {
 
 function CopyIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <rect x="9" y="9" width="13" height="13" rx="2" />
       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
     </svg>
@@ -110,7 +123,14 @@ function CopyIcon() {
 
 function CheckIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M20 6L9 17l-5-5" />
     </svg>
   );

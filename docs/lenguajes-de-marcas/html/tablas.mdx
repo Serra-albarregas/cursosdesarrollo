@@ -1,13 +1,16 @@
 ---
 sidebar_position: 5
 title: "Tablas"
-draft: true
 ---
 
 import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
 import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
 
-Se utilizan para organizar información con un formato de filas y columnas
+Las tablas se utilizan para organizar información con un formato de filas y columnas.
+
+:::warning
+Las tablas sirven para mostrar **datos tabulares**. No deben usarse para maquetar la página (colocar menús, columnas de texto, etc.); para eso existen CSS, `flexbox` y `grid`.
+:::
 
 ## Crear una tabla
 
@@ -16,8 +19,9 @@ Para crear una tabla básica en HTML, se utiliza la etiqueta `<table>`, que defi
 - `<table>`: define la tabla.
 - `<tr>`: define una fila de la tabla.
 - `<td>`: define una celda dentro de una fila.
+- `border="1"`: atributo de `<table>` que dibuja los bordes. Está obsoleto en HTML5, pero se sigue admitiendo con el valor `1` y sirve para ver la estructura de la tabla. La forma actual de dar bordes es CSS (se explica más abajo).
 
-<HtmlPlayground initialHtml={`<table>
+<HtmlPlayground initialHtml={`<table border="1">
     <tr>
         <td>Fila 1 Col 1</td>
         <td>Fila 1 Col 2</td>
@@ -35,28 +39,25 @@ Para crear una tabla básica en HTML, se utiliza la etiqueta `<table>`, que defi
         <td>Fila 3 Col 2</td>
         <td>Fila 3 Col 3</td>
         <td>Fila 3 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 4 Col 1</td>
-        <td>Fila 4 Col 2</td>
-        <td>Fila 4 Col 3</td>
-        <td>Fila 4 Col 4</td>
     </tr>
 </table>`} />
 
-## Tablas con bordes
+## Celdas de cabecera
 
-Para agregar bordes a una tabla, se pueden utilizar estilos CSS. El borde puede ser definido con la propiedad border, que permite especificar el grosor, estilo y color del borde. Para que se vea en todo el contorno de la tabla y las celdas, se aplica tanto a la tabla como a los elementos `<td>`.
+Las celdas de cabecera dentro de una tabla se definen con la etiqueta `<th>` (table header), que representa la cabecera de una columna o de una fila. Estas celdas tienen un estilo predeterminado de texto en negrita y alineado al centro, aunque pueden ser estilizadas mediante CSS.
 
-- border: define los bordes alrededor de la tabla y las celdas.
+El atributo `scope` indica a qué se refiere la cabecera y ayuda a los lectores de pantalla a leer bien la tabla.
 
-<HtmlCssPlayground
-  initialHtml={`<table>
+- `<th>`: define una celda de cabecera.
+- `scope="col"`: la cabecera se refiere a toda la columna.
+- `scope="row"`: la cabecera se refiere a toda la fila.
+
+<HtmlPlayground initialHtml={`<table border="1">
     <tr>
-        <td>Fila 1 Col 1</td>
-        <td>Fila 1 Col 2</td>
-        <td>Fila 1 Col 3</td>
-        <td>Fila 1 Col 4</td>
+        <th scope="col">Cabecera 1</th>
+        <th scope="col">Cabecera 2</th>
+        <th scope="col">Cabecera 3</th>
+        <th scope="col">Cabecera 4</th>
     </tr>
     <tr>
         <td>Fila 2 Col 1</td>
@@ -70,106 +71,24 @@ Para agregar bordes a una tabla, se pueden utilizar estilos CSS. El borde puede 
         <td>Fila 3 Col 3</td>
         <td>Fila 3 Col 4</td>
     </tr>
-    <tr>
-        <td>Fila 4 Col 1</td>
-        <td>Fila 4 Col 2</td>
-        <td>Fila 4 Col 3</td>
-        <td>Fila 4 Col 4</td>
-    </tr>
-</table>`}
-  initialCss={`table {
-    border: 1px solid black;
-}`}
-/>
-
-## Celdas con bordes
-
-Para agregar bordes a las celdas de una tabla, se puede aplicar CSS directamente a las celdas usando la etiqueta `<td>` con una clase específica que contenga estilos de borde. Es importante notar que si no se colapsan los bordes, estos aparecerán como duplicados entre las celdas.
-
-<HtmlCssPlayground
-  initialHtml={`<table>
-    <tr>
-        <td>Fila 1 Col 1</td>
-        <td>Fila 1 Col 2</td>
-        <td>Fila 1 Col 3</td>
-        <td>Fila 1 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 2 Col 1</td>
-        <td>Fila 2 Col 2</td>
-        <td>Fila 2 Col 3</td>
-        <td>Fila 2 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 3 Col 1</td>
-        <td>Fila 3 Col 2</td>
-        <td>Fila 3 Col 3</td>
-        <td>Fila 3 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 4 Col 1</td>
-        <td>Fila 4 Col 2</td>
-        <td>Fila 4 Col 3</td>
-        <td>Fila 4 Col 4</td>
-    </tr>
-</table>`}
-  initialCss={`table, td {
-    border: 1px solid black;
-}`}
-/>
-
-## Tabla y celdas con bordes colapsados
-
-Al colapsar los bordes de una tabla con CSS utilizando la propiedad border-collapse: collapse;, los bordes de las celdas adyacentes se combinan en uno solo. Esto evita que se dupliquen los bordes entre celdas.
-
-- border-collapse: define cómo se manejan los bordes adyacentes en una tabla.
-
-<HtmlCssPlayground
-  initialHtml={`<table>
-    <tr>
-        <td>Fila 1 Col 1</td>
-        <td>Fila 1 Col 2</td>
-        <td>Fila 1 Col 3</td>
-        <td>Fila 1 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 2 Col 1</td>
-        <td>Fila 2 Col 2</td>
-        <td>Fila 2 Col 3</td>
-        <td>Fila 2 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 3 Col 1</td>
-        <td>Fila 3 Col 2</td>
-        <td>Fila 3 Col 3</td>
-        <td>Fila 3 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 4 Col 1</td>
-        <td>Fila 4 Col 2</td>
-        <td>Fila 4 Col 3</td>
-        <td>Fila 4 Col 4</td>
-    </tr>
-</table>`}
-  initialCss={`table, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-}`}
-/>
+</table>`} />
 
 ## Combinar celdas
 
-Para combinar varias celdas dentro de una tabla, se pueden utilizar los atributos colspan y rowspan. El atributo colspan permite que una celda ocupe varias columnas, mientras que rowspan hace que una celda ocupe varias filas.
+Para combinar varias celdas dentro de una tabla, se pueden utilizar los atributos `colspan` y `rowspan`. El atributo `colspan` permite que una celda ocupe varias columnas, mientras que `rowspan` hace que una celda ocupe varias filas.
 
-- colspan: define cuántas columnas abarcará una celda.
-- rowspan: define cuántas filas abarcará una celda.
+- `colspan`: define cuántas columnas abarcará una celda.
+- `rowspan`: define cuántas filas abarcará una celda.
 
-<HtmlCssPlayground
-  initialHtml={`<table>
+:::warning
+Al combinar celdas, **hay que eliminar las celdas que quedan cubiertas**. Cada fila debe seguir sumando el mismo número de columnas. En el ejemplo, la primera fila tiene una celda de 2 columnas y dos celdas normales (4 columnas en total). La fila 4 solo tiene una celda porque las demás están ocupadas por las combinaciones de la fila 3.
+:::
+
+<HtmlPlayground initialHtml={`<table border="1">
     <tr>
         <td colspan="2">Fila 1 Col 1 y 2</td>
-        <td>Fila 1 Col 2</td>
         <td>Fila 1 Col 3</td>
+        <td>Fila 1 Col 4</td>
     </tr>
     <tr>
         <td>Fila 2 Col 1</td>
@@ -185,75 +104,268 @@ Para combinar varias celdas dentro de una tabla, se pueden utilizar los atributo
     <tr>
         <td>Fila 4 Col 3</td>
     </tr>
-</table>`}
-  initialCss={`table, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-}`}
-/>
+</table>`} />
 
 ## Estructura de tabla compleja combinando celdas
+
+Combinando `rowspan` y `colspan` se pueden construir cabeceras de varios niveles. En este ejemplo, la celda vacía de la esquina ocupa 3 filas, "Resultados" abarca las 6 columnas de datos y cada mes abarca 2 columnas (Ventas y Gastos). Cada fila suma 7 columnas contando las celdas combinadas.
+
+<HtmlPlayground
+  initialHtml={`<table border="1">
+    <tr>
+        <td rowspan="3"></td>
+        <th colspan="6" scope="colgroup">Resultados</th>
+    </tr>
+    <tr>
+        <th colspan="2" scope="colgroup">Enero</th>
+        <th colspan="2" scope="colgroup">Febrero</th>
+        <th colspan="2" scope="colgroup">Marzo</th>
+    </tr>
+    <tr>
+        <th scope="col">Ventas</th>
+        <th scope="col">Gastos</th>
+        <th scope="col">Ventas</th>
+        <th scope="col">Gastos</th>
+        <th scope="col">Ventas</th>
+        <th scope="col">Gastos</th>
+    </tr>
+    <tr>
+        <th scope="row">2022</th>
+        <td>54</td>
+        <td>7</td>
+        <td>65</td>
+        <td>12</td>
+        <td>78</td>
+        <td>25</td>
+    </tr>
+    <tr>
+        <th scope="row">2023</th>
+        <td>123</td>
+        <td>66</td>
+        <td>85</td>
+        <td>50</td>
+        <td>102</td>
+        <td>75</td>
+    </tr>
+    <tr>
+        <th scope="row">2024</th>
+        <td>140</td>
+        <td>80</td>
+        <td>155</td>
+        <td>100</td>
+        <td>175</td>
+        <td>95</td>
+    </tr>
+</table>`}
+  layout="stacked"
+/>
+
+## Título de la tabla
+
+La etiqueta `<caption>` añade un título a la tabla. Debe ser el **primer elemento** dentro de `<table>` y, por defecto, se muestra encima de la tabla. Además de describir su contenido, ayuda a los lectores de pantalla.
+
+- `<caption>`: define el título de la tabla.
+
+<HtmlPlayground initialHtml={`<table border="1">
+    <caption>Notas del primer trimestre</caption>
+    <tr>
+        <th scope="col">Módulo</th>
+        <th scope="col">Nota</th>
+    </tr>
+    <tr>
+        <td>Lenguajes de Marcas</td>
+        <td>8</td>
+    </tr>
+    <tr>
+        <td>Programación</td>
+        <td>7</td>
+    </tr>
+</table>`} />
+
+## Cabecera, cuerpo y pie
+
+Una tabla puede dividirse en tres secciones: cabecera (`<thead>`), cuerpo (`<tbody>`) y pie (`<tfoot>`). La cabecera contiene las celdas `<th>` que definen las columnas, el cuerpo contiene los datos y el pie puede incluir filas de totales o resumen. Esto mejora la semántica y la accesibilidad de la tabla, y permite darle estilo a cada sección por separado.
+
+Conviene escribirlas en este orden: primero `<thead>`, después `<tbody>` y al final `<tfoot>`.
+
+- `<thead>`: define la cabecera de la tabla.
+- `<tbody>`: define el cuerpo de la tabla.
+- `<tfoot>`: define el pie de la tabla.
+
+<HtmlPlayground initialHtml={`<table border="1">
+    <thead>
+        <tr>
+            <th scope="col">Producto</th>
+            <th scope="col">Unidades</th>
+            <th scope="col">Importe (€)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Cuaderno</td>
+            <td>10</td>
+            <td>20</td>
+        </tr>
+        <tr>
+            <td>Bolígrafo</td>
+            <td>25</td>
+            <td>25</td>
+        </tr>
+        <tr>
+            <td>Carpeta</td>
+            <td>5</td>
+            <td>20</td>
+        </tr>
+    </tbody>
+    <tfoot>
+        <tr>
+            <th scope="row">Total</th>
+            <td>40</td>
+            <td>65</td>
+        </tr>
+    </tfoot>
+</table>`} />
+
+## Tablas con bordes
+
+Para agregar bordes a una tabla con CSS se utiliza la propiedad `border`, que permite especificar el grosor, el estilo y el color del borde en un solo valor (por ejemplo, `1px solid black`). Si se aplica solo al elemento `<table>`, únicamente se dibuja el **borde exterior** de la tabla; las celdas quedan sin borde.
+
+- `border`: define el borde de un elemento (grosor, estilo y color).
 
 <HtmlCssPlayground
   initialHtml={`<table>
     <tr>
-        <td rowspan="3"></td>
-        <td colspan="6">Resultados</td>
+        <td>Fila 1 Col 1</td>
+        <td>Fila 1 Col 2</td>
+        <td>Fila 1 Col 3</td>
+        <td>Fila 1 Col 4</td>
     </tr>
     <tr>
-        <td colspan="2">Enero</td>
-        <td colspan="2">Febrero</td>
-        <td colspan="2">Marzo</td>
+        <td>Fila 2 Col 1</td>
+        <td>Fila 2 Col 2</td>
+        <td>Fila 2 Col 3</td>
+        <td>Fila 2 Col 4</td>
     </tr>
     <tr>
-        <td>Ventas</td>
-        <td>Gastos</td>
-        <td>Ventas</td>
-        <td>Gastos</td>
-        <td>Ventas</td>
-        <td>Gastos</td>
+        <td>Fila 3 Col 1</td>
+        <td>Fila 3 Col 2</td>
+        <td>Fila 3 Col 3</td>
+        <td>Fila 3 Col 4</td>
+    </tr>
+</table>`}
+  initialCss={`table {
+    border: 1px solid black;
+}`}
+/>
+
+## Celdas con bordes
+
+Para que las celdas también tengan borde, se aplica la propiedad `border` a los elementos `<td>` (y a `<th>` si la tabla tiene cabeceras). Se pueden escribir todos los selectores juntos, separados por comas, para no repetir el estilo. Es importante notar que si no se colapsan los bordes, estos aparecerán duplicados entre las celdas.
+
+<HtmlCssPlayground
+  initialHtml={`<table>
+    <tr>
+        <td>Fila 1 Col 1</td>
+        <td>Fila 1 Col 2</td>
+        <td>Fila 1 Col 3</td>
+        <td>Fila 1 Col 4</td>
     </tr>
     <tr>
-        <td>2022</td>
-        <td>54</td>
-        <td>7</td>
-        <td>65</td>
-        <td>78</td>
-        <td>5</td>
-        <td>25</td>
+        <td>Fila 2 Col 1</td>
+        <td>Fila 2 Col 2</td>
+        <td>Fila 2 Col 3</td>
+        <td>Fila 2 Col 4</td>
     </tr>
     <tr>
-        <td>2023</td>
-        <td>123</td>
-        <td>66</td>
-        <td>85</td>
-        <td>7</td>
-        <td>2</td>
-        <td>21</td>
-    </tr>
-    <tr>
-        <td>2024</td>
-        <td>564</td>
-        <td>65</td>
-        <td>4</td>
-        <td>76</td>
-        <td>33</td>
-        <td>66</td>
+        <td>Fila 3 Col 1</td>
+        <td>Fila 3 Col 2</td>
+        <td>Fila 3 Col 3</td>
+        <td>Fila 3 Col 4</td>
     </tr>
 </table>`}
   initialCss={`table, td {
     border: 1px solid black;
+}`}
+/>
+
+## Tabla y celdas con bordes colapsados
+
+Al colapsar los bordes de una tabla con CSS utilizando la propiedad `border-collapse: collapse;`, los bordes de las celdas adyacentes se combinan en uno solo. Esto evita que se dupliquen los bordes entre celdas.
+
+- `border-collapse`: define cómo se manejan los bordes adyacentes en una tabla.
+
+<HtmlCssPlayground
+  initialHtml={`<table>
+    <tr>
+        <th>Cabecera 1</th>
+        <th>Cabecera 2</th>
+        <th>Cabecera 3</th>
+        <th>Cabecera 4</th>
+    </tr>
+    <tr>
+        <td>Fila 2 Col 1</td>
+        <td>Fila 2 Col 2</td>
+        <td>Fila 2 Col 3</td>
+        <td>Fila 2 Col 4</td>
+    </tr>
+    <tr>
+        <td>Fila 3 Col 1</td>
+        <td>Fila 3 Col 2</td>
+        <td>Fila 3 Col 3</td>
+        <td>Fila 3 Col 4</td>
+    </tr>
+</table>`}
+  initialCss={`table, th, td {
+    border: 1px solid black;
     border-collapse: collapse;
 }`}
-  layout="stacked"
+/>
+
+## Espacio interior y alineación de las celdas
+
+Por defecto, el contenido de las celdas queda pegado a su borde y la tabla se ve apretada. La propiedad `padding` añade espacio entre el contenido y el borde de la celda, y `text-align` controla la alineación horizontal del texto.
+
+- `padding`: define el espacio interior de la celda.
+- `text-align`: define la alineación horizontal del texto (`left`, `center` o `right`).
+
+<HtmlCssPlayground
+  initialHtml={`<table>
+    <tr>
+        <th>Producto</th>
+        <th>Unidades</th>
+        <th>Importe (€)</th>
+    </tr>
+    <tr>
+        <td>Cuaderno</td>
+        <td>10</td>
+        <td>20</td>
+    </tr>
+    <tr>
+        <td>Bolígrafo</td>
+        <td>25</td>
+        <td>25</td>
+    </tr>
+</table>`}
+  initialCss={`table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+}
+
+td {
+    text-align: center;
+}`}
 />
 
 ## Cambiar el tamaño de la tabla
 
-El tamaño de las celdas de una tabla se ajusta automáticamente al contenido, pero puede ser modificado manualmente usando CSS. Las propiedades width y height permiten establecer un tamaño fijo o relativo para las celdas. Si el contenido es más grande que el tamaño establecido, se ajustará y creará saltos de línea.
+Por defecto, el tamaño de una tabla se ajusta al contenido de sus celdas. Con CSS se puede fijar el tamaño de la tabla completa: `width` establece el ancho total (las columnas se reparten ese espacio) y `height` establece la altura total (las filas se reparten esa altura). Los valores pueden ser fijos (`500px`) o relativos (`50%`).
 
-- width: define el ancho de las celdas o la tabla.
-- height: define la altura de las celdas.
+- `width`: define el ancho de la tabla.
+- `height`: define la altura de la tabla.
 
 <HtmlCssPlayground
   initialHtml={`<table>
@@ -283,15 +395,16 @@ El tamaño de las celdas de una tabla se ajusta automáticamente al contenido, p
 
 table {
     width: 500px;
+    height: 150px;
 }`}
 />
 
 ## Cambiar el tamaño de las celdas
 
-Explicación: Para ajustar el tamaño de una celda en particular, se pueden usar las propiedades CSS width y height directamente en las etiquetas `<td>` o aplicando clases CSS a las celdas. Esto afectará el tamaño de toda la columna, ya que las celdas de una columna comparten el mismo ancho.
+Para ajustar el tamaño de las celdas se pueden usar las propiedades CSS `width` y `height` sobre los elementos `<td>` o mediante clases CSS. Hay que tener en cuenta que las celdas de una misma columna comparten el ancho, y las de una misma fila comparten la altura. Por eso, cambiar el ancho de una celda afecta a toda su columna, y cambiar su altura afecta a toda su fila.
 
-- td { `width:` }: define el ancho de una celda.
-- td { `height:` }: define la altura de una celda.
+- `td { width }`: define el ancho de una celda (y de toda su columna).
+- `td { height }`: define la altura de una celda (y de toda su fila).
 
 <HtmlCssPlayground
   initialHtml={`<table>
@@ -321,18 +434,21 @@ Explicación: Para ajustar el tamaño de una celda en particular, se pueden usar
 
 td {
     width: 120px;
+    height: 50px;
 }`}
 />
 
 ## Ajustar el tamaño a la pantalla
 
-Explicación: Para hacer que la tabla se ajuste a la pantalla de forma automática, se pueden utilizar unidades relativas como porcentajes en las propiedades width de la tabla y celdas. Esto asegura que la tabla se escale según el tamaño de la ventana del navegador, proporcionando una experiencia más adaptable en pantallas de diferentes tamaños.
+Para hacer que la tabla se ajuste a la pantalla de forma automática, se pueden utilizar unidades relativas como porcentajes en la propiedad `width` de la tabla y de las celdas. Esto asegura que la tabla se escale según el tamaño de la ventana del navegador, proporcionando una experiencia más adaptable en pantallas de diferentes tamaños.
 
-- width: 100%: hace que la tabla ocupe todo el ancho disponible.
-- max-width: configura un tamaño máximo para la tabla
-- min-width: configura un tamaño mínimo para la tabla
-- margin:auto: centra la tabla
-- td {`width:25%`}: especifica que cada celda debe ocupar el 25% de la tabla
+Hay que tener cuidado con los tamaños mínimos: si `min-width` es mayor que el ancho de la pantalla (por ejemplo, en un móvil), la tabla se saldrá de la pantalla y aparecerá scroll horizontal.
+
+- `width: 100%`: hace que la tabla ocupe todo el ancho disponible.
+- `max-width`: configura un tamaño máximo para la tabla.
+- `min-width`: configura un tamaño mínimo para la tabla.
+- `margin: auto`: centra la tabla.
+- `td { width: 25% }`: especifica que cada celda debe ocupar el 25% de la tabla.
 
 <HtmlCssPlayground
   initialHtml={`<table>
@@ -363,7 +479,7 @@ Explicación: Para hacer que la tabla se ajuste a la pantalla de forma automáti
 table {
     width: 90%;
     max-width: 700px;
-    min-width: 600px;
+    min-width: 300px;
     margin: auto;
 }
 
@@ -372,130 +488,148 @@ td {
 }`}
 />
 
-## Celdas de cabecera
-
-Las celdas de cabecera dentro de una tabla se definen con la etiqueta `<th>`, que representa la cabecera de una columna o fila. Estas celdas tienen un estilo predeterminado de texto en negrita y están alineadas al centro, aunque pueden ser estilizadas mediante CSS.
-
-- `<th>`: define una celda de cabecera.
-
-<HtmlCssPlayground
-  initialHtml={`<table>
-    <tr>
-        <th>Fila 1 Col 1</th>
-        <th>Fila 1 Col 2</th>
-        <th>Fila 1 Col 3</th>
-        <th>Fila 1 Col 4</th>
-    </tr>
-    <tr>
-        <td>Fila 2 Col 1</td>
-        <td>Fila 2 Col 2</td>
-        <td>Fila 2 Col 3</td>
-        <td>Fila 2 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 3 Col 1</td>
-        <td>Fila 3 Col 2</td>
-        <td>Fila 3 Col 3</td>
-        <td>Fila 3 Col 4</td>
-    </tr>
-</table>`}
-  initialCss={`table, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-}`}
-/>
-
 ## Selectores para filas pares e impares
 
-Explicación: Con CSS, es posible alternar los estilos de las filas pares e impares de una tabla usando selectores como :nth-child(even) para las filas pares y :nth-child(odd) para las filas impares. Esto mejora la legibilidad de los datos al ofrecer un contraste visual entre las filas.
+Con CSS es posible alternar los estilos de las filas pares e impares de una tabla usando selectores como `:nth-child(even)` para las filas pares y `:nth-child(odd)` para las impares. Esto mejora la legibilidad de los datos al ofrecer un contraste visual entre las filas.
 
-- tr:nth-child(even): aplica estilos a las filas pares.
-- tr:nth-child(odd): aplica estilos a las filas impares.
+Conviene aplicar estos selectores solo a las filas del cuerpo (`tbody tr`). Si se escriben como `tr:nth-child(...)`, también afectan a la fila de cabecera y esta no se distingue del resto.
+
+- `tbody tr:nth-child(even)`: aplica estilos a las filas pares del cuerpo.
+- `tbody tr:nth-child(odd)`: aplica estilos a las filas impares del cuerpo.
 
 <HtmlCssPlayground
   initialHtml={`<table>
-    <tr>
-        <th>Fila 1 Col 1</th>
-        <th>Fila 1 Col 2</th>
-        <th>Fila 1 Col 3</th>
-        <th>Fila 1 Col 4</th>
-    </tr>
-    <tr>
-        <td>Fila 2 Col 1</td>
-        <td>Fila 2 Col 2</td>
-        <td>Fila 2 Col 3</td>
-        <td>Fila 2 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 3 Col 1</td>
-        <td>Fila 3 Col 2</td>
-        <td>Fila 3 Col 3</td>
-        <td>Fila 3 Col 4</td>
-    </tr>
-    <tr>
-        <td>Fila 4 Col 1</td>
-        <td>Fila 4 Col 2</td>
-        <td>Fila 4 Col 3</td>
-        <td>Fila 4 Col 4</td>
-    </tr>
+    <thead>
+        <tr>
+            <th>Cabecera 1</th>
+            <th>Cabecera 2</th>
+            <th>Cabecera 3</th>
+            <th>Cabecera 4</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Fila 1 Col 1</td>
+            <td>Fila 1 Col 2</td>
+            <td>Fila 1 Col 3</td>
+            <td>Fila 1 Col 4</td>
+        </tr>
+        <tr>
+            <td>Fila 2 Col 1</td>
+            <td>Fila 2 Col 2</td>
+            <td>Fila 2 Col 3</td>
+            <td>Fila 2 Col 4</td>
+        </tr>
+        <tr>
+            <td>Fila 3 Col 1</td>
+            <td>Fila 3 Col 2</td>
+            <td>Fila 3 Col 3</td>
+            <td>Fila 3 Col 4</td>
+        </tr>
+        <tr>
+            <td>Fila 4 Col 1</td>
+            <td>Fila 4 Col 2</td>
+            <td>Fila 4 Col 3</td>
+            <td>Fila 4 Col 4</td>
+        </tr>
+    </tbody>
 </table>`}
-  initialCss={`tr:nth-child(even){
+  initialCss={`th, td {
+    padding: 8px;
+}
+
+thead {
+    background-color: #2980b9;
+    color: #FFFFFF;
+}
+
+tbody tr:nth-child(even){
     background-color: #85c1e9;
 }
 
-tr:nth-child(odd){
+tbody tr:nth-child(odd){
     background-color: #deedf8;
 }`}
 />
 
-## Estructura de una tabla compleja con cabecera y pie
+## Estilo de columnas completas
 
-Una tabla puede dividirse en tres secciones principales: cabecera (`<thead>`), cuerpo (`<tbody>`) y pie (`<tfoot>`). La cabecera contiene las etiquetas `<th>` para definir las columnas, el cuerpo contiene los datos y el pie puede incluir filas de totales o resumen. Esto mejora la semántica y la accesibilidad de la tabla.
+Con `<colgroup>` y `<col>` se puede dar estilo a una columna entera sin tener que modificar cada celda. `<colgroup>` va justo debajo de `<table>` (o de `<caption>`, si existe) y antes de las filas; dentro, cada `<col>` representa una columna. Con el atributo `span` un mismo `<col>` puede representar varias columnas seguidas.
 
-- `<thead>`: define la cabecera de la tabla.
-- `<tbody>`: define el cuerpo de la tabla.
-- `<tfoot>`: define el pie de la tabla.
+Solo funcionan algunas propiedades sobre las columnas: `background`, `border`, `width` y `visibility`.
+
+- `<colgroup>`: agrupa las definiciones de columnas.
+- `<col>`: representa una columna de la tabla.
+- `span`: número de columnas a las que afecta un `<col>`.
+
+<HtmlCssPlayground
+  initialHtml={`<table>
+    <colgroup>
+        <col>
+        <col class="destacada">
+        <col>
+    </colgroup>
+    <tr>
+        <th>Producto</th>
+        <th>Unidades</th>
+        <th>Importe (€)</th>
+    </tr>
+    <tr>
+        <td>Cuaderno</td>
+        <td>10</td>
+        <td>20</td>
+    </tr>
+    <tr>
+        <td>Bolígrafo</td>
+        <td>25</td>
+        <td>25</td>
+    </tr>
+</table>`}
+  initialCss={`table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+}
+
+.destacada {
+    background-color: #f7dc6f;
+}`}
+/>
+
+## Ejemplo completo con estilos
+
+Ejemplo que reúne todo lo visto: cabecera de varios niveles con `<thead>`, cuerpo con `<tbody>`, pie con `<tfoot>`, cabeceras `<th>` con `scope` y estilos CSS.
 
 <HtmlCssPlayground
   initialHtml={`<table>
     <thead>
         <tr>
             <td rowspan="3"></td>
-            <td colspan="8">Resultados</td>
+            <th colspan="8" scope="colgroup">Resultados</th>
         </tr>
         <tr>
-            <td colspan="2">Enero</td>
-            <td colspan="2">Febrero</td>
-            <td colspan="2">Marzo</td>
-            <td colspan="2">Abril</td>
+            <th colspan="2" scope="colgroup">Enero</th>
+            <th colspan="2" scope="colgroup">Febrero</th>
+            <th colspan="2" scope="colgroup">Marzo</th>
+            <th colspan="2" scope="colgroup">Abril</th>
         </tr>
         <tr>
-            <td>Ventas</td>
-            <td>Gastos</td>
-            <td>Ventas</td>
-            <td>Gastos</td>
-            <td>Ventas</td>
-            <td>Gastos</td>
-            <td>Ventas</td>
-            <td>Gastos</td>
+            <th scope="col">Ventas</th>
+            <th scope="col">Gastos</th>
+            <th scope="col">Ventas</th>
+            <th scope="col">Gastos</th>
+            <th scope="col">Ventas</th>
+            <th scope="col">Gastos</th>
+            <th scope="col">Ventas</th>
+            <th scope="col">Gastos</th>
         </tr>
     </thead>
-    <tfoot>
-        <tr>
-            <td>Totales</td>
-            <td>405</td>
-            <td>167</td>
-            <td>415</td>
-            <td>183</td>
-            <td>487</td>
-            <td>237</td>
-            <td>492</td>
-            <td>265</td>
-        </tr>
-    </tfoot>
     <tbody>
         <tr>
-            <td>2020</td>
+            <th scope="row">2020</th>
             <td>40</td>
             <td>6</td>
             <td>52</td>
@@ -506,7 +640,7 @@ Una tabla puede dividirse en tres secciones principales: cabecera (`<thead>`), c
             <td>22</td>
         </tr>
         <tr>
-            <td>2021</td>
+            <th scope="row">2021</th>
             <td>48</td>
             <td>8</td>
             <td>58</td>
@@ -517,7 +651,7 @@ Una tabla puede dividirse en tres secciones principales: cabecera (`<thead>`), c
             <td>25</td>
         </tr>
         <tr>
-            <td>2022</td>
+            <th scope="row">2022</th>
             <td>54</td>
             <td>7</td>
             <td>65</td>
@@ -528,7 +662,7 @@ Una tabla puede dividirse en tres secciones principales: cabecera (`<thead>`), c
             <td>30</td>
         </tr>
         <tr>
-            <td>2023</td>
+            <th scope="row">2023</th>
             <td>123</td>
             <td>66</td>
             <td>85</td>
@@ -539,7 +673,7 @@ Una tabla puede dividirse en tres secciones principales: cabecera (`<thead>`), c
             <td>78</td>
         </tr>
         <tr>
-            <td>2024</td>
+            <th scope="row">2024</th>
             <td>140</td>
             <td>80</td>
             <td>155</td>
@@ -550,15 +684,32 @@ Una tabla puede dividirse en tres secciones principales: cabecera (`<thead>`), c
             <td>110</td>
         </tr>
     </tbody>
+    <tfoot>
+        <tr>
+            <th scope="row">Totales</th>
+            <td>405</td>
+            <td>167</td>
+            <td>415</td>
+            <td>183</td>
+            <td>487</td>
+            <td>237</td>
+            <td>492</td>
+            <td>265</td>
+        </tr>
+    </tfoot>
 </table>`}
   initialCss={`table {
-    width: 70%;
+    width: 90%;
     max-width: 800px;
-    min-width: 500px;
     margin: auto;
+    border-collapse: collapse;
 }
 
-thead{
+th, td {
+    padding: 6px;
+}
+
+thead {
     background-color: #2980b9;
     color: #FFFFFF;
     text-align: center;

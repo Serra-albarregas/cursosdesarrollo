@@ -1,13 +1,14 @@
-// src/components/Playground/HtmlCssJsPlayground.tsx
 import React, {useMemo, useState} from 'react';
 import {CodeBlock} from './CodeBlock';
-import {PlaygroundShell} from './PlaygroundShell';
+import {PlaygroundShell, type Layout} from './PlaygroundShell';
+import {ResultFrame} from './ResultFrame';
 
 type HtmlCssJsPlaygroundProps = {
   initialHtml: string;
   initialCss?: string;
   initialJs?: string;
-  layout?: 'side-by-side' | 'stacked';
+  layout?: Layout;
+  height?: number | string;
 };
 
 export default function HtmlCssJsPlayground({
@@ -15,15 +16,22 @@ export default function HtmlCssJsPlayground({
   initialCss = '',
   initialJs = '',
   layout = 'side-by-side',
+  height = 700,
 }: HtmlCssJsPlaygroundProps): React.ReactNode {
   const [html, setHtml] = useState(initialHtml);
   const [css, setCss] = useState(initialCss);
   const [js, setJs] = useState(initialJs);
 
-  const srcDoc = useMemo(
-    () => `<html><head><style>${css}</style></head><body>${html}<script>${js}</script></body></html>`,
-    [html, css, js],
-  );
+  const doc = useMemo(() => {
+    // El JS del alumno se parte para no cerrar antes de tiempo ningún <script>
+    // del documento generado, igual que hacemos con el bootstrap.
+    const safeJs = js.replace(/<\/script>/gi, '<\\/script>');
+    return (
+      `<!doctype html><html lang="es"><head><meta charset="utf-8">` +
+      `<style>${css}</style></head><body>${html}` +
+      `<script>${safeJs}</script></body></html>`
+    );
+  }, [html, css, js]);
 
   return (
     <PlaygroundShell
@@ -36,12 +44,7 @@ export default function HtmlCssJsPlayground({
         </div>
       }
       resultPanel={
-        <iframe
-          title="Resultado HTML+CSS+JS"
-          srcDoc={srcDoc}
-          sandbox="allow-scripts"
-          style={{width: '100%', height: '700px', border: '1px solid #ccc', backgroundColor: 'white', borderRadius: '8px'}}
-        />
+        <ResultFrame doc={doc} title="Resultado HTML+CSS+JS" height={height} />
       }
     />
   );

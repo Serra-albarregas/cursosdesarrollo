@@ -1,12 +1,12 @@
 ---
 sidebar_position: 3
 title: "Enlaces"
-draft: true
 ---
 
 import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
 import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
 import HtmlCssJsPlayground from '@site/src/components/Playground/HtmlCssJsPlayground';
+import paisajeUrl from './img/paisaje.jpg';
 
 # Enlaces
 
@@ -42,8 +42,14 @@ Los enlaces a secciones dentro de una misma página permiten a los usuarios nave
 <p><a href=&quot;#seccion2&quot;>Enlace a la sección 2</a></p>
 <h3 id=&quot;seccion1&quot;>Sección 1</h3>
 <p>Esto es la sección 1</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sodales, eros aliquam pretium tristique, lorem enim posuere massa, ut imperdiet augue metus sed risus. Praesent non nunc pulvinar, porta quam eget, consectetur diam. Donec ac congue elit, eu scelerisque nibh. Sed sollicitudin magna sed ex ornare, eu ullamcorper augue semper. Sed vitae tincidunt augue. Aenean pretium leo sit amet enim facilisis consequat. Vivamus mattis nibh vitae lectus pretium, eget faucibus risus ornare. Fusce vitae velit fringilla, hendrerit mauris sed, ultrices tortor.</p>
+<p>Vestibulum in turpis nibh. Morbi quis convallis enim. Nulla sollicitudin mi quis ornare euismod. Phasellus et maximus neque, vitae porta augue. Proin iaculis elit et rhoncus imperdiet. Nullam velit sapien, lacinia sit amet ipsum et, rutrum pellentesque tortor. Curabitur ullamcorper convallis tristique. Phasellus vitae sodales magna. Sed ornare mauris a fringilla gravida. Nam posuere tellus in finibus porttitor. Nam porta massa neque. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Ut rhoncus vel dolor quis vulputate.</p>
+
 <h3 id=&quot;seccion2&quot;>Sección 2</h3>
-<p>Esto es la sección 2</p>" />
+<p>Esto es la sección 2</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sodales, eros aliquam pretium tristique, lorem enim posuere massa, ut imperdiet augue metus sed risus. Praesent non nunc pulvinar, porta quam eget, consectetur diam. Donec ac congue elit, eu scelerisque nibh. Sed sollicitudin magna sed ex ornare, eu ullamcorper augue semper. Sed vitae tincidunt augue. Aenean pretium leo sit amet enim facilisis consequat. Vivamus mattis nibh vitae lectus pretium, eget faucibus risus ornare. Fusce vitae velit fringilla, hendrerit mauris sed, ultrices tortor.</p>
+<p>Vestibulum in turpis nibh. Morbi quis convallis enim. Nulla sollicitudin mi quis ornare euismod. Phasellus et maximus neque, vitae porta augue. Proin iaculis elit et rhoncus imperdiet. Nullam velit sapien, lacinia sit amet ipsum et, rutrum pellentesque tortor. Curabitur ullamcorper convallis tristique. Phasellus vitae sodales magna. Sed ornare mauris a fringilla gravida. Nam posuere tellus in finibus porttitor. Nam porta massa neque. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Ut rhoncus vel dolor quis vulputate.</p>
+" layout="stacked"/>
 
 ## Rutas relativas y absolutas
 
@@ -56,6 +62,18 @@ Las rutas en los enlaces pueden ser absolutas o relativas.
   - **Subir niveles**: Usa `../` para subir uno o más niveles en la jerarquía de carpetas. Por ejemplo, `../../index.html` sube dos niveles antes de buscar el archivo.
 La elección entre rutas absolutas y relativas depende del contexto y de cómo se organiza el sitio web. Generalmente, las rutas relativas son preferibles en entornos donde la estructura de carpetas es estable, ya que hacen que los archivos sean más portables.
 
+Para el ejemplo suponemos la siguiente estructura de carpetas:
+
+```
+mi-web/
+├── index.html
+└── paginas/
+    └── ejemplo/
+        ├── ejemplo.html <---- Estamos aquí
+        └── enlaces/
+            └── destino.html
+```
+
 <HtmlPlayground initialHtml="<p><a href=&quot;/index.html&quot;>Enlace absoluto</a></p>
 <p><a href=&quot;./enlaces/destino.html&quot;>Enlace relativo explícito</a></p>
 <p><a href=&quot;enlaces/destino.html&quot;>Enlace relativo implícito</a></p>
@@ -65,9 +83,15 @@ La elección entre rutas absolutas y relativas depende del contexto y de cómo s
 
 Los enlaces también pueden apuntar a recursos como imágenes, documentos o archivos multimedia. Al agregar el atributo `download` a un enlace, se permite a los usuarios descargar directamente el recurso en lugar de abrirlo en el navegador, lo que es útil para proporcionar contenido descargable como PDFs o imágenes.
 
-<HtmlPlayground initialHtml="<p><a href=&quot;../../recursos/paisaje.jpg&quot;>Enlace a una imagen</a></p>
-<p><a href=&quot;../../recursos/paisaje.jpg&quot; download>Enlace a una imagen con descarga</a></p>
-<p><a href=&quot;../../recursos/paisaje.jpg&quot; download=&quot;imagen-paisaje.jpg&quot;>Enlace a una imagen con descarga con nombre editado</a></p>" />
+<HtmlPlayground
+  initialHtml={`<p><a href="${paisajeUrl}">Enlace a una imagen</a></p>
+<p><a href="${paisajeUrl}" download>Enlace a una imagen con descarga</a></p>
+<p><a href="${paisajeUrl}" download="imagen-paisaje.jpg">Enlace a una imagen con descarga con nombre editado</a></p>`}
+/>
+
+:::warning
+Aunque en este entorno de pruebas no se permita la descarga, el atributo `download` funciona correctamente. ¡Pruebalo en tu máquina!
+:::
 
 ## `target`
 

@@ -102,7 +102,7 @@ const config: Config = {
       items: [
         {
           label: "Lenguajes de Marcas",
-          to: "/lenguajes-de-marcas/html/introduccion",
+          to: "lenguajes-de-marcas/html/introduccion",
           position: "left",
         },
         {

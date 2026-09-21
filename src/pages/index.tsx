@@ -64,7 +64,7 @@ export default function Home(): ReactNode {
                 <div className="card__footer">
                   <Link
                     className="button button--primary button--block"
-                    to="/programacion-java/introduccion"
+                    to="/programacion-java/ut1-introduccion/elementos-basicos"
                   >
                     Entrar al curso
                   </Link>

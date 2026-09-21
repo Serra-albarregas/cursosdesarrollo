@@ -1,12 +1,12 @@
 ---
 sidebar_position: 4
 title: "Listas"
-draft: true
 ---
 
 import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
 import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
-import useBaseUrl from '@docusaurus/useBaseUrl';
+import gateteUrl from './img/gatete.png';
+import paisajeUrl from './img/paisaje.png';
 
 Las listas sirven para organizar información.
 
@@ -84,24 +84,17 @@ Una lista anidada se crea al utilizar una etiqueta de tipo `<ul>` o `<ol>` tras 
 
 ### Tipo de estilo con imágenes
 
-export function EstiloImagenDemo() {
-  const gateteUrl = useBaseUrl('/img/gatete.png');
-  return (
-    <HtmlCssPlayground
-      initialHtml={`<ul>
+<HtmlCssPlayground
+  initialHtml={`<ul>
     <li>Gato</li>
     <li>Perrete</li>
     <li>Caballo</li>
     <li>Tortuga</li>
 </ul>`}
-      initialCss={`ul li{
-    list-style-image: url(${gateteUrl});
+  initialCss={`ul li{
+    list-style-image: url(${paisajeUrl});
 }`}
-    />
-  );
-}
-
-<EstiloImagenDemo />
+/>
 
 ### Estilos en listas anidadas
 

@@ -1,24 +1,27 @@
-// src/components/Playground/HtmlCssPlayground.tsx
 import React, {useMemo, useState} from 'react';
 import {CodeBlock} from './CodeBlock';
-import {PlaygroundShell} from './PlaygroundShell';
+import {PlaygroundShell, type Layout} from './PlaygroundShell';
+import {ResultFrame} from './ResultFrame';
 
 type HtmlCssPlaygroundProps = {
   initialHtml: string;
   initialCss?: string;
-  layout?: 'side-by-side' | 'stacked';
+  layout?: Layout;
+  height?: number | string;
 };
 
 export default function HtmlCssPlayground({
   initialHtml,
   initialCss = '',
   layout = 'side-by-side',
+  height = 460,
 }: HtmlCssPlaygroundProps): React.ReactNode {
   const [html, setHtml] = useState(initialHtml);
   const [css, setCss] = useState(initialCss);
 
-  const srcDoc = useMemo(
-    () => `<html><head><style>${css}</style></head><body>${html}</body></html>`,
+  const doc = useMemo(
+    () =>
+      `<!doctype html><html lang="es"><head><meta charset="utf-8"><style>${css}</style></head><body>${html}</body></html>`,
     [html, css],
   );
 
@@ -32,11 +35,7 @@ export default function HtmlCssPlayground({
         </div>
       }
       resultPanel={
-        <iframe
-          title="Resultado HTML+CSS"
-          srcDoc={srcDoc}
-          style={{width: '100%', height: '460px', border: '1px solid #ccc', backgroundColor: 'white', borderRadius: '8px'}}
-        />
+        <ResultFrame doc={doc} title="Resultado HTML+CSS" height={height} />
       }
     />
   );
