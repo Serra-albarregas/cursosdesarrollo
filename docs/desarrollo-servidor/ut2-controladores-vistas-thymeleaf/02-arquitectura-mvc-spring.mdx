@@ -1,0 +1,197 @@
+---
+id: arquitectura-mvc-spring
+title: 2. Arquitectura MVC en Spring
+sidebar_label: 2. Arquitectura MVC
+sidebar_position: 2
+description: El patrón Modelo-Vista-Controlador aplicado a Spring, las capas típicas de una aplicación (Controller, Service, Repository), las anotaciones de estereotipo y dos primeros ejemplos de controlador.
+---
+
+# 2. Arquitectura MVC en Spring
+
+Spring MVC (*Model-View-Controller*) es el módulo de Spring encargado de gestionar peticiones web.
+Organiza la aplicación en tres responsabilidades bien diferenciadas, y es la base sobre la que
+construiremos todos los ejemplos del resto de la unidad.
+
+## 2.1. El patrón Modelo-Vista-Controlador
+
+| Componente | Responsabilidad |
+|---|---|
+| **Modelo** | Los datos de la aplicación y la lógica para obtenerlos/manipularlos |
+| **Vista** | Cómo se muestran esos datos al usuario (en nuestro caso, plantillas Thymeleaf) |
+| **Controlador** | Recibe la petición, decide qué hacer y qué vista devolver |
+
+El flujo típico de una petición es siempre el mismo:
+
+1. El navegador envía una petición HTTP (p. ej. `GET /alumnos`).
+2. Spring la dirige al **controlador** que tiene mapeada esa ruta.
+3. El controlador pide los datos necesarios a un **servicio**.
+4. El controlador coloca esos datos en el **modelo** y decide qué **vista** devolver.
+5. Spring renderiza la vista (la plantilla Thymeleaf) con esos datos y la envía al navegador.
+
+:::note
+No confundir con el "Modelo" de datos
+El término "Modelo" del patrón MVC (el objeto que viaja del controlador a la vista) es distinto
+de las clases de **modelo de dominio** (entidades como `Alumno`). Lo veremos con detalle en la
+página dedicada al modelo y el paso de datos a la vista.
+:::
+
+## 2.2. Capas de una aplicación Spring
+
+En la práctica, una aplicación Spring bien organizada separa el código en varias capas, cada una
+con una única responsabilidad:
+
+```text
+Petición HTTP
+      │
+      ▼
+  Controller   →  recibe la petición, valida parámetros, decide la vista
+      │
+      ▼
+   Service     →  lógica de negocio (reglas, cálculos, validaciones complejas)
+      │
+      ▼
+ Repository    →  acceso a los datos (base de datos, ficheros, una API externa...)
+```
+
+- **Controller**: es la puerta de entrada. No debería contener lógica de negocio, solo coordinar.
+- **Service**: contiene las reglas de negocio. Un mismo servicio puede ser usado por varios
+  controladores.
+- **Repository**: se encarga exclusivamente de obtener y guardar datos. Por ahora trabajaremos con
+  repositorios muy simples (en memoria); el acceso real a bases de datos se verá más adelante.
+
+Esta separación en capas es la razón por la que, en la página anterior, organizamos el proyecto en
+los paquetes `controllers`, `services` y `repositories`.
+
+## 2.3. Anotaciones de estereotipo
+
+Spring necesita saber qué clases debe gestionar él mismo (crearlas, inyectarlas donde se
+necesiten...). Para ello usamos las llamadas **anotaciones de estereotipo**, que marcan una clase
+como un componente gestionado por el contenedor de Spring:
+
+| Anotación | Capa | Uso |
+|---|---|---|
+| `@Controller` | Controlador | Gestiona peticiones web y devuelve vistas |
+| `@Service` | Servicio | Contiene lógica de negocio |
+| `@Repository` | Repositorio | Acceso a datos |
+| `@Component` | Genérica | Cualquier otro componente gestionado por Spring que no encaje en las anteriores |
+
+Las cuatro hacen esencialmente lo mismo (registrar la clase como un *bean* de Spring), pero usar
+la anotación específica de cada capa deja claro el papel de cada clase con solo mirarla.
+
+```java
+@Service
+public class ServicioAlumnos {
+
+    public List<Alumno> listarTodos() {
+        // lógica de negocio
+    }
+}
+```
+
+```java
+@Controller
+public class AlumnosController {
+
+    // Spring inyecta aquí una instancia de ServicioAlumnos
+    // (veremos cómo funciona esto en la siguiente página)
+}
+```
+
+:::note
+¿Qué es un "bean"?
+En Spring, un **bean** es simplemente un objeto cuyo ciclo de vida (creación, configuración,
+destrucción) gestiona el propio *framework*, en lugar de gestionarlo nosotros con `new`. Las
+anotaciones de estereotipo son la forma más habitual de decirle a Spring "gestiona tú esta clase".
+:::
+
+## 2.4. Ejemplo 1: un controlador que devuelve solo texto
+
+El controlador más simple posible: responde directamente con un texto, sin usar ninguna vista.
+Para ello usamos `@ResponseBody`, que le indica a Spring que el valor devuelto es la propia
+respuesta (no el nombre de una plantilla).
+
+```java
+package es.centro.miproyecto.controllers;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class SaludoController {
+
+    @GetMapping("/saludo")
+    @ResponseBody
+    public String saludo() {
+        return "¡Hola desde Spring Boot!";
+    }
+}
+```
+
+Al visitar `http://localhost:8080/saludo`, el navegador recibe directamente el texto
+`¡Hola desde Spring Boot!`, sin pasar por ninguna plantilla.
+
+## 2.5. Ejemplo 2: un controlador que devuelve una plantilla sencilla
+
+Ahora un ejemplo que sí sigue el flujo completo del patrón MVC: el controlador prepara unos datos,
+los coloca en el **modelo** y devuelve el nombre de una **vista** para que Spring la renderice. De
+momento el controlador genera el dato él mismo; en la siguiente página veremos cómo delegar esto
+en un servicio inyectado.
+
+```java
+package es.centro.miproyecto.controllers;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class SaludoController {
+
+    @GetMapping("/saludo-plantilla")
+    public String saludo(Model model) {
+        model.addAttribute("mensaje", "¡Hola, mundo!");
+        return "saludo"; // nombre de la plantilla: templates/saludo.html
+    }
+}
+```
+
+Plantilla (`src/main/resources/templates/saludo.html`):
+
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Saludo</title>
+</head>
+<body>
+    <h1 th:text="${mensaje}">Mensaje por defecto</h1>
+</body>
+</html>
+```
+
+Al visitar `http://localhost:8080/saludo-plantilla`, Spring busca `templates/saludo.html` y la
+renderiza, sustituyendo `th:text="${mensaje}"` por el valor real colocado en el modelo.
+
+:::note
+Diferencia clave entre los dos ejemplos
+En el primer ejemplo, `@ResponseBody` hace que el `String` devuelto sea la respuesta HTTP final.
+En el segundo, al no usar `@ResponseBody`, el `String` devuelto (`"saludo"`) se interpreta como el
+**nombre de una vista** que Spring debe buscar y renderizar.
+:::
+
+## 2.6. ¿Por qué separar en capas?
+
+Podríamos escribir toda la lógica dentro del controlador y funcionaría. Sin embargo, separar en
+capas aporta ventajas que se notan según crece el proyecto:
+
+- **Mantenibilidad**: cada clase tiene una única responsabilidad, es más fácil de entender y
+  modificar.
+- **Reutilización**: un servicio puede usarse desde varios controladores (por ejemplo, un
+  controlador web y una futura API REST).
+- **Testabilidad**: es mucho más sencillo probar la lógica de negocio de un servicio de forma
+  aislada, sin tener que simular peticiones HTTP.
+
+En la siguiente página veremos cómo Spring conecta automáticamente estas capas entre sí mediante
+la **inyección de dependencias**.

@@ -1,0 +1,176 @@
+---
+id: introduccion-spring-boot
+title: 1. Introducción a Spring y Spring Boot
+sidebar_label: 1. Introducción a Spring Boot
+sidebar_position: 1
+description: Qué es Spring, diferencias con Spring Boot, generación de un proyecto con Spring Initializr, instalación en IntelliJ IDEA y Visual Studio Code, y estructura de carpetas de un proyecto Spring Boot.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 1. Introducción a Spring y Spring Boot
+
+**Spring** es un *framework* que
+resuelve gran parte de ese trabajo repetitivo, permitiéndonos centrarnos en la lógica de negocio.
+
+## 1.1. ¿Qué problema resuelve Spring?
+
+Construir una aplicación Java desde cero implica resolver, una y otra vez, los mismos problemas:
+cómo conectar las clases entre sí, cómo gestionar el ciclo de vida de los objetos, cómo mapear
+peticiones HTTP a código, cómo acceder a una base de datos...
+
+Spring propone una solución basada en dos ideas centrales:
+
+- **Inversión de control (IoC)**: en lugar de que nuestras clases creen sus propias dependencias
+  (`new ServicioAlumnos()`), es el *framework* quien las crea y nos las "inyecta". Profundizaremos
+  en esto en la siguiente página.
+- **Configuración sobre convención**: Spring asume una serie de convenciones por defecto (nombres
+  de paquetes, anotaciones, rutas) que reducen la configuración manual al mínimo.
+
+:::note
+¿Por qué "Spring"?
+El nombre hace referencia a que el *framework* apareció como una alternativa más ligera y sencilla
+("primavera") frente a la complejidad de J2EE (Java Enterprise Edition) de principios de siglo.
+:::
+
+## 1.2. Spring Framework vs Spring Boot
+
+**Spring Framework** es el proyecto original: un conjunto muy amplio de módulos (Spring MVC,
+Spring Data, Spring Security...) que hay que configurar manualmente.
+
+**Spring Boot** es una capa construida encima de Spring Framework que:
+
+- Proporciona **configuración automática** (*auto-configuration*) según las dependencias que
+  incluyamos.
+- Incluye un **servidor embebido** (Tomcat por defecto), por lo que no hace falta instalar ni
+  desplegar en un servidor externo: la propia aplicación se ejecuta como un programa Java normal.
+- Facilita la gestión de dependencias mediante los llamados *starters* (`spring-boot-starter-web`,
+  `spring-boot-starter-thymeleaf`...).
+
+| | Spring Framework | Spring Boot |
+|---|---|---|
+| Configuración | Manual (XML o Java Config) | Automática, por convención |
+| Servidor | Externo (hay que desplegar el `.war`) | Embebido (se ejecuta como `.jar`) |
+| Gestión de dependencias | Manual, módulo a módulo | Mediante *starters* |
+| Curva de entrada | Alta | Baja/media |
+
+En este módulo trabajaremos siempre con **Spring Boot**.
+
+## 1.3. Spring Initializr: generación del proyecto
+
+La forma habitual de crear un proyecto Spring Boot es a través de
+[Spring Initializr](https://start.spring.io), un generador de proyectos que nos permite elegir:
+
+- **Build tool**: Maven o Gradle (usaremos **Maven**).
+- **Lenguaje**: Java.
+- **Versión de Spring Boot**: la última versión estable.
+- **Metadatos del proyecto**: `Group` (normalmente el dominio invertido, p. ej. `es.centro`),
+  `Artifact` (nombre del proyecto), *packaging* (`Jar`) y versión de Java.
+- **Dependencias**: los *starters* que necesitemos. Para empezar añadiremos:
+  - `Spring Web` (para crear controladores y gestionar peticiones HTTP)
+  - `Thymeleaf` (motor de plantillas que veremos en las próximas páginas)
+
+Al generar el proyecto, Spring Initializr nos descarga un `.zip` con el esqueleto ya preparado y
+un archivo `pom.xml` con las dependencias seleccionadas.
+
+Tanto **IntelliJ IDEA** como **Visual Studio Code** permiten crear el proyecto directamente desde
+el propio IDE, sin pasar por la web, usando ese mismo generador por debajo.
+
+## 1.4. Instalación y puesta en marcha
+
+<Tabs>
+<TabItem value="vscode" label="Visual Studio Code">
+
+Visual Studio Code no tiene soporte para Spring por defecto: hay que instalar la extensión
+**Extension Pack for Java** y, sobre ella, **Spring Boot Extension Pack** (ambas desde el
+Marketplace de VS Code).
+
+1. Instalar las dos extensiones anteriores.
+2. Abrir la paleta de comandos (`Ctrl+Shift+P`) y buscar `Spring Initializr: Generate a Maven Project`.
+3. El propio VS Code guía el proceso: `Group`, `Artifact`, versión de Java, dependencias
+   (`Spring Web`, `Thymeleaf`)...
+4. Elegir la carpeta donde generar el proyecto. VS Code lo abre automáticamente al terminar.
+
+Con las extensiones instaladas, VS Code reconoce el proyecto Maven, resuelve las dependencias y
+permite ejecutar la aplicación (botón *Run* sobre la clase principal, la que contiene el método
+`main`).
+
+</TabItem>
+<TabItem value="intellij" label="IntelliJ IDEA">
+
+IntelliJ IDEA (en su edición **Ultimate**) integra el soporte de Spring de forma nativa.
+
+1. `File > New > Project...`
+2. Seleccionar **Spring Initializr** en el panel izquierdo.
+3. Rellenar `Group`, `Artifact`, `Java` y `Build system` (Maven).
+4. Pulsar `Next` y marcar las dependencias `Spring Web` y `Thymeleaf`.
+5. `Finish`. IntelliJ descarga las dependencias y abre el proyecto ya configurado.
+
+:::note
+Edición Community
+La edición **Community** (gratuita) de IntelliJ no incluye el asistente de Spring Initializr
+integrado. En ese caso, se genera el proyecto desde [start.spring.io](https://start.spring.io), se
+descomprime y se abre la carpeta con `File > Open`.
+:::
+
+</TabItem>
+</Tabs>
+
+## 1.5. Estructura de un proyecto Spring Boot
+
+Al generar el proyecto obtenemos una estructura de carpetas como esta:
+
+```text
+mi-proyecto/
+├── pom.xml
+└── src/
+    ├── main/
+    │   ├── java/
+    │   │   └── es/centro/miproyecto/
+    │   │       └── MiProyectoApplication.java
+    │   └── resources/
+    │       ├── static/
+    │       ├── templates/
+    │       └── application.properties
+    └── test/
+        └── java/...
+```
+
+- **`pom.xml`**: describe el proyecto Maven (dependencias, versión de Java, *plugins*).
+- **`MiProyectoApplication.java`**: clase principal, anotada con `@SpringBootApplication`, que
+  contiene el método `main` que arranca la aplicación.
+- **`src/main/resources/application.properties`**: fichero de configuración (puerto del servidor,
+  conexión a base de datos, etc.).
+- **`src/main/resources/static/`**: recursos estáticos servidos tal cual (CSS, JS, imágenes).
+- **`src/main/resources/templates/`**: plantillas Thymeleaf (lo veremos en detalle más adelante).
+
+### Paquetes típicos dentro de `java/...`
+
+Spring Boot no impone una organización concreta de paquetes, pero es habitual seguir la
+arquitectura en capas (Controller → Service → Repository) que veremos en la siguiente página, y
+reflejarla en subpaquetes dentro del paquete base del proyecto:
+
+```text
+es.centro.miproyecto/
+├── MiProyectoApplication.java
+├── controllers/     // gestionan las peticiones HTTP
+├── services/         // lógica de negocio
+├── repositories/      // acceso a datos
+└── models/            // clases de dominio (entidades, DTOs...)
+```
+
+:::note
+Convención, no obligación
+Esta organización en paquetes es una convención muy extendida, no una imposición del framework.
+La seguiremos a lo largo de la unidad para mantener el código ordenado desde el principio.
+:::
+
+## 1.6. Ejecutar la aplicación
+
+Una aplicación Spring Boot se ejecuta como un programa Java normal: basta con ejecutar el método
+`main` de la clase anotada con `@SpringBootApplication` (desde el IDE, con el botón *Run*, o por
+línea de comandos con `mvn spring-boot:run`).
+
+Por defecto, el servidor embebido arranca en el puerto **8080**, por lo que la aplicación queda
+disponible en `http://localhost:8080`.

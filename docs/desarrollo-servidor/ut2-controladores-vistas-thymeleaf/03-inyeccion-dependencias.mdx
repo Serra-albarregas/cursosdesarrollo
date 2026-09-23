@@ -1,0 +1,344 @@
+---
+id: inyeccion-dependencias
+title: 3. Inyección de dependencias
+sidebar_label: 3. Inyección de dependencias
+sidebar_position: 3
+description: Inversión de control, qué es un bean y cómo inspeccionar el ApplicationContext, la anotación @Autowired (constructor, atributo, setter), la inyección de una interfaz y la resolución de ambigüedad con @Primary.
+---
+
+# 3. Inyección de dependencias
+
+En la página anterior vimos que Spring gestiona por nosotros la creación de controladores,
+servicios y repositorios. Vamos a entender ahora **por qué** funciona así y **cómo** lo hace por
+debajo.
+
+## 3.1. Inversión de control (IoC)
+
+Normalmente, cuando una clase necesita colaborar con otra, es ella misma quien crea esa
+dependencia con `new`:
+
+```java
+public class ServicioAlumnos {
+
+    // La propia clase decide y crea su dependencia
+    private AlumnoRepository repositorio = new AlumnoRepositoryImpl();
+}
+```
+
+El problema es que `ServicioAlumnos` queda atado a una implementación concreta
+(`AlumnoRepositoryImpl`). Si quisiéramos cambiarla (por ejemplo, por una versión de pruebas),
+tendríamos que modificar el código de `ServicioAlumnos`.
+
+La alternativa es que la clase **no cree** su dependencia, sino que la **reciba desde fuera**,
+normalmente como parámetro del constructor:
+
+```java
+public class ServicioAlumnos {
+
+    private final AlumnoRepository repositorio;
+
+    // La dependencia llega "desde fuera": alguien decide qué implementación pasar
+    public ServicioAlumnos(AlumnoRepository repositorio) {
+        this.repositorio = repositorio;
+    }
+}
+```
+
+A este cambio de perspectiva —dejar de ser la propia clase quien controla la creación de sus
+dependencias, para que sea algo externo quien las proporcione— se le llama **inversión de
+control (IoC)**: el control sobre "quién crea qué" se invierte, pasa de la clase al elemento
+externo.
+
+En una aplicación Spring, ese "elemento externo" es el propio *framework*: es Spring quien crea
+`AlumnoRepositoryImpl` y se la pasa a `ServicioAlumnos`. A este mecanismo concreto —Spring
+entregando las dependencias— se le llama **inyección de dependencias**, y es la forma más habitual
+de aplicar la inversión de control.
+
+## 3.2. ¿Qué es un bean?
+
+Para que Spring pueda inyectar una dependencia, primero tiene que **conocerla**: tiene que existir
+una instancia de esa clase que el propio Spring haya creado y tenga controlada. A esa instancia
+gestionada por Spring la llamamos **bean**.
+
+El conjunto de todos los beans de una aplicación vive dentro del **`ApplicationContext`**, el
+contenedor central de Spring. Cuando anotamos una clase con `@Component` (o `@Service`,
+`@Repository`, `@Controller`, que son especializaciones de `@Component`), le estamos diciendo a
+Spring: "al arrancar, crea una instancia de esta clase y regístrala como bean".
+
+Podemos comprobarlo con un pequeño componente "espía" que, nada más arrancar la aplicación,
+recorre todos los beans registrados y los muestra por consola:
+
+```java
+package es.centro.miproyecto;
+
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
+@Component
+public class InspectorDeBeans {
+
+    private final ApplicationContext contexto;
+
+    @Autowired
+    public InspectorDeBeans(ApplicationContext contexto) {
+        this.contexto = contexto;
+    }
+
+    @PostConstruct // se ejecuta justo después de que Spring construya este bean
+    public void mostrarBeans() {
+        for (String nombre : contexto.getBeanDefinitionNames()) {
+            System.out.println(nombre);
+        }
+    }
+}
+```
+
+Y un componente cualquiera, anotado con `@Component`:
+
+```java
+package es.centro.miproyecto.services;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class ServicioSaludo {
+    // ...
+}
+```
+
+Al arrancar la aplicación, entre las líneas que imprime `InspectorDeBeans` aparecerá
+`servicioSaludo`: Spring ha creado automáticamente un bean para `ServicioSaludo` y le ha asignado
+ese nombre (el nombre de la clase, con la primera letra en minúscula).
+
+:::note
+El propio `ApplicationContext` es también un bean
+Fíjate en que `InspectorDeBeans` recibe el `ApplicationContext` inyectado igual que recibiría
+cualquier otra dependencia: Spring lo trata como un bean más, ya registrado de antemano.
+:::
+
+## 3.3. La anotación `@Autowired`
+
+`@Autowired` es la anotación que le pide a Spring: "busca en el `ApplicationContext` un bean
+compatible con este tipo, y asígnamelo aquí". Puede usarse en varios sitios distintos.
+
+### Uso normal: en el constructor
+
+Es la forma recomendada, ya vista en el ejemplo del `InspectorDeBeans`: se anota el constructor,
+y Spring resuelve e inyecta cada parámetro con el bean correspondiente.
+
+```java
+@Service
+public class ServicioAlumnos {
+
+    private final AlumnoRepository repositorio;
+
+    @Autowired
+    public ServicioAlumnos(AlumnoRepository repositorio) {
+        this.repositorio = repositorio;
+    }
+}
+```
+
+### Constructor único: `@Autowired` es opcional
+
+Si la clase tiene **un único constructor**, Spring lo usa automáticamente para la inyección,
+aunque no lo anotemos. El siguiente código es equivalente al anterior:
+
+```java
+@Service
+public class ServicioAlumnos {
+
+    private final AlumnoRepository repositorio; // sigue pudiendo ser final
+
+    // Sin @Autowired: Spring lo detecta igualmente al ser el único constructor
+    public ServicioAlumnos(AlumnoRepository repositorio) {
+        this.repositorio = repositorio;
+    }
+}
+```
+
+:::note
+¿Entonces por qué escribirlo?
+No es obligatorio, pero muchos equipos lo mantienen igualmente por claridad: deja explícito, con
+solo mirar la anotación, que ese constructor existe para que Spring inyecte dependencias.
+:::
+
+### `@Autowired` directamente en el atributo
+
+La forma más breve de escribir: se anota el propio campo, sin constructor ni *setter*. Spring
+asigna el valor directamente, incluso saltándose el modificador `private`, mediante reflexión.
+
+```java
+@Service
+public class ServicioAlumnos {
+
+    @Autowired
+    private AlumnoRepository repositorio; // tampoco puede ser final
+}
+```
+
+Es la opción más cómoda de escribir, pero también la que más problemas trae: al no pasar por un
+constructor, es imposible crear la clase "a mano" (por ejemplo, en un test) sin recurrir al propio
+Spring o a *mocks* más complejos, y una clase puede acumular muchas dependencias ocultas sin que
+se note, porque no obligan a ampliar ninguna firma. Por eso, aunque la verás con frecuencia en
+código de ejemplo, **no** es la forma recomendada.
+
+### `@Autowired` en un *setter*
+
+También es posible anotar un método *setter*. Spring lo llama automáticamente tras crear el bean,
+pasándole la dependencia como argumento. A diferencia de la inyección por constructor, el atributo
+no puede ser `final`, y la dependencia podría reasignarse más adelante.
+
+```java
+@Service
+public class ServicioAlumnos {
+
+    private AlumnoRepository repositorio; // ya no puede ser final
+
+    @Autowired
+    public void setRepositorio(AlumnoRepository repositorio) {
+        this.repositorio = repositorio;
+    }
+}
+```
+
+| | Constructor | Atributo | Setter |
+|---|---|---|---|
+| ¿Permite `final`? | ✅ | ❌ | ❌ |
+| ¿Dependencia obligatoria? | Sí, no se puede crear el objeto sin ella | No queda reflejado en ningún sitio | No, podría quedar sin asignar |
+| Fácil de testear sin Spring | ✅ (se pasa por el constructor) | ❌ | Parcialmente |
+| Recomendado | ✅ | ❌ | Casos puntuales (dependencias opcionales) |
+
+## 3.4. Inyectar una interfaz
+
+Hasta ahora hemos inyectado clases concretas, pero lo habitual en Spring es programar contra
+**interfaces**: se inyecta el tipo de la interfaz, y Spring resuelve automáticamente qué
+implementación concreta entregar.
+
+Interfaz:
+
+```java
+package es.centro.miproyecto.services;
+
+public interface NotificadorService {
+    void enviar(String mensaje);
+}
+```
+
+Implementación (la única clase que la implementa, anotada como bean):
+
+```java
+package es.centro.miproyecto.services;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class EmailNotificadorService implements NotificadorService {
+
+    @Override
+    public void enviar(String mensaje) {
+        System.out.println("Enviando email: " + mensaje);
+    }
+}
+```
+
+Ahora inyectamos el **tipo de la interfaz**, no la clase concreta:
+
+```java
+package es.centro.miproyecto.controllers;
+
+import es.centro.miproyecto.services.NotificadorService;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class NotificacionesController {
+
+    private final NotificadorService notificador;
+
+    @Autowired
+    public NotificacionesController(NotificadorService notificador) {
+        this.notificador = notificador;
+    }
+
+    @PostConstruct
+    public void comprobarImplementacion() {
+        // Comprobamos qué clase concreta ha inyectado realmente Spring
+        System.out.println(notificador.getClass().getSimpleName());
+    }
+}
+```
+
+Al arrancar la aplicación, la consola mostrará `EmailNotificadorService`: aunque en el código solo
+hemos hablado de `NotificadorService`, Spring ha encontrado la única clase que la implementa y ha
+inyectado esa instancia.
+
+:::note
+¿Y si hay más de una implementación?
+Si existiera una segunda clase que implementase `NotificadorService`, Spring no sabría cuál elegir
+y la aplicación fallaría al arrancar (error de bean ambiguo). Veámoslo a continuación.
+:::
+
+Programar contra interfaces, en lugar de contra clases concretas, es lo que realmente permite
+cambiar una implementación por otra (por ejemplo, para hacer pruebas) sin tocar ni una línea de
+las clases que la usan.
+
+## 3.5. Varias implementaciones: resolviendo la ambigüedad con `@Primary`
+
+Supongamos que añadimos una segunda implementación de `NotificadorService`:
+
+```java
+package es.centro.miproyecto.services;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class SmsNotificadorService implements NotificadorService {
+
+    @Override
+    public void enviar(String mensaje) {
+        System.out.println("Enviando SMS: " + mensaje);
+    }
+}
+```
+
+Si ahora arrancamos la aplicación, `NotificacionesController` deja de funcionar: Spring encuentra
+**dos** beans que implementan `NotificadorService` (`emailNotificadorService` y
+`smsNotificadorService`) y no sabe cuál inyectar. El arranque falla con un error de tipo
+`NoUniqueBeanDefinitionException`.
+
+La forma más sencilla de resolverlo es marcar una de las dos implementaciones como **la
+preferida** con `@Primary`: cuando haya ambigüedad, Spring elegirá siempre ese bean.
+
+```java
+package es.centro.miproyecto.services;
+
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+@Primary
+@Service
+public class EmailNotificadorService implements NotificadorService {
+
+    @Override
+    public void enviar(String mensaje) {
+        System.out.println("Enviando email: " + mensaje);
+    }
+}
+```
+
+Con `@Primary` añadido sobre `EmailNotificadorService`, el mismo `NotificacionesController` de
+antes vuelve a arrancar sin problema, y `comprobarImplementacion()` imprime de nuevo
+`EmailNotificadorService`: entre las dos implementaciones disponibles, Spring ha elegido la
+marcada como primaria.
+
+:::note
+`@Primary` es una preferencia por defecto, no la única opción
+`@Primary` resuelve el caso general ("si no se especifica nada, usa esta"). Cuando se necesita
+elegir una implementación concreta en un punto de inyección puntual, existe además `@Qualifier`,
+que permite pedir explícitamente un bean por su nombre — lo dejamos apuntado para cuando lo
+necesites, pero no lo desarrollaremos en esta unidad.
+:::
