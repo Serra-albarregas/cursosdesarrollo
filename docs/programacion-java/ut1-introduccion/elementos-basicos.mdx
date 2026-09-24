@@ -463,3 +463,82 @@ boolean lanzamientoMoneda = generador.nextBoolean();
 Scanner teclado = new Scanner(System.in);
 String entrada = teclado.nextLine();
 ```
+
+## Cadenas de texto: la clase `String`
+
+Ya hemos visto que `String` no es un tipo primitivo, sino una clase de la API de Java (paquete `java.lang`, importado automáticamente). Como toda clase, además de almacenar un valor (la cadena de caracteres), ofrece **métodos** para consultar y transformar ese valor.
+
+```java
+String nombre = "Ana García";
+```
+
+:::note[Las cadenas son inmutables]
+Un objeto `String` **no puede modificarse una vez creado**. Todos los métodos que "transforman" una cadena (`replace`, `toUpperCase`, `trim`...) no cambian el `String` original: **devuelven uno nuevo**. Por eso siempre hay que recoger el resultado en una variable:
+
+```java
+String texto = "hola";
+texto.toUpperCase();               // no hace nada útil: el resultado se descarta
+texto = texto.toUpperCase();       // correcto: "HOLA"
+```
+:::
+
+### Posición de los caracteres: se empieza a contar en cero
+
+Cada carácter de una cadena ocupa una posición, y esa posición se numera a partir de **0**, no de 1. Es un concepto clave que aparece en casi todos los métodos que trabajan con posiciones (`charAt`, `substring`, `indexOf`...).
+
+```java
+String palabra = "Hola";
+// H -> posición 0
+// o -> posición 1
+// l -> posición 2
+// a -> posición 3
+```
+
+:::warning[El primer carácter está en la posición 0]
+En Java (como en la mayoría de lenguajes de programación) el índice del primer carácter de una cadena es `0`, y el del último es `length() - 1`. Pedir la posición `length()` o una posición negativa provoca una excepción (`StringIndexOutOfBoundsException`).
+:::
+
+### Métodos principales de `String`
+
+| Método | Descripción |
+| --- | --- |
+| `length()` | Devuelve el número de caracteres de la cadena. |
+| `charAt(int indice)` | Devuelve el carácter (`char`) que ocupa esa posición. |
+| `contains(CharSequence texto)` | Indica (`boolean`) si la cadena contiene el texto indicado. |
+| `indexOf(String texto)` | Devuelve la posición de la primera aparición del texto, o `-1` si no lo encuentra. |
+| `substring(int inicio)` | Devuelve la subcadena desde `inicio` hasta el final. |
+| `substring(int inicio, int fin)` | Devuelve la subcadena desde `inicio` hasta `fin` (`fin` **no incluido**). |
+| `replace(CharSequence viejo, CharSequence nuevo)` | Devuelve una nueva cadena sustituyendo todas las apariciones de `viejo` por `nuevo`. |
+| `toUpperCase()` / `toLowerCase()` | Devuelve la cadena en mayúsculas / minúsculas. |
+| `trim()` | Devuelve la cadena sin los espacios en blanco del principio y el final. |
+| `equals(Object otro)` | Compara el **contenido** de dos cadenas (`boolean`). |
+| `equalsIgnoreCase(String otro)` | Igual que `equals`, pero sin distinguir mayúsculas de minúsculas. |
+| `split(String regex)` | Divide la cadena en un array de `String`, usando el separador indicado. |
+| `isEmpty()` | Indica si la cadena no tiene ningún carácter (`length() == 0`). |
+
+```java
+String frase = "  Aprendiendo Java con estructuras de control  ";
+
+System.out.println(frase.length());                       // 49
+System.out.println(frase.charAt(2));                       // 'A' (posición 2, contando desde 0)
+System.out.println(frase.contains("Java"));                 // true
+System.out.println(frase.indexOf("Java"));                  // posición donde empieza "Java"
+System.out.println(frase.substring(2, 15));                 // "Aprendiendo"
+System.out.println(frase.replace("Java", "Kotlin"));        // sustituye "Java" por "Kotlin"
+System.out.println(frase.trim());                           // sin espacios al principio ni al final
+System.out.println(frase.toUpperCase());                    // todo en mayúsculas
+```
+
+### Comparar cadenas: `equals` frente a `==`
+
+:::warning[Nunca compares cadenas con `==`]
+El operador `==` compara si dos variables apuntan al **mismo objeto** en memoria, no si su contenido es igual. Para comparar el **contenido** de dos cadenas siempre hay que usar `equals()` (o `equalsIgnoreCase()` si no importan las mayúsculas).
+
+```java
+String a = "hola";
+String b = new String("hola");
+
+System.out.println(a == b);        // false, aunque el texto sea idéntico
+System.out.println(a.equals(b));   // true, correcto
+```
+:::

@@ -2,12 +2,5 @@
   "label": "UT2 - Controladores, vistas y thymeleaf",
   "position": 2,
   "collapsible": true,
-  "collapsed": false,
-  "link": {
-    "type": "doc",
-    "id": "ut2-controladores-vistas-thymeleaf/introduccion-spring-boot"
-  },
-  "customProps": {
-    "description": "Primeros pasos en spring"
-  }
+  "collapsed": false
 }
