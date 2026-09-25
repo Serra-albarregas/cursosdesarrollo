@@ -1,0 +1,108 @@
+---
+sidebar_position: 7
+title: "Videos"
+---
+
+import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+import gatoVideoUrl from './img/gatovideo.mp4';
+import posterUrl from './img/musica.jpg';
+
+Cómo manejar uno de los recursos multimedia más importantes de internet.
+
+## Incluir un video
+
+Para incluir un video en HTML, utilizamos la etiqueta `<video>`. Dentro de ella se coloca un elemento `<source>` con el archivo y su tipo (en vez de poner `src` y `type` directamente en `<video>`, que no es válido). Esta etiqueta admite varios atributos para controlar la reproducción:
+
+- `controls`: muestra los controles de reproducción (play, pausa, volumen, pantalla completa...).
+- `muted`: silencia el video.
+- `loop`: hace que el video se repita continuamente.
+- `autoplay`: hace que el video comience a reproducirse automáticamente cuando la página se carga. (Nota: la mayoría de los navegadores exigen que el video esté silenciado, `muted`, para permitir el `autoplay`).
+
+```html
+<video controls loop muted autoplay>
+  <source src="ruta-del-video.mp4" type="video/mp4">
+</video>
+```
+
+<HtmlCssPlayground
+  initialHtml={`<video controls loop muted>
+  <source src="${gatoVideoUrl}" type="video/mp4">
+</video>`}
+  initialCss={`video {
+    width: 100%;
+}`}
+/>
+
+:::tip
+En la demo se ha quitado `autoplay` para no reproducir el video automáticamente al cargar la página, pero funciona igual que en el bloque de código de arriba.
+:::
+
+## Formatos de vídeo y varias fuentes
+
+Los formatos más habituales en la web son:
+
+- **MP4 (H.264):** el más compatible, funciona en prácticamente todos los navegadores.
+- **WebM:** formato abierto con buena compresión, muy usado junto a MP4 como alternativa.
+- **Ogg:** menos usado hoy en día, compatibilidad limitada.
+
+Se puede incluir más de un `<source>` dentro de `<video>` para ofrecer varios formatos. El navegador probará cada uno en orden y usará el primero que sea capaz de reproducir:
+
+```html
+<video controls>
+  <source src="video.webm" type="video/webm">
+  <source src="video.mp4" type="video/mp4">
+  Tu navegador no soporta el elemento de video.
+</video>
+```
+
+El texto después de los `<source>` solo se muestra si el navegador no puede reproducir ninguno de los formatos ofrecidos.
+
+## Video con imagen de portada
+
+La etiqueta `<video>` también permite establecer una imagen de portada o "poster", que se muestra antes de que comience la reproducción del video. Para ello, se utiliza el atributo `poster`.
+
+<HtmlCssPlayground
+  initialHtml={`<video controls loop muted poster="${posterUrl}">
+  <source src="${gatoVideoUrl}" type="video/mp4">
+</video>`}
+  initialCss={`video {
+    width: 100%;
+}`}
+/>
+
+## Subtítulos con `<track>`
+
+Para añadir subtítulos o una transcripción se utiliza el elemento `<track>` dentro de `<video>`, con un archivo de subtítulos en formato WebVTT (`.vtt`). El atributo `kind="subtitles"` indica que son subtítulos y `srclang` indica el idioma.
+
+```html
+<video controls>
+  <source src="video.mp4" type="video/mp4">
+  <track kind="subtitles" src="subtitulos-es.vtt" srclang="es" label="Español" default>
+</video>
+```
+
+## Modificar el tamaño del reproductor y añadir bordes
+
+Podemos ajustar el tamaño del reproductor de video añadiendo los atributos `width` y `height` a la etiqueta `<video>`. También es posible personalizar el diseño del reproductor usando CSS para, por ejemplo, añadir bordes.
+
+```html
+<video width="600" height="400" controls loop muted>
+  <source src="ruta-del-video.mp4" type="video/mp4">
+</video>
+```
+
+Para añadir bordes y otros estilos al video, se puede usar CSS sobre el propio elemento o sobre una clase, como en este ejemplo:
+
+<HtmlCssPlayground
+  initialHtml={`<video controls loop muted>
+  <source src="${gatoVideoUrl}" type="video/mp4">
+</video>`}
+  initialCss={`video {
+        width: 50%;
+        display: block;
+        margin: auto;
+        border: 2px solid rgba(13, 112, 204, 0.247);
+        border-radius: 6px;
+}`}
+/>

@@ -1,0 +1,236 @@
+---
+id: controladores-mapeo-peticiones
+title: 4. Controladores y mapeo de peticiones
+sidebar_label: 4. Controladores y mapeo
+sidebar_position: 4
+description: Qué es un controlador, ruta base con @RequestMapping, métodos GET con @GetMapping y subrutas, la diferencia entre rutas y parámetros de una URL, y su paso al controlador con @PathVariable y @RequestParam.
+---
+
+# 4. Controladores y mapeo de peticiones
+
+Ya hemos usado controladores en páginas anteriores. Toca ahora verlos con detalle: cómo se
+organiza una ruta base, cómo se añaden varios métodos dentro del mismo controlador, y cómo recibir
+datos que llegan a través de la propia URL.
+
+Por el momento, todos los ejemplos usarán únicamente el método `GET` y devolverán texto plano con
+`@ResponseBody`, sin plantillas: lo importante aquí es entender el mapeo de peticiones, no la
+vista.
+
+## 4.1. ¿Qué es un controlador?
+
+Un **controlador** es la clase encargada de recibir una petición HTTP y decidir qué hacer con
+ella. En Spring, cualquier clase anotada con `@Controller` (o `@RestController`, que veremos en
+unidades posteriores) puede convertirse en un controlador, siempre que además indiquemos, método a
+método, qué ruta atiende cada uno.
+
+```java
+@Controller
+public class AlumnosController {
+    // aquí irán los métodos que atienden peticiones
+}
+```
+
+Por sí sola, esta clase no responde a ninguna petición: hace falta mapear cada método a una ruta
+concreta, como vemos a continuación.
+
+## 4.2. Ruta base con `@RequestMapping`
+
+Cuando un controlador agrupa varios métodos relacionados (por ejemplo, todo lo relativo a
+`/alumnos`), es habitual fijar una **ruta base** a nivel de clase con `@RequestMapping`. Esa ruta
+se antepone automáticamente a la de cada método.
+
+```java
+package es.centro.miproyecto.controllers;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+@RequestMapping("/alumnos")
+public class AlumnosController {
+
+    @GetMapping
+    @ResponseBody
+    public String listar() {
+        return "Listado de alumnos";
+    }
+}
+```
+
+Con `@RequestMapping("/alumnos")` en la clase, el método anterior (que no añade ninguna subruta)
+queda mapeado a `GET /alumnos`.
+
+## 4.3. Varios métodos con subrutas particulares
+
+Dentro de un mismo controlador podemos tener tantos métodos como necesitemos, cada uno con su
+propia subruta, que se añade a la ruta base:
+
+```java
+@Controller
+@RequestMapping("/alumnos")
+public class AlumnosController {
+
+    @GetMapping
+    @ResponseBody
+    public String listar() {
+        return "Listado de alumnos";
+    }
+
+    @GetMapping("/activos")
+    @ResponseBody
+    public String listarActivos() {
+        return "Listado de alumnos activos";
+    }
+
+    @GetMapping("/matriculados/2daw")
+    @ResponseBody
+    public String listarMatriculados2DAW() {
+        return "Alumnos matriculados en 2DAW";
+    }
+}
+```
+
+| Método | Ruta resultante |
+|---|---|
+| `listar()` | `GET /alumnos` |
+| `listarActivos()` | `GET /alumnos/activos` |
+| `listarMatriculados2DAW()` | `GET /alumnos/matriculados/2daw` |
+
+:::note
+¿Y los demás métodos HTTP?
+De momento solo usamos `GET`, porque solo estamos leyendo datos (listar, consultar). Cuando más
+adelante necesitemos crear o modificar recursos, usaremos también `@PostMapping`, `@PutMapping` y
+`@DeleteMapping`, que funcionan exactamente igual en cuanto a rutas y subrutas.
+:::
+
+## 4.4. Rutas y parámetros de una URL
+
+Antes de ver cómo se recogen en el controlador, conviene identificar las dos formas distintas en
+las que una URL puede llevar información, porque cada una se usa con una intención diferente.
+
+```text
+https://api.centro.es/alumnos/2daw/42?activo=true&orden=nombre
+                       └──────┬──────┘└───────────┬───────────┘
+                          la ruta (path)      los parámetros
+                                              (query string)
+```
+
+- **La ruta (*path*)**: la parte de la URL que va justo después del dominio, formada por
+  segmentos separados por `/` (`/alumnos/2daw/42`). Identifica **qué recurso** se pide. Cuando un
+  segmento puede variar (el curso, el id...), se dice que es una **parte variable de la ruta**.
+- **Los parámetros (*query string*)**: la parte opcional que empieza por `?`, con pares
+  `clave=valor` separados por `&` (`?activo=true&orden=nombre`). No identifican el recurso, sino
+  que matizan **cómo** se quiere obtener: filtros, orden, paginación, opciones de búsqueda...
+
+| | Ruta (*path*) | Parámetros (*query string*) |
+|---|---|---|
+| Aspecto | `/alumnos/2daw/42` | `?activo=true&orden=nombre` |
+| Responde a | "¿Qué recurso?" | "¿Con qué condiciones/opciones?" |
+| ¿Suele ser obligatoria? | Sí, define la propia ruta | No, normalmente son opcionales |
+| Ejemplo típico | El id de un alumno concreto | Un filtro de búsqueda, una página de resultados |
+
+Como regla general: si al quitar ese dato la URL deja de tener sentido o apunta a "otra cosa"
+(otro alumno, otro curso), es parte de la **ruta**. Si al quitarlo la URL sigue siendo válida y
+simplemente cambia el resultado (más o menos filtrado, en otro orden...), es un **parámetro**.
+
+En Spring, estas dos formas de recibir datos se recogen con dos anotaciones distintas:
+`@PathVariable` para la ruta y `@RequestParam` para los parámetros. Las vemos a continuación.
+
+## 4.5. Paso de datos por la URL: `@PathVariable`
+
+Muchas rutas necesitan identificar un recurso concreto, como "el alumno con id 42". Para eso,
+declaramos una parte variable de la ruta entre llaves, y la recogemos en el método con
+`@PathVariable`:
+
+```java
+@GetMapping("/{id}")
+@ResponseBody
+public String obtenerPorId(@PathVariable int id) {
+    return "Alumno con id: " + id;
+}
+```
+
+Una petición a `GET /alumnos/42` invoca este método con `id = 42`.
+
+:::note
+El nombre debe coincidir
+Por defecto, Spring empareja el nombre del parámetro del método con el nombre usado entre llaves
+en la ruta (`{id}` ↔ `int id`). Si quisiéramos que se llamasen distinto, habría que indicarlo
+explícitamente: `@PathVariable("id") int identificador`.
+:::
+
+## 4.6. Varios `@PathVariable` en la misma ruta
+
+Una ruta puede tener más de una parte variable. Por ejemplo, para obtener un alumno concreto
+dentro de un curso concreto:
+
+```java
+@GetMapping("/{curso}/{id}")
+@ResponseBody
+public String obtenerPorCursoYId(@PathVariable String curso, @PathVariable int id) {
+    return "Alumno " + id + " del curso " + curso;
+}
+```
+
+Una petición a `GET /alumnos/2daw/42` invoca este método con `curso = "2daw"` e `id = 42`. El
+orden de los parámetros en el método no tiene por qué coincidir con el de la ruta, ya que cada uno
+se empareja por nombre.
+
+## 4.7. Paso de datos por la URL: `@RequestParam`
+
+Los parámetros de la *query string* (`?clave=valor&clave2=valor2`) se recogen con
+`@RequestParam`:
+
+```java
+@GetMapping("/buscar")
+@ResponseBody
+public String buscar(@RequestParam String nombre) {
+    return "Buscando alumnos con nombre: " + nombre;
+}
+```
+
+Una petición a `GET /alumnos/buscar?nombre=Lucia` invoca este método con `nombre = "Lucia"`. Si la
+petición no incluye ese parámetro, Spring devuelve un error 400 (petición incorrecta), salvo que
+lo marquemos como opcional, como vemos a continuación.
+
+## 4.8. `@RequestParam` opcional con valor por defecto
+
+Es muy habitual que un parámetro de búsqueda no sea obligatorio. Para eso, `@RequestParam` admite
+`required` y `defaultValue`:
+
+```java
+@GetMapping("/buscar")
+@ResponseBody
+public String buscar(
+        @RequestParam(required = false, defaultValue = "") String nombre,
+        @RequestParam(required = false, defaultValue = "10") int limite) {
+    return "Buscando '" + nombre + "' (máximo " + limite + " resultados)";
+}
+```
+
+- `GET /alumnos/buscar` → `nombre = ""`, `limite = 10`
+- `GET /alumnos/buscar?nombre=Lucia` → `nombre = "Lucia"`, `limite = 10`
+- `GET /alumnos/buscar?nombre=Lucia&limite=5` → `nombre = "Lucia"`, `limite = 5`
+
+:::note
+`required = false` sin `defaultValue`
+Si se omite `defaultValue`, un parámetro no obligatorio que no llega toma el valor `null` (o, en
+tipos primitivos como `int`, provoca un error, ya que `null` no es un `int` válido — en ese caso
+habría que usar `Integer` en lugar de `int`).
+:::
+
+## 4.9. `@PathVariable` vs. `@RequestParam`
+
+Retomando la distinción de rutas y parámetros del apartado 4.4, así se traduce en las anotaciones
+del controlador:
+
+| | `@PathVariable` | `@RequestParam` |
+|---|---|---|
+| Forma en la URL | Parte de la propia ruta (`/alumnos/42`) | Parámetros tras `?` (`/alumnos?nombre=Lucia`) |
+| Uso típico | Identificar **qué recurso** (un id, un curso) | Filtrar, buscar u opciones (**cómo** obtenerlo) |
+| ¿Suele ser opcional? | No; forma parte de la identidad de la ruta | Frecuentemente sí |
+
+Como regla general: si el dato identifica de forma única el recurso al que se accede, va como
+`@PathVariable`; si el dato modifica o filtra una consulta, va como `@RequestParam`.
