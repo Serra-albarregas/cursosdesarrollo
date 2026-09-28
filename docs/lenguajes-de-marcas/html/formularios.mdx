@@ -1,97 +1,182 @@
 ---
 sidebar_position: 8
 title: "Formularios"
-draft: true
 ---
 
 import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
 
-Los formularios son un recurso esencial para la comunicación entre el usuario y la aplicación. permiten a los usuarios la introducción de datos, que generalmente se envían a un servidor web para su procesamiento y almacenamiento, o se usan en el lado del cliente para provocar de alguna manera una actualización inmediata de la interfaz.
+Los formularios son un recurso esencial para la comunicación entre el usuario y la aplicación. Permiten a los usuarios la introducción de datos, que generalmente se envían a un servidor web para su procesamiento y almacenamiento, o se usan en el lado del cliente para provocar de alguna manera una actualización inmediata de la interfaz.
+
+:::note
+En los ejemplos de esta página el formulario apunta a `recibir`, un archivo que no existe. Por eso, al pulsar "Enviar" no se procesará nada; lo importante es ver cómo se construye cada campo.
+:::
 
 ## Creación de un formulario básico
 
-Para crear un formulario, se utiliza la etiqueta `<form>`. En esta etiqueta se especifican atributos importantes como `action` y `method`, que determinan a dónde se enviará la información y cómo será procesada. Por ejemplo, `action` indica el archivo o URL al que se enviarán los datos, mientras que `method` puede ser `GET` o `POST`, dependiendo de cómo se quiera enviar la información.
+Para crear un formulario, se utiliza la etiqueta `<form>`. En esta etiqueta se especifican atributos importantes como `action` y `method`, que determinan a dónde se enviará la información y cómo será procesada.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+- `action`: archivo o URL al que se enviarán los datos.
+- `method`: método HTTP con el que se envían, `get` o `post` (se explica en el siguiente apartado).
+
+Cada campo debe tener un atributo `name`: es el nombre con el que viajará su valor al servidor. **Un campo sin `name` no se envía.**
+
+<HtmlPlayground initialHtml={`<form action="recibir" method="post">
     <input type="text" name="nombre" />
     <input type="text" name="apellidos" />
-    <input type="password" name="contraseña" />
+    <input type="password" name="contrasena" />
     <input type="submit" value="Enviar" />
 </form>`} />
 
+## Métodos de envío: GET y POST
+
+- `get`: los datos se añaden a la URL (por ejemplo, `recibir?nombre=Ana&apellidos=Ruiz`). Son visibles, quedan en el historial del navegador y tienen un tamaño limitado. Se usa para consultas y búsquedas.
+- `post`: los datos viajan en el cuerpo de la petición, sin aparecer en la URL, y no tienen un límite de tamaño práctico. Se usa para datos sensibles (contraseñas), para crear o modificar información en el servidor y para subir archivos.
+
+:::warning
+Nunca envíes contraseñas con `method="get"`: quedarían escritas en la URL. Por eso los ejemplos con campos `password` de esta página usan `post`.
+:::
+
 ## Ordenar los elementos del formulario
 
-Los elementos de un formulario, como `<input>`, `<textarea>`, y otros, se colocan de manera predeterminada en la misma línea. Sin embargo, para mejorar la presentación, puedes usar elementos de bloque como `<p>` o `<div>` para poner cada elemento en una línea diferente. Además, podemos utilizar etiquetas de tipo `<placeholder>` para añadir un mensaje en el campo de texto con algunas instrucciones.
+Los elementos de un formulario, como `<input>` o `<textarea>`, son elementos en línea, así que por defecto se colocan uno detrás de otro en la misma línea. Para ordenarlos, lo habitual es:
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
-    <p>Nombre <input type="text" name="nombre" placeholder="Escribe tu nombre" /></p>
-    <p>Apellidos <input type="text" name="apellidos" placeholder="Escribe tus apellidos" /></p>
-    <p>Contraseña <input type="password" name="contrasena" /></p>
-    <p>Comentarios <textarea name="text" cols="32" rows="10"></textarea></p>
-    <p><input type="submit" value="Enviar" /></p>
-</form>`} layout="stacked" />
+- Envolver cada campo con su etiqueta `<label>` en un `<div>`, de modo que cada grupo ocupe su propia línea.
+- Agrupar los campos relacionados con `<fieldset>`.
+- Usar CSS para controlar la disposición y el tamaño de los elementos.
 
-## Ordenar los elementos del formulario y usar etiquetas `<label>`
+Cada `<label>` se asocia a su campo mediante el atributo `for`, que debe coincidir con el `id` del campo. Con `display: block` en el `<label>`, el campo se coloca debajo de su etiqueta. Con `width: 100%` y `box-sizing: border-box`, los campos ocupan todo el ancho del formulario sin desbordarlo por culpa del `padding` y el borde.
 
-Para mejorar la accesibilidad, se recomienda usar la etiqueta `<label>`, que asocia un texto descriptivo con su campo correspondiente mediante el atributo `for` (que debe coincidir con el `id` del campo).
+El atributo `placeholder` muestra una pista dentro del campo (por ejemplo, un formato o un ejemplo), pero **no sustituye al `<label>`**: desaparece al escribir y los lectores de pantalla no siempre lo leen.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
-    <p>
-        <label for="nombre">Nombre:</label>
-        <input type="text" id="nombre" name="nombre" placeholder="Escribe tu nombre" />
-    </p>
-    <p>
-        <label for="apellidos">Apellidos:</label>
-        <input type="text" id="apellidos" name="apellidos" placeholder="Escribe tus apellidos" />
-    </p>
-    <p>
-        <label for="contrasena">Contraseña:</label>
-        <input type="password" id="contrasena" name="contrasena" />
-    </p>
-    <p>
-        <label for="comentarios">Comentarios:</label>
-        <textarea id="comentarios" name="text" cols="32" rows="10"></textarea>
-    </p>
-    <p><input type="submit" value="Enviar" /></p>
-</form>`} layout="stacked" />
+La etiqueta `<textarea>` crea un campo de texto de varias líneas. Con `rows` se indica su altura inicial en líneas, y el ancho se controla con CSS. El texto por defecto (si lo hay) se escribe entre la etiqueta de apertura y la de cierre.
+
+### Agrupar campos con `<fieldset>` y `<legend>`
+
+Cuando un formulario tiene varios campos relacionados entre sí, se agrupan con `<fieldset>` y se les da un título con `<legend>`. Por defecto, el navegador dibuja un marco alrededor del grupo con la leyenda sobre el borde superior. Además de ordenar visualmente el formulario, mejora la accesibilidad: los lectores de pantalla anuncian la leyenda al entrar en el grupo.
+
+- `<fieldset>`: agrupa campos relacionados.
+- `<legend>`: título del grupo. Debe ser el primer elemento dentro del `<fieldset>`.
+
+Si se añade el atributo `disabled` a un `<fieldset>`, se desactivan a la vez todos los campos que contiene.
+
+<HtmlCssPlayground
+  initialHtml={`<form action="recibir" method="post">
+    <fieldset>
+        <legend>Datos personales</legend>
+        <div class="campo">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Ej.: Ana" />
+        </div>
+        <div class="campo">
+            <label for="apellidos">Apellidos</label>
+            <input type="text" id="apellidos" name="apellidos" placeholder="Ej.: García Ruiz" />
+        </div>
+    </fieldset>
+    <fieldset>
+        <legend>Acceso</legend>
+        <div class="campo">
+            <label for="contrasena">Contraseña</label>
+            <input type="password" id="contrasena" name="contrasena" />
+        </div>
+    </fieldset>
+    <div class="campo">
+        <label for="comentarios">Comentarios</label>
+        <textarea id="comentarios" name="comentarios" rows="6"></textarea>
+    </div>
+    <div class="campo">
+        <input type="submit" value="Enviar" />
+    </div>
+</form>`}
+  initialCss={`form {
+    max-width: 400px;
+}
+
+fieldset {
+    margin-bottom: 16px;
+}
+
+legend {
+    font-weight: bold;
+    padding: 0 6px;
+}
+
+.campo {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px;
+}`}
+  layout="stacked"
+/>
 
 ## Checkbox
 
-Los campos de tipo `checkbox` permiten a los usuarios seleccionar una o más opciones. Para crear un checkbox, se usa el atributo `type="checkbox"` en la etiqueta `<input>`. Es útil para confirmaciones como "Aceptar términos y condiciones" o para seleccionar múltiples preferencias. Con el atributo `checked` se puede marcar una checkbox de manera predeterminada.
+Los campos de tipo `checkbox` (casillas de verificación) permiten a los usuarios seleccionar una o más opciones. Para crear un checkbox, se usa el atributo `type="checkbox"` en la etiqueta `<input>`. Es útil para confirmaciones como "Aceptar términos y condiciones" o para seleccionar múltiples preferencias. Con el atributo `checked` se puede marcar un checkbox de manera predeterminada.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
-    <p>Nombre <input type="text" name="nombre" placeholder="Escribe tu nombre" /></p>
-    <p>Apellidos <input type="text" name="apellidos" placeholder="Escribe tus apellidos" /></p>
-    <p>Acepto las condiciones <input type="checkbox" name="condiciones" /></p>
-    <p>Me gustaría recibir correo promocional<input type="checkbox" name="promo" checked /></p>
+Solo se envían al servidor las casillas que estén marcadas, con el valor indicado en `value`.
+
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
+    <p>
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" name="nombre" placeholder="Escribe tu nombre" />
+    </p>
+    <p>
+        <label for="apellidos">Apellidos</label>
+        <input type="text" id="apellidos" name="apellidos" placeholder="Escribe tus apellidos" />
+    </p>
+    <p>
+        <input type="checkbox" id="condiciones" name="condiciones" value="si" />
+        <label for="condiciones">Acepto las condiciones</label>
+    </p>
+    <p>
+        <input type="checkbox" id="promo" name="promo" value="si" checked />
+        <label for="promo">Me gustaría recibir correo promocional</label>
+    </p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} layout="stacked" />
 
 ## Radio
 
-Los botones de opción, o `radio buttons`, permiten seleccionar solo una opción dentro de un grupo. Para agruparlos, todos los `<input>` deben tener el mismo valor en el atributo `name`, mientras que cada uno tiene un valor diferente en `value`.
+Los botones de opción, o *radio buttons*, permiten seleccionar solo una opción dentro de un grupo. Para agruparlos, todos los `<input>` deben tener el mismo valor en el atributo `name`, mientras que cada uno tiene un valor diferente en `value`, que es el que se enviará al servidor. Con `checked` se puede dejar una opción marcada por defecto.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
-    <p>Nombre <input type="text" name="nombre" placeholder="Escribe tu nombre" /></p>
-    <p>Apellidos <input type="text" name="apellidos" placeholder="Escribe tus apellidos" /></p>
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
+    <p>
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" name="nombre" placeholder="Escribe tu nombre" />
+    </p>
+    <p>
+        <label for="apellidos">Apellidos</label>
+        <input type="text" id="apellidos" name="apellidos" placeholder="Escribe tus apellidos" />
+    </p>
     <p>Género</p>
-    <p><input type="radio" name="genero" value="h" />Hombre</p>
-    <p><input type="radio" name="genero" value="m" />Mujer</p>
-    <p><input type="radio" name="genero" value="o" />Otro</p>
+    <p><input type="radio" id="genero-h" name="genero" value="h" /><label for="genero-h">Hombre</label></p>
+    <p><input type="radio" id="genero-m" name="genero" value="m" /><label for="genero-m">Mujer</label></p>
+    <p><input type="radio" id="genero-o" name="genero" value="o" /><label for="genero-o">Otro</label></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} layout="stacked" />
 
 ## Selector desplegable con `<select>`
 
-El selector desplegable se implementa usando la etiqueta `<select>`, junto con varias etiquetas `<option>` que representan las diferentes opciones disponibles. El usuario puede elegir solo una (o varias, si se usa el atributo `multiple`).
+El selector desplegable se implementa usando la etiqueta `<select>`, junto con varias etiquetas `<option>` que representan las diferentes opciones disponibles. El usuario puede elegir solo una (o varias, si se usa el atributo `multiple`). Con el atributo `selected` se deja una opción elegida por defecto.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>
-        Elige tu navegador favorito:
-        <select name="navegador">
+        <label for="navegador">Elige tu navegador favorito:</label>
+        <select id="navegador" name="navegador">
             <option value="Edge">Edge</option>
             <option value="Firefox">Firefox</option>
-            <option value="Chrome">Chrome</option>
+            <option value="Chrome" selected>Chrome</option>
             <option value="Opera">Opera</option>
             <option value="Safari">Safari</option>
         </select>
@@ -99,14 +184,15 @@ El selector desplegable se implementa usando la etiqueta `<select>`, junto con v
     <p><input type="submit" value="Enviar" /></p>
 </form>`} layout="stacked" />
 
-## Selector desplegable `<list>`
+## Lista de sugerencias con `<datalist>`
 
-El selector desplegable se implementa usando la etiqueta `<input>` con el atributo `list`, que se enlaza con un `<datalist>`. Esto permite sugerir opciones al usuario mientras escribe, etiquetadas como `<option>`. Es útil para proporcionar una lista predefinida de opciones.
+Una lista de sugerencias se implementa usando la etiqueta `<input>` con el atributo `list`, que se enlaza con un `<datalist>` cuyo `id` coincide. Dentro del `<datalist>` se escriben las sugerencias con etiquetas `<option>`. A diferencia de `<select>`, el usuario puede elegir una sugerencia o escribir cualquier otro valor.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>
-        Elige tu navegador favorito <input list="browsers" />
-        <datalist id="browsers">
+        <label for="navegador">Elige tu navegador favorito</label>
+        <input id="navegador" name="navegador" list="navegadores" />
+        <datalist id="navegadores">
             <option value="Edge"></option>
             <option value="Firefox"></option>
             <option value="Chrome"></option>
@@ -117,30 +203,42 @@ El selector desplegable se implementa usando la etiqueta `<input>` con el atribu
     <p><input type="submit" value="Enviar" /></p>
 </form>`} layout="stacked" />
 
-## Botón de borrado
+## Botones de envío y de borrado
 
-El botón de borrado se crea con el atributo `type="reset"` en la etiqueta `<input>`. Este botón restablece todos los campos del formulario a sus valores por defecto.
+El botón de envío se crea con `type="submit"` y envía el formulario. El botón de borrado se crea con `type="reset"` y restablece todos los campos del formulario a sus valores por defecto. Conviene usar el botón de borrado con cuidado: es fácil pulsarlo sin querer y perder todos los datos escritos.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>Nombre <input type="text" name="nombre" placeholder="Escribe tu nombre" /></p>
     <p>Apellidos <input type="text" name="apellidos" placeholder="Escribe tus apellidos" /></p>
     <p><input type="reset" value="Borrar" /><input type="submit" value="Enviar" /></p>
+</form>`} layout="stacked" />
+
+## La etiqueta `<button>`
+
+Los botones también se pueden crear con la etiqueta `<button>`, cuyo texto se escribe entre las etiquetas de apertura y cierre (en lugar de en `value`). Esto permite incluir dentro de ellos otros elementos, como una imagen. Su atributo `type` puede ser `submit` (valor por defecto), `reset` o `button` (no hace nada por sí mismo y se usa junto con JavaScript).
+
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
+    <p>Nombre <input type="text" name="nombre" placeholder="Escribe tu nombre" /></p>
+    <p>
+        <button type="reset">Borrar</button>
+        <button type="submit">Enviar</button>
+    </p>
 </form>`} layout="stacked" />
 
 ## Selector de color
 
 El campo `color` permite al usuario seleccionar un color desde un cuadro de diálogo. Se implementa con `<input type="color">`.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>Color <input type="color" name="color" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
 
 ## Selector de fecha
 
-El campo de fecha permite al usuario seleccionar una fecha. Se implementa con `<input type="date">`. Además, puedes limitar el rango de fechas permitidas utilizando los atributos `min` y `max`.
+El campo de fecha permite al usuario seleccionar una fecha. Se implementa con `<input type="date">`. Además, puedes limitar el rango de fechas permitidas utilizando los atributos `min` y `max`, con las fechas en formato `AAAA-MM-DD`.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>Fecha <input type="date" name="fecha" min="1990-01-01" max="2030-12-31" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
@@ -149,16 +247,16 @@ El campo de fecha permite al usuario seleccionar una fecha. Se implementa con `<
 
 El campo `datetime-local` permite seleccionar tanto la fecha como la hora en un solo campo de entrada. Se utiliza con `<input type="datetime-local">`.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>Fecha y hora <input type="datetime-local" name="fecha-hora" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
 
 ## Email
 
-El campo de entrada para correos electrónicos se define con `<input type="email">`. Este campo realiza una pequeña validación de un correo electrónica, que normalmente no es suficiente.
+El campo de entrada para correos electrónicos se define con `<input type="email">`. Este campo realiza una pequeña validación del formato del correo electrónico (por ejemplo, que contenga una `@`), que normalmente no es suficiente. En móviles, además, muestra un teclado adaptado.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>Email <input type="email" name="email" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
@@ -167,53 +265,59 @@ El campo de entrada para correos electrónicos se define con `<input type="email
 
 El campo de entrada para números de teléfono se implementa con `<input type="tel">`, que espera un número telefónico. Aunque no valida automáticamente el formato del número, es útil para hacer que los campos de teléfono se comporten correctamente en dispositivos móviles.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>Teléfono <input type="tel" name="telefono" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
 
 ## URL
 
-El campo `url` está diseñado para la introducción de direcciones web, añadiendo una validación que suele ser insuficiente. Se implementa con `<input type="url">`.
+El campo `url` está diseñado para la introducción de direcciones web, añadiendo una validación que suele ser insuficiente (por ejemplo, exige que incluya el protocolo `https://`). Se implementa con `<input type="url">`.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>URL <input type="url" name="url" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
 
 ## Campo de texto numérico
 
-El campo de texto numérico se define con `<input type="number">`. Permite al usuario ingresar solo números y puedes establecer límites utilizando los atributos `min` y `max`.
+El campo de texto numérico se define con `<input type="number">`. Permite al usuario ingresar solo números y puedes establecer límites utilizando los atributos `min` y `max`, y el incremento de las flechas con `step`.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
-    <p>Numero <input type="number" name="numero" /></p>
+- `min`: valor mínimo permitido.
+- `max`: valor máximo permitido.
+- `step`: incremento al subir o bajar el valor (por defecto, 1).
+
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
+    <p>Número <input type="number" name="numero" min="0" max="100" step="5" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
 
 ## Rango numérico
 
-El campo de rango numérico se define con `<input type="range">`. Esto permite seleccionar un valor dentro de un rango establecido con `min` y `max`, ideal para seleccionar cantidades o niveles de intensidad.
+El campo de rango numérico se define con `<input type="range">`. Esto permite seleccionar un valor dentro de un rango establecido con `min` y `max`, ideal para seleccionar cantidades o niveles de intensidad. También admite `step`.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>Rango numérico <input type="range" name="rango" min="5" max="15" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
 
 ## Subir archivos
 
-Para permitir a los usuarios subir archivos, se utiliza `<input type="file">`. Puedes restringir el tipo de archivo que se puede subir usando el atributo `accept`. Por ejemplo, `accept="image/png, image/jpg"` restringe a imágenes en formato PNG y JPG.
+Para permitir a los usuarios subir archivos, se utiliza `<input type="file">`. El formulario debe usar `method="post"` y el atributo `enctype="multipart/form-data"`; con `get` solo se enviaría el nombre del archivo, no su contenido.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+Puedes restringir el tipo de archivo que se puede subir usando el atributo `accept`. Por ejemplo, `accept="image/png, image/jpeg"` restringe a imágenes en formato PNG y JPEG. Con el atributo `multiple` se permite seleccionar varios archivos a la vez.
+
+<HtmlPlayground initialHtml={`<form action="recibir" method="post" enctype="multipart/form-data">
     <p>Sube tu archivo <input type="file" name="archivo" /></p>
-    <p>Sube tu imagen <input type="file" name="imagen" accept="image/png, image/jpg, image/gif" /></p>
+    <p>Sube tu imagen <input type="file" name="imagen" accept="image/png, image/jpeg, image/gif" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} layout="stacked" />
 
 ## Campo de búsqueda
 
-El campo de búsqueda se define con `<input type="search">`. Este campo es especialmente útil cuando se implementa una función de búsqueda en el sitio web.
+El campo de búsqueda se define con `<input type="search">`. Este campo es especialmente útil cuando se implementa una función de búsqueda en el sitio web; algunos navegadores añaden un botón para borrar el texto escrito.
 
-<HtmlPlayground initialHtml={`<form action="recibir.php" method="get">
+<HtmlPlayground initialHtml={`<form action="recibir" method="get">
     <p>Buscador <input type="search" name="buscador" /></p>
     <p><input type="submit" value="Enviar" /></p>
 </form>`} />
