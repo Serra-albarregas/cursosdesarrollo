@@ -8,7 +8,7 @@
   <li>Profiterol</li>
   <li>Helado</li>
   <li>Galleta</li>
-</ol>`}),"\n",(0,s.jsx)(i.h2,{id:"listas-de-definici\xf3n",children:"Listas de definici\xf3n"}),"\n",(0,s.jsx)(i.p,{children:"Las listas de definici\xf3n permiten organizar y listar conceptos junto con una descripci\xf3n."}),"\n",(0,s.jsxs)(i.p,{children:["Una lista de definici\xf3n comienza con la etiqueta ",(0,s.jsx)(i.code,{children:"<dl>"}),", posteriormente cada elemento comienza con la etiqueta ",(0,s.jsx)(i.code,{children:"<dt>"}),". Finalmente, la definic\xf3n del elemento utiliza la etiqueta ",(0,s.jsx)(i.code,{children:"<dd>"}),"."]}),"\n",(0,s.jsx)(n.A,{initialHtml:`<dl>
+</ol>`}),"\n",(0,s.jsx)(i.h2,{id:"listas-de-definici\xf3n",children:"Listas de definici\xf3n"}),"\n",(0,s.jsx)(i.p,{children:"Las listas de definici\xf3n permiten organizar y listar conceptos junto con una descripci\xf3n."}),"\n",(0,s.jsxs)(i.p,{children:["Una lista de definici\xf3n comienza con la etiqueta ",(0,s.jsx)(i.code,{children:"<dl>"}),", posteriormente cada elemento comienza con la etiqueta ",(0,s.jsx)(i.code,{children:"<dt>"}),". Finalmente, la definici\xf3n del elemento utiliza la etiqueta ",(0,s.jsx)(i.code,{children:"<dd>"}),"."]}),"\n",(0,s.jsx)(n.A,{initialHtml:`<dl>
   <dt>Coche</dt>
   <dd>Veh\xedculo con 4 ruedas</dd>
   <dt>Moto</dt>
