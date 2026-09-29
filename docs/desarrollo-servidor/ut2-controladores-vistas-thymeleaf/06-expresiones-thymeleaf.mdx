@@ -1,0 +1,313 @@
+---
+id: expresiones-thymeleaf
+title: 6. Expresiones de Thymeleaf
+sidebar_label: 6. Expresiones
+sidebar_position: 6
+description: Sintaxis de las expresiones de Thymeleaf. Variables, th:text y th:utext, literales, operadores, expresiones de selección con th:object, objetos de utilidad y th:with.
+---
+
+# 6. Expresiones de Thymeleaf
+
+En la página anterior vimos que una plantilla se rellena con los datos del modelo mediante atributos
+`th:*`. El valor de esos atributos es una **expresión**: una pequeña fórmula que Thymeleaf evalúa en
+el servidor y cuyo resultado se inserta en el HTML. En esta página vemos qué se puede escribir en
+ellas.
+
+## 6.1. Atributos `th:*` y expresiones
+
+Para poder usar Thymeleaf, la etiqueta `html` de la plantilla declara el espacio de nombres `th`:
+
+```html
+<html xmlns:th="http://www.thymeleaf.org">
+```
+
+Cada atributo `th:*` combina **qué se modifica** (el contenido, un atributo, la visibilidad...) con
+**la expresión** que calcula el valor:
+
+```html
+<p th:text="${mensaje}">Texto de ejemplo</p>
+```
+
+Aquí `th:text` indica que se sustituye el contenido de la etiqueta, y `${mensaje}` es la expresión
+que obtiene el valor. El texto original ("Texto de ejemplo") solo se muestra si abrimos el archivo
+sin pasar por Spring.
+
+Existen cinco tipos de expresiones, que se distinguen por el símbolo inicial. En esta página vemos
+las de variable y las de selección; el resto se resumen en el último apartado.
+
+## 6.2. Expresiones de variable: `${...}`
+
+Son las más habituales. Acceden a los datos que el controlador dejó en el modelo, usando como nombre
+la clave de `addAttribute`.
+
+Usaremos la clase `Alumno` de la página anterior (con `id`, `nombre`, `curso` y `edad`, y sus
+*getters*) y un controlador que la envía:
+
+```java
+@GetMapping("/{id}/ficha")
+public String ficha(@PathVariable int id, Model model) {
+    model.addAttribute("alumno", new Alumno(id, "Lucía Márquez", "2DAW", 19));
+    model.addAttribute("nota", 7.5);
+    return "alumno-ficha";
+}
+```
+
+### Acceso a propiedades y métodos
+
+```html
+<p th:text="${alumno.nombre}">Nombre</p>
+<p th:text="${alumno.getCurso()}">Curso</p>
+<p th:text="${alumno.nombre.length()}">Longitud</p>
+```
+
+- `${alumno.nombre}` es la forma habitual: Thymeleaf llama internamente a `getNombre()`.
+- También se pueden invocar métodos directamente (`getCurso()`, `length()`...).
+
+### Listas y mapas
+
+```html
+<p th:text="${alumnos[0].nombre}">Primer alumno</p>
+<p th:text="${mapa['clave']}">Valor del mapa</p>
+```
+
+### Valores nulos
+
+Si el atributo no existe en el modelo o vale `null`, `th:text` no produce error: simplemente deja la
+etiqueta vacía. Lo que sí produce error es acceder a una propiedad de un objeto que es `null`
+(por ejemplo, `${alumno.nombre}` cuando `alumno` es `null`). Para evitarlo se usa el operador de
+navegación segura `?.`:
+
+```html
+<p th:text="${alumno?.nombre}">Nombre</p>
+```
+
+Si `alumno` es `null`, la expresión devuelve `null` en lugar de fallar.
+
+## 6.3. `th:text` frente a `th:utext`
+
+Los dos atributos insertan un valor como contenido de la etiqueta, pero tratan el HTML de forma
+distinta:
+
+| | `th:text` | `th:utext` |
+|---|---|---|
+| Escapa el HTML | Sí | No |
+| Qué ocurre con `<b>Hola</b>` | Se muestra el texto literal `<b>Hola</b>` | El navegador lo interpreta y muestra **Hola** en negrita |
+| Seguridad | Segura por defecto | Peligrosa con datos del usuario |
+
+```html
+<p th:text="${contenido}">...</p>     <!-- muestra las etiquetas como texto -->
+<p th:utext="${contenido}">...</p>    <!-- interpreta las etiquetas como HTML -->
+```
+
+:::note
+Usa `th:text` siempre que puedas
+Si el valor procede del usuario (un comentario, un nombre escrito en un formulario...) y se inserta
+con `th:utext`, alguien podría introducir código HTML o JavaScript malicioso que se ejecutaría en
+el navegador de otros usuarios (ataque **XSS**). `th:utext` solo debe usarse con contenido
+que controlamos nosotros.
+:::
+
+## 6.4. Literales y concatenación
+
+Dentro de una expresión se pueden escribir valores fijos (**literales**):
+
+| Tipo | Ejemplos |
+|---|---|
+| Texto | `'Hola'` (entre comillas simples) |
+| Número | `42`, `3.14` |
+| Booleano | `true`, `false` |
+| Nulo | `null` |
+
+Para unir textos se usa el operador `+`:
+
+```html
+<p th:text="'Curso: ' + ${alumno.curso}">Curso</p>
+```
+
+### Sustitución de literales
+
+Cuando hay que mezclar mucho texto fijo con variables, la concatenación se vuelve incómoda. La
+**sustitución de literales** encierra todo entre barras verticales `|...|` y permite escribir las
+variables directamente dentro del texto:
+
+```html
+<p th:text="|Curso: ${alumno.curso}, edad: ${alumno.edad}|">Datos</p>
+```
+
+Es equivalente a `'Curso: ' + ${alumno.curso} + ', edad: ' + ${alumno.edad}`, pero mucho más
+legible.
+
+:::note
+Alternativa: *inlining*
+Dentro del texto de una etiqueta también se pueden insertar variables con doble corchete, sin
+necesidad de `th:text`: `<p>Hola, [[${alumno.nombre}]]</p>`. Es cómodo en frases cortas, aunque
+en esta unidad usaremos preferentemente `th:text`.
+:::
+
+## 6.5. Operadores
+
+Dentro de las expresiones se pueden usar operadores similares a los de Java:
+
+| Tipo | Operadores |
+|---|---|
+| Aritméticos | `+`, `-`, `*`, `/`, `%` |
+| Comparación | `>`, `<`, `>=`, `<=` (o `gt`, `lt`, `ge`, `le`) |
+| Igualdad | `==`, `!=` (o `eq`, `ne`) |
+| Lógicos | `and`, `or`, `!` (o `not`) |
+| Condicional (ternario) | `condición ? valorSi : valorNo` |
+| Elvis | `valor ?: valorPorDefecto` |
+
+```html
+<p th:text="${alumno.edad + 1}">Edad el año que viene</p>
+<p th:text="${alumno.edad >= 18 and alumno.curso == '2DAW'}">Condición</p>
+```
+
+:::note
+Alias de los operadores de comparación
+Los alias `gt`, `lt`, `ge`, `le` existen porque los símbolos `<` y `>` pueden confundirse con las
+etiquetas HTML. Es especialmente recomendable usar `lt` en lugar de `<` dentro de los atributos.
+:::
+
+### Operador ternario
+
+Elige entre dos valores según una condición:
+
+```html
+<p th:text="${alumno.edad >= 18} ? 'Mayor de edad' : 'Menor de edad'">Estado</p>
+```
+
+### Operador Elvis
+
+Devuelve el valor si no es `null`, y un valor por defecto en caso contrario:
+
+```html
+<p th:text="${alumno.curso} ?: 'Sin curso asignado'">Curso</p>
+```
+
+El Elvis solo actúa cuando el valor es `null`: un texto vacío (`""`) **no** es `null`, por lo que se
+mostraría vacío.
+
+## 6.6. Expresiones de selección: `*{...}` y `th:object`
+
+Cuando hay que mostrar varias propiedades del mismo objeto, repetir `${alumno.` en cada línea es
+tedioso. Con `th:object` se **selecciona** un objeto, y dentro de esa etiqueta las expresiones
+`*{...}` se refieren directamente a sus propiedades:
+
+```html
+<div th:object="${alumno}">
+    <p th:text="*{nombre}">Nombre</p>
+    <p th:text="*{curso}">Curso</p>
+    <p th:text="*{edad}">Edad</p>
+</div>
+```
+
+Es equivalente a escribir `${alumno.nombre}`, `${alumno.curso}` y `${alumno.edad}`.
+
+- `${...}` sigue disponible dentro del bloque para acceder al resto de variables del modelo, y se
+  pueden mezclar ambas.
+- `th:object` afecta a la etiqueta donde se declara y a todas las que contiene.
+
+:::note
+Más adelante
+Con los formularios, `th:object` se usará también para enlazar un formulario con un objeto. Aquí lo
+usamos solo para mostrar datos.
+:::
+
+## 6.7. Objetos de utilidad y `th:with`
+
+### Objetos de utilidad
+
+Thymeleaf incluye una serie de objetos con métodos auxiliares, que se distinguen por empezar
+con `#`. Se usan dentro de `${...}`:
+
+| Objeto | Para qué sirve | Ejemplo |
+|---|---|---|
+| `#strings` | Trabajar con textos | `${#strings.toUpperCase(alumno.nombre)}` |
+| `#numbers` | Formatear números | `${#numbers.formatDecimal(nota, 1, 2)}` |
+| `#lists` | Trabajar con listas | `${#lists.size(alumnos)}` |
+| `#temporals` | Formatear fechas (`LocalDate`, `LocalDateTime`) | `${#temporals.format(fecha, 'dd/MM/yyyy')}` |
+| `#dates` | Formatear fechas de tipo `java.util.Date` | `${#dates.format(fecha, 'dd/MM/yyyy')}` |
+
+Otros métodos frecuentes:
+
+- `#strings`: `isEmpty`, `length`, `contains`, `substring`, `toLowerCase`...
+- `#lists`: `isEmpty`, `contains`...
+
+```html
+<p th:text="${#strings.toUpperCase(alumno.nombre)}">NOMBRE</p>
+<p th:text="${#numbers.formatDecimal(nota, 1, 2)}">7.50</p>
+<p th:text="${#lists.size(alumnos)}">0</p>
+```
+
+`formatDecimal(numero, digitosEnteros, decimales)` muestra el número con el número mínimo de dígitos
+enteros y los decimales indicados.
+
+### Variables locales con `th:with`
+
+Si un valor calculado se necesita varias veces, se puede guardar en una **variable local** con
+`th:with`. Solo existe dentro de la etiqueta donde se declara y las que contiene:
+
+```html
+<div th:with="mayor=${alumno.edad >= 18}">
+    <p th:text="${mayor} ? 'Puede matricularse solo' : 'Necesita autorización'">Estado</p>
+    <p th:text="|¿Mayor de edad? ${mayor}|">Resultado</p>
+</div>
+```
+
+## 6.8. Ejemplo completo
+
+Controlador (visto en el apartado 6.2):
+
+```java
+@GetMapping("/{id}/ficha")
+public String ficha(@PathVariable int id, Model model) {
+    model.addAttribute("alumno", new Alumno(id, "Lucía Márquez", "2DAW", 19));
+    model.addAttribute("nota", 7.5);
+    return "alumno-ficha";
+}
+```
+
+Plantilla `alumno-ficha.html`:
+
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ficha</title>
+</head>
+<body>
+    <h1 th:text="|Ficha de ${#strings.toUpperCase(alumno.nombre)}|">Ficha</h1>
+
+    <div th:object="${alumno}">
+        <p th:text="'Curso: ' + *{curso}">Curso</p>
+        <p th:text="*{edad >= 18} ? 'Mayor de edad' : 'Menor de edad'">Edad</p>
+    </div>
+
+    <p th:text="|Nota media: ${#numbers.formatDecimal(nota, 1, 2)}|">Nota</p>
+</body>
+</html>
+```
+
+Al visitar `GET /alumnos/7/ficha`, el HTML generado es:
+
+```html
+<h1>Ficha de LUCÍA MÁRQUEZ</h1>
+
+<div>
+    <p>Curso: 2DAW</p>
+    <p>Mayor de edad</p>
+</div>
+
+<p>Nota media: 7.50</p>
+```
+
+## 6.9. Resumen de los tipos de expresión
+
+| Sintaxis | Nombre | Para qué sirve | Dónde se explica |
+|---|---|---|---|
+| `${...}` | Variable | Acceder a los datos del modelo | Esta página |
+| `*{...}` | Selección | Acceder a las propiedades del objeto seleccionado con `th:object` | Esta página |
+| `@{...}` | Enlace | Construir URLs | Página de enlaces y recursos estáticos |
+| `~{...}` | Fragmento | Reutilizar trozos de plantilla | Página de fragmentos |
+| `#{...}` | Mensaje | Textos externos (internacionalización) | Fuera del alcance de esta página |
