@@ -71,12 +71,12 @@ Forzosamente, dentro de todo bucle debe haber instrucciones que manipulen el val
 flowchart TD
     A[Variables de control] --> B[Contador]
     A --> C[Acumulador]
-    A --> D[Semáforo]
+    A --> D[Bandera]
 ```
 
 - **Contador**: variable de tipo entero que va aumentando o disminuyendo, indicando de manera clara el número de iteraciones que habrá que hacer.
 - **Acumulador**: variable en la que se van acumulando directamente los cálculos que se quieren hacer, de manera que al alcanzar cierto valor se considera que ya no es necesario hacer más iteraciones.
-- **Semáforo**: variable que sirve como interruptor explícito de si hay que seguir haciendo iteraciones. Cuando ya no queremos hacer más, el código simplemente se encarga de asignarle el valor específico que servirá para que la condición evalúe `false`.
+- **Bandera**: variable que sirve como interruptor explícito de si hay que seguir haciendo iteraciones. Cuando ya no queremos hacer más, el código simplemente se encarga de asignarle el valor específico que servirá para que la condición evalúe `false`.
 
 :::warning[Cuidado con los bucles infinitos]
 Si olvidas actualizar la variable de control dentro del bucle (por ejemplo, olvidar el `i = i + 1;`), la condición nunca cambiará y el programa se quedará ejecutando el bucle para siempre.
@@ -133,7 +133,7 @@ public class Modulo {
 }
 ```
 
-### Ejemplo con semáforo
+### Ejemplo con Bandera
 
 ```java
 import java.util.Scanner;
