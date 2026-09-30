@@ -1,0 +1,297 @@
+---
+id: estructuras-control-thymeleaf
+title: 7. Estructuras de control en Thymeleaf
+sidebar_label: 7. Estructuras de control
+sidebar_position: 7
+description: th:if y th:unless, th:switch/th:case, th:each sobre listas y mapas con la variable de estado y el contador (count), th:block para agrupar sin generar etiqueta, y atributos dinámicos con th:class, th:classappend y th:attr.
+---
+
+# 7. Estructuras de control en Thymeleaf
+
+Con lo visto hasta ahora podemos mostrar datos, pero no decidir **qué** mostrar según una condición,
+ni **repetir** una parte de la plantilla por cada elemento de una lista. De eso se encargan las
+estructuras de control.
+
+Seguiremos usando la clase `Alumno` (con `id`, `nombre`, `curso`, `edad`) de páginas anteriores.
+
+## 7.1. Condicionales: `th:if` y `th:unless`
+
+`th:if` muestra la etiqueta **solo si** la expresión es verdadera. Si es falsa, la etiqueta entera
+desaparece del HTML generado (no se oculta con CSS, se elimina).
+
+```java
+@GetMapping("/{id}/ficha")
+public String ficha(@PathVariable int id, Model model) {
+    model.addAttribute("alumno", new Alumno(id, "Lucía Márquez", "2DAW", 19));
+    return "alumno-ficha";
+}
+```
+
+```html
+<p th:if="${alumno.edad >= 18}">Alumno mayor de edad</p>
+<p th:if="${alumno.curso == '2DAW'}">Matriculado en 2DAW</p>
+```
+
+`th:unless` es el opuesto: muestra la etiqueta cuando la expresión es **falsa**. Es equivalente a
+usar `th:if` con la condición negada (`!`), pero se lee mejor en los casos simples:
+
+```html
+<p th:unless="${alumno.edad >= 18}">Alumno menor de edad</p>
+```
+
+### Valores que Thymeleaf considera falsos
+
+Además de `false`, `th:if` trata como falsos: `null`, el número `0`, y las cadenas y colecciones
+**vacías**. El resto de valores se consideran verdaderos.
+
+```html
+<p th:if="${alumnos}">Hay alumnos en la lista</p>
+```
+
+Esta expresión es falsa tanto si `alumnos` es `null` como si es una lista vacía; útil para no tener
+que comprobar ambos casos por separado.
+
+## 7.2. `th:switch` / `th:case`
+
+Cuando hay que elegir entre varias alternativas según el valor de una misma expresión, encadenar
+varios `th:if` es incómodo. `th:switch` evalúa una expresión una sola vez, y cada `th:case` interior
+se compara con ese valor:
+
+```html
+<div th:switch="${alumno.curso}">
+    <p th:case="'1DAW'">Primero de DAW</p>
+    <p th:case="'2DAW'">Segundo de DAW</p>
+    <p th:case="'1DAM'">Primero de DAM</p>
+    <p th:case="*">Otro curso</p>
+</div>
+```
+
+`th:case="*"` funciona como el `default` de un `switch` de Java: se muestra cuando ningún otro caso
+coincide. Solo se renderiza la etiqueta cuyo `th:case` coincide con el valor de `th:switch`; el
+resto desaparecen del HTML, igual que con `th:if`.
+
+## 7.3. Iteración con `th:each`
+
+`th:each` repite la etiqueta que lo contiene una vez por cada elemento de una colección. Su valor
+tiene la forma `variable : ${coleccion}`.
+
+```java
+@GetMapping
+public String listar(Model model) {
+    List<Alumno> alumnos = List.of(
+            new Alumno(1, "Lucía Márquez", "2DAW", 19),
+            new Alumno(2, "Marcos Iglesias", "1DAM", 18),
+            new Alumno(3, "Eva Soto", "2DAW", 20));
+
+    model.addAttribute("alumnos", alumnos);
+    return "alumnos";
+}
+```
+
+```html
+<table>
+    <tr th:each="alumno : ${alumnos}">
+        <td th:text="${alumno.nombre}">Nombre</td>
+        <td th:text="${alumno.curso}">Curso</td>
+    </tr>
+</table>
+```
+
+Por cada `Alumno` de la lista, Thymeleaf genera una fila `<tr>`, con `alumno` disponible dentro de
+esa etiqueta y sus descendientes como una variable normal.
+
+`th:each` también funciona sobre *arrays* y sobre mapas, como vemos a continuación.
+
+### Recorrer un mapa
+
+Cuando la colección es un `Map`, cada vuelta del bucle entrega una **entrada** (`Map.Entry`), con
+sus propiedades `.key` y `.value`:
+
+```java
+@GetMapping("/resumen-cursos")
+public String resumenPorCurso(Model model) {
+    Map<String, Integer> alumnosPorCurso = new LinkedHashMap<>();
+    alumnosPorCurso.put("1DAW", 22);
+    alumnosPorCurso.put("2DAW", 18);
+    alumnosPorCurso.put("1DAM", 20);
+
+    model.addAttribute("alumnosPorCurso", alumnosPorCurso);
+    return "resumen-cursos";
+}
+```
+
+```html
+<table>
+    <tr th:each="entrada : ${alumnosPorCurso}">
+        <td th:text="${entrada.key}">Curso</td>
+        <td th:text="${entrada.value}">Nº de alumnos</td>
+    </tr>
+</table>
+```
+
+Por cada entrada del mapa se genera una fila, con `entrada.key` (el curso) y `entrada.value` (el
+número de alumnos).
+
+### La variable de estado (`iterStat`)
+
+Añadiendo una segunda variable después de una coma, Thymeleaf proporciona información sobre la
+posición actual del recorrido:
+
+```html
+<tr th:each="alumno, iterStat : ${alumnos}">
+    <td th:text="${iterStat.index}">0</td>
+    <td th:text="${alumno.nombre}">Nombre</td>
+    <td th:text="${iterStat.odd} ? 'impar' : 'par'">Paridad</td>
+</tr>
+```
+
+| Propiedad | Significado |
+|---|---|
+| `index` | Posición empezando en 0 |
+| `count` | Posición empezando en 1 |
+| `size` | Número total de elementos |
+| `even` / `odd` | Si la posición (basada en 0) es par o impar |
+| `first` / `last` | Si es el primer o el último elemento |
+
+### Sacar un contador del bucle
+
+El uso más habitual de la variable de estado es numerar los elementos que se van mostrando. Para
+eso se usa `count`, que empieza en 1 (a diferencia de `index`, que empieza en 0):
+
+```html
+<ol>
+    <li th:each="alumno, iterStat : ${alumnos}">
+        <span th:text="|${iterStat.count}. ${alumno.nombre}|">1. Nombre</span>
+    </li>
+</ol>
+```
+
+Con la lista de tres alumnos del ejemplo, el resultado es:
+
+```html
+<ol>
+    <li><span>1. Lucía Márquez</span></li>
+    <li><span>2. Marcos Iglesias</span></li>
+    <li><span>3. Eva Soto</span></li>
+</ol>
+```
+
+:::note
+`index` vs. `count`
+Usa `index` cuando el número se necesita para calcular algo internamente (por ejemplo, alternar
+colores con `even`/`odd`, que se basan en él). Usa `count` cuando el número es para
+**mostrárselo al usuario**, ya que la gente cuenta empezando en 1, no en 0.
+:::
+
+:::note
+Nombre por defecto de la variable de estado
+Si no se indica explícitamente (`alumno, iterStat`), Thymeleaf crea igualmente una variable de
+estado, con el mismo nombre de la variable de iteración más el sufijo `Stat` (aquí,
+`alumnoStat`). Nombrarla explícitamente es más claro y evita errores.
+:::
+
+## 7.4. `th:block`: agrupar sin generar etiqueta
+
+A veces se necesita aplicar `th:if` o `th:each` a **varias** etiquetas a la vez, pero no hay ningún
+elemento HTML que las envuelva de forma natural (o no interesa añadir uno, por ejemplo dentro de una
+`<table>`, donde no se puede meter cualquier etiqueta entre `<tr>` sin más). `th:block` es una
+etiqueta especial de Thymeleaf que **desaparece** del HTML final, dejando solo lo que contiene.
+
+```html
+<table>
+    <th:block th:each="alumno : ${alumnos}">
+        <tr>
+            <td th:text="${alumno.nombre}">Nombre</td>
+        </tr>
+        <tr>
+            <td th:text="${alumno.curso}">Curso</td>
+        </tr>
+    </th:block>
+</table>
+```
+
+Por cada alumno se generan **dos** filas (`<tr>`), sin que `<th:block>` aparezca en el HTML
+resultante.
+
+## 7.5. Atributos dinámicos
+
+### `th:attr`: cualquier atributo genérico
+
+`th:attr` permite fijar el valor de cualquier atributo HTML a partir de una expresión. Es la forma
+más general, aunque para los casos más comunes (`class`, `href`, `src`...) Thymeleaf ofrece
+atributos específicos más cómodos, como vemos a continuación.
+
+```html
+<input type="text" th:attr="placeholder=${alumno.nombre}, maxlength=50" />
+```
+
+### `th:class`: sustituir la clase CSS
+
+Igual que `th:text` sustituye el contenido, `th:class` sustituye por completo el atributo `class`:
+
+```html
+<p th:class="${alumno.edad >= 18} ? 'destacado' : 'normal'">Alumno</p>
+```
+
+### `th:classappend`: añadir una clase sin perder las existentes
+
+Cuando ya hay clases fijas en el HTML y solo se quiere **añadir** una condicional, `th:class`
+las sustituiría por completo. `th:classappend` las conserva y añade la nueva al final:
+
+```html
+<p class="fila" th:classappend="${alumno.edad >= 18} ? 'mayor' : 'menor'">Alumno</p>
+```
+
+Si `alumno.edad` es 19, el resultado es `<p class="fila mayor">`.
+
+:::note
+Mismo patrón para otros atributos
+Existen equivalentes para otros atributos habituales: `th:style` / `th:styleappend`, y en general
+`th:attrappend` para añadir a cualquier atributo en lugar de sustituirlo. `th:attr` sigue siendo la
+opción más genérica cuando no existe una variante específica.
+:::
+
+## 7.6. Ejemplo completo
+
+```java
+@GetMapping
+public String listar(Model model) {
+    List<Alumno> alumnos = List.of(
+            new Alumno(1, "Lucía Márquez", "2DAW", 19),
+            new Alumno(2, "Marcos Iglesias", "1DAM", 17),
+            new Alumno(3, "Eva Soto", "2DAW", 20));
+
+    model.addAttribute("alumnos", alumnos);
+    return "alumnos";
+}
+```
+
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alumnos</title>
+</head>
+<body>
+    <table>
+        <tr th:if="${#lists.isEmpty(alumnos)}">
+            <td>No hay alumnos matriculados</td>
+        </tr>
+        <tr th:each="alumno, iterStat : ${alumnos}"
+            th:classappend="${iterStat.odd} ? 'fila-impar' : 'fila-par'">
+            <td th:text="${iterStat.count}">1</td>
+            <td th:text="${alumno.nombre}">Nombre</td>
+            <td th:switch="${alumno.edad >= 18}">
+                <span th:case="true">Mayor de edad</span>
+                <span th:case="*">Menor de edad</span>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+```
+
+Con la lista de tres alumnos, la fila `th:if="${#lists.isEmpty(alumnos)}"` no llega a renderizarse
+(la condición es falsa), y `th:each` genera tres filas numeradas, alternando `fila-impar` /
+`fila-par` según la posición.

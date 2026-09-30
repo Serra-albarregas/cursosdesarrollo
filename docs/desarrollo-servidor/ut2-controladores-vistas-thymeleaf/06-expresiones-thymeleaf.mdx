@@ -220,18 +220,59 @@ usamos solo para mostrar datos.
 Thymeleaf incluye una serie de objetos con métodos auxiliares, que se distinguen por empezar
 con `#`. Se usan dentro de `${...}`:
 
-| Objeto | Para qué sirve | Ejemplo |
+| Objeto | Para qué sirve |
+|---|---|
+| `#strings` | Trabajar con textos |
+| `#numbers` | Formatear números |
+| `#lists` | Trabajar con listas |
+| `#temporals` | Formatear fechas modernas (`LocalDate`, `LocalDateTime`) |
+
+A continuación, los métodos más habituales de cada uno.
+
+#### `#strings`
+
+| Método | Qué hace | Ejemplo |
 |---|---|---|
-| `#strings` | Trabajar con textos | `${#strings.toUpperCase(alumno.nombre)}` |
-| `#numbers` | Formatear números | `${#numbers.formatDecimal(nota, 1, 2)}` |
-| `#lists` | Trabajar con listas | `${#lists.size(alumnos)}` |
-| `#temporals` | Formatear fechas (`LocalDate`, `LocalDateTime`) | `${#temporals.format(fecha, 'dd/MM/yyyy')}` |
-| `#dates` | Formatear fechas de tipo `java.util.Date` | `${#dates.format(fecha, 'dd/MM/yyyy')}` |
+| `isEmpty(str)` | `true` si el texto es `null` o vacío | `${#strings.isEmpty(alumno.curso)}` |
+| `length(str)` | Longitud del texto | `${#strings.length(alumno.nombre)}` |
+| `toUpperCase(str)` / `toLowerCase(str)` | Cambia a mayúsculas/minúsculas | `${#strings.toUpperCase(alumno.nombre)}` |
+| `contains(str, sub)` | `true` si `str` contiene `sub` | `${#strings.contains(alumno.nombre, 'María')}` |
+| `substring(str, inicio, fin)` | Extrae una parte del texto | `${#strings.substring(alumno.nombre, 0, 3)}` |
+| `trim(str)` | Elimina espacios al principio y al final | `${#strings.trim(texto)}` |
+| `concat(str1, str2, ...)` | Concatena varios textos | `${#strings.concat(alumno.nombre, ' - ', alumno.curso)}` |
 
-Otros métodos frecuentes:
+#### `#numbers`
 
-- `#strings`: `isEmpty`, `length`, `contains`, `substring`, `toLowerCase`...
-- `#lists`: `isEmpty`, `contains`...
+| Método | Qué hace | Ejemplo |
+|---|---|---|
+| `formatDecimal(num, digitosEnteros, decimales)` | Formatea con dígitos enteros y decimales fijos | `${#numbers.formatDecimal(nota, 1, 2)}` → `7.50` |
+| `formatInteger(num, digitos)` | Formatea como entero, rellenando con ceros si hace falta | `${#numbers.formatInteger(id, 3)}` → `007` |
+| `formatCurrency(num)` | Formatea como moneda, según la configuración regional | `${#numbers.formatCurrency(precio)}` |
+| `formatPercent(num, digitosEnteros, decimales)` | Formatea como porcentaje | `${#numbers.formatPercent(ratio, 1, 0)}` |
+
+#### `#lists`
+
+| Método | Qué hace | Ejemplo |
+|---|---|---|
+| `isEmpty(lista)` | `true` si la lista es `null` o vacía | `${#lists.isEmpty(alumnos)}` |
+| `size(lista)` | Número de elementos | `${#lists.size(alumnos)}` |
+| `contains(lista, elemento)` | `true` si la lista contiene ese elemento | `${#lists.contains(cursos, '2DAW')}` |
+| `sort(lista)` | Devuelve la lista ordenada | `${#lists.sort(nombres)}` |
+
+#### `#temporals`
+
+| Método | Qué hace | Ejemplo |
+|---|---|---|
+| `format(fecha, patron)` | Formatea la fecha con el patrón indicado | `${#temporals.format(alumno.fechaAlta, 'dd/MM/yyyy')}` |
+| `day(fecha)` / `month(fecha)` / `year(fecha)` | Extraen la parte correspondiente | `${#temporals.year(alumno.fechaAlta)}` |
+| `formatISO(fecha)` | Formatea en formato estándar ISO-8601 | `${#temporals.formatISO(alumno.fechaAlta)}` |
+
+:::note
+`#temporals` frente a `#dates`
+`#temporals` trabaja con las clases modernas de fecha de Java (`java.time`, como `LocalDate`), que
+son las que usaremos en esta unidad. Si en algún momento trabajas con la clase antigua
+`java.util.Date`, existe el objeto equivalente `#dates`, con métodos muy similares.
+:::
 
 ```html
 <p th:text="${#strings.toUpperCase(alumno.nombre)}">NOMBRE</p>
@@ -304,10 +345,13 @@ Al visitar `GET /alumnos/7/ficha`, el HTML generado es:
 
 ## 6.9. Resumen de los tipos de expresión
 
-| Sintaxis | Nombre | Para qué sirve | Dónde se explica |
+| Sintaxis | Nombre | Ejemplo | Para qué sirve |
 |---|---|---|---|
-| `${...}` | Variable | Acceder a los datos del modelo | Esta página |
-| `*{...}` | Selección | Acceder a las propiedades del objeto seleccionado con `th:object` | Esta página |
-| `@{...}` | Enlace | Construir URLs | Página de enlaces y recursos estáticos |
-| `~{...}` | Fragmento | Reutilizar trozos de plantilla | Página de fragmentos |
-| `#{...}` | Mensaje | Textos externos (internacionalización) | Fuera del alcance de esta página |
+| `${...}` | Variable | `${alumno.nombre}` | Acceder a los datos del modelo |
+| `*{...}` | Selección | `*{nombre}` (con `th:object`) | Acceder a las propiedades del objeto seleccionado |
+| `@{...}` | Enlace | `@{/alumnos/{id}(id=${alumno.id})}` | Construir URLs |
+| `~{...}` | Fragmento | `~{layout :: cabecera}` | Reutilizar trozos de plantilla |
+| `#{...}` | Mensaje | `#{alumno.bienvenida}` | Textos externos (internacionalización) |
+
+Los tres últimos se muestran aquí solo para que reconozcas el símbolo si te los encuentras; se
+explican con detalle, y con ejemplos completos, en las páginas indicadas.
