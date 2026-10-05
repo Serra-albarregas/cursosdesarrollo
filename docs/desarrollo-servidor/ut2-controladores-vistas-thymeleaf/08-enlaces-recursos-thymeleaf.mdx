@@ -1,0 +1,197 @@
+---
+id: enlaces-recursos-estaticos
+title: 8. Enlaces y recursos estáticos
+sidebar_label: 8. Enlaces y recursos
+sidebar_position: 8
+description: Expresiones de enlace @{...} en Thymeleaf, rutas absolutas y relativas al contexto, parámetros de ruta y de query string, th:href y th:src, y la carpeta static para CSS, JS e imágenes.
+---
+
+# 8. Enlaces y recursos estáticos
+
+Las páginas que hemos construido hasta ahora no tienen ningún enlace ni ningún estilo: solo texto.
+En esta página vemos cómo escribir URLs dentro de una plantilla (hacia otras rutas del propio
+controlador, o hacia recursos como CSS, JS e imágenes) de forma que sigan funcionando aunque cambie
+dónde está desplegada la aplicación.
+
+## 8.1. El problema de escribir URLs a mano
+
+Podríamos escribir un enlace como HTML normal, sin Thymeleaf:
+
+```html
+<a href="/alumnos">Ver alumnos</a>
+```
+
+Mientras la aplicación se sirve en la raíz (`http://localhost:8080/`) funciona. Pero si algún día
+se despliega bajo una ruta distinta (por ejemplo, `http://miservidor.es/miproyecto/`), **todos**
+los enlaces escritos así dejarían de apuntar donde deben, porque les falta el prefijo
+`/miproyecto`. Añadirlo a mano, enlace por enlace, es poco fiable.
+
+## 8.2. Expresiones de enlace: `@{...}`
+
+Para evitar este problema, Thymeleaf ofrece las **expresiones de enlace**, que se escriben entre
+`@{...}` y se usan con los atributos `th:href` y `th:src`. Thymeleaf construye la URL final teniendo
+en cuenta dónde está desplegada la aplicación.
+
+```html
+<a th:href="@{/alumnos}">Ver alumnos</a>
+```
+
+Mientras la ruta empiece por `/`, Thymeleaf la trata como **relativa al contexto** de la aplicación:
+añade automáticamente el prefijo que corresponda. En nuestros proyectos, al desplegar en la raíz,
+el resultado es simplemente `/alumnos`; si se desplegase bajo `/miproyecto`, sería
+`/miproyecto/alumnos`, sin tener que cambiar nada en la plantilla.
+
+## 8.3. Tipos de ruta
+
+| Ruta | Ejemplo | Cómo se resuelve |
+|---|---|---|
+| Relativa al contexto | `@{/alumnos}` | Se le añade el contexto de la aplicación. La forma habitual para enlazar con tus propios controladores. |
+| Absoluta | `@{https://www.google.com}` | Se usa tal cual, sin modificar. Para enlazar a otros sitios. |
+| Relativa a la página actual | `@{alumnos}` (sin `/` inicial) | Se resuelve respecto a la URL actual, igual que en HTML normal. Poco usada, porque depende de la ruta desde la que se acceda. |
+
+En la práctica, usaremos casi siempre rutas **relativas al contexto** (con `/` inicial) para los
+enlaces a nuestro propio proyecto.
+
+## 8.4. Parámetros en la URL
+
+### Parte variable de la ruta (equivalente a `@PathVariable`)
+
+Para construir una URL con una parte variable, se indica el nombre del segmento entre llaves en la
+ruta, y su valor entre paréntesis al final de la expresión:
+
+```html
+<a th:href="@{/alumnos/{id}(id=${alumno.id})}">Ver ficha</a>
+```
+
+Con `alumno.id` igual a `42`, el resultado es `/alumnos/42`: exactamente la URL que esperaría un
+método anotado con `@GetMapping("/{id}")` y `@PathVariable int id` (visto en la página de
+controladores).
+
+### Parámetros de *query string* (equivalente a `@RequestParam`)
+
+Los parámetros tras `?` se añaden igual, entre paréntesis, sin necesidad de declarar ningún hueco en
+la ruta:
+
+```html
+<a th:href="@{/alumnos/buscar(nombre='Lucia', limite=5)}">Buscar</a>
+```
+
+El resultado es `/alumnos/buscar?nombre=Lucia&limite=5`. Thymeleaf se encarga de anteponer el `?`
+al primer parámetro y el `&` al resto, y de escapar los caracteres especiales que pudiera haber en
+los valores.
+
+### Combinando ambos
+
+Una misma expresión puede tener parte variable en la ruta y parámetros de *query string* a la vez:
+
+```html
+<a th:href="@{/alumnos/{curso}(curso=${alumno.curso}, orden='nombre')}">Ver compañeros</a>
+```
+
+Con `alumno.curso` igual a `"2DAW"`, el resultado es `/alumnos/2DAW?orden=nombre`.
+
+:::note
+Relación con la página de controladores
+Esta tabla resume la equivalencia entre lo que escribe la plantilla y lo que recibe el
+controlador:
+
+| En la plantilla (`@{...}`) | En el controlador |
+|---|---|
+| `{id}(id=${alumno.id})` | `@GetMapping("/{id}")` + `@PathVariable int id` |
+| `(nombre='Lucia')` | `@GetMapping("/buscar")` + `@RequestParam String nombre` |
+:::
+
+## 8.5. `th:href` y `th:src`
+
+- **`th:href`**: sustituye el atributo `href`, pensado para enlaces (`<a>`) y hojas de estilo
+  (`<link>`).
+- **`th:src`**: sustituye el atributo `src`, pensado para recursos que se cargan directamente
+  (imágenes, scripts).
+
+```html
+<a th:href="@{/alumnos}">Ver alumnos</a>
+<link rel="stylesheet" th:href="@{/css/estilos.css}">
+<img th:src="@{/img/logo.png}" alt="Logo del centro">
+<script th:src="@{/js/app.js}"></script>
+```
+
+## 8.6. La carpeta `static`
+
+Spring Boot sirve automáticamente, sin necesidad de ningún controlador, todo lo que haya dentro de:
+
+```text
+src/main/resources/static/
+```
+
+Es el lugar donde van el CSS, el JavaScript y las imágenes propias del proyecto:
+
+```text
+src/main/resources/
+├── static/
+│   ├── css/
+│   │   └── estilos.css
+│   ├── js/
+│   │   └── app.js
+│   └── img/
+│       └── logo.png
+└── templates/
+    └── alumnos.html
+```
+
+Un archivo en `static/css/estilos.css` queda disponible en la URL `/css/estilos.css`: la ruta
+dentro de `static` se convierte directamente en la ruta pública, sin el prefijo `static`.
+
+:::note
+`static` no pasa por Thymeleaf
+Los archivos de `static` se sirven tal cual, como archivos planos. No se procesan expresiones
+`th:*` en un `.css` o un `.js`: eso solo ocurre con las plantillas `.html` de `templates`.
+:::
+
+## 8.7. Ejemplo completo
+
+```java
+@Controller
+@RequestMapping("/alumnos")
+public class AlumnosController {
+
+    @GetMapping
+    public String listar(Model model) {
+        model.addAttribute("alumnos", List.of(
+                new Alumno(1, "Lucía Márquez", "2DAW", 19),
+                new Alumno(2, "Marcos Iglesias", "1DAM", 18)));
+        return "alumnos";
+    }
+
+    @GetMapping("/{id}")
+    public String detalle(@PathVariable int id, Model model) {
+        model.addAttribute("alumno", new Alumno(id, "Lucía Márquez", "2DAW", 19));
+        return "alumno-detalle";
+    }
+}
+```
+
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alumnos</title>
+    <link rel="stylesheet" th:href="@{/css/estilos.css}">
+</head>
+<body>
+    <img th:src="@{/img/logo.png}" alt="Logo del centro">
+
+    <table>
+        <tr th:each="alumno : ${alumnos}">
+            <td th:text="${alumno.nombre}">Nombre</td>
+            <td>
+                <a th:href="@{/alumnos/{id}(id=${alumno.id})}">Ver ficha</a>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+```
+
+Cada fila de la tabla enlaza con la ficha del alumno correspondiente, construyendo la URL a partir
+de su `id`, sin que haya ni una sola ruta escrita a mano.

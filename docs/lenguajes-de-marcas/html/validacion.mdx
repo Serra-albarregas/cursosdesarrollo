@@ -1,21 +1,20 @@
 ---
 sidebar_position: 9
 title: "Validación de formularios"
-draft: true
 ---
 
 import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
 
-Los usuarios pueden equivocarse al rellenar un formulario. También podemos necesitar que algunos de los campos cumplan ciertos requisitos, como un cierto número de caracteres a la hora de introducir una contraseña. Esto hace que la validacion de formularios sea una práctica muy habitual.
+Los usuarios pueden equivocarse al rellenar un formulario. También podemos necesitar que algunos de los campos cumplan ciertos requisitos, como un cierto número de caracteres a la hora de introducir una contraseña. Esto hace que la validación de formularios sea una práctica muy habitual.
 
 ## Atributos de validación básica
 
 <table>
   <thead>
     <tr>
-      <th>atributo</th>
-      <th>actúa sobre</th>
-      <th>descripción</th>
+      <th scope="col">atributo</th>
+      <th scope="col">actúa sobre</th>
+      <th scope="col">descripción</th>
     </tr>
   </thead>
   <tbody>
@@ -81,7 +80,7 @@ Los usuarios pueden equivocarse al rellenar un formulario. También podemos nece
 
 ## CSS para validación
 
-Existen propiedades css para seleccionar y modificar campos que cumplen o no los criterios de validación establecidos. Usaremos estos estilos para visualizar mejor los ejemplos.
+Existen pseudoclases CSS para seleccionar campos según cumplan o no las condiciones de validación establecidas. Usaremos estos estilos para visualizar mejor los ejemplos.
 
 ```css
 input:invalid {
@@ -95,9 +94,13 @@ input:valid {
 }
 ```
 
+:::note
+Un campo vacío y sin `required` se considera `:valid` por defecto, ya que no tiene ninguna condición que incumplir. Solo se marca como `:invalid` cuando tiene algún atributo de validación (`required`, `pattern`, `min`...) y no lo cumple.
+:::
+
 ## Tamaños de texto requeridos
 
-El uso de los atributos `<minlength>` y `<maxlength>` es fundamental cuando queremos limitar el número de caracteres que un usuario puede introducir en un campo de texto. Con `<maxlength>`, podemos establecer un número máximo de caracteres, mientras que con `<minlength>` aseguramos que se introduzca un número mínimo de caracteres.
+El uso de los atributos `minlength` y `maxlength` es fundamental cuando queremos limitar el número de caracteres que un usuario puede introducir en un campo de texto. Con `maxlength`, podemos establecer un número máximo de caracteres, mientras que con `minlength` aseguramos que se introduzca un número mínimo de caracteres.
 
 <HtmlCssPlayground
   initialHtml={`<form method="get">
@@ -117,7 +120,7 @@ input:valid {
 
 ## Límites numéricos y en fechas
 
-Los atributos `<min>` y `<max>` se usan para establecer valores mínimos y máximos en campos numéricos o de fecha. Esto garantiza que los usuarios solo puedan seleccionar o introducir valores dentro de los límites establecidos.
+Los atributos `min` y `max` se usan para establecer valores mínimos y máximos en campos numéricos o de fecha. Esto garantiza que los usuarios solo puedan seleccionar o introducir valores dentro de los límites establecidos.
 
 <HtmlCssPlayground
   initialHtml={`<form method="get">
@@ -138,7 +141,7 @@ input:valid {
 
 ## Incremento numérico y en fechas
 
-El atributo `<step>` define el intervalo entre los valores permitidos. Para campos numéricos, establece el incremento entre los números que se pueden seleccionar o introducir. Para fechas, define el incremento entre días o unidades de tiempo.
+El atributo `step` define el intervalo entre los valores permitidos. Para campos numéricos, establece el incremento entre los números que se pueden seleccionar o introducir. Para fechas, define el incremento entre días o unidades de tiempo.
 
 <HtmlCssPlayground
   initialHtml={`<form method="get">
@@ -159,7 +162,7 @@ input:valid {
 
 ## Campos obligatorios
 
-El atributo `<required>` se utiliza para indicar que un campo es obligatorio. Si el usuario intenta enviar el formulario sin rellenar un campo requerido, el navegador mostrará un mensaje de error.
+El atributo `required` se utiliza para indicar que un campo es obligatorio. Si el usuario intenta enviar el formulario sin rellenar un campo requerido, el navegador mostrará un mensaje de error.
 
 <HtmlCssPlayground
   initialHtml={`<form method="get">
@@ -179,7 +182,7 @@ input:valid {
 
 ## Campos deshabilitados
 
-El atributo `<disabled>` deshabilita un campo, lo que significa que no puede ser modificado por el usuario ni será enviado como parte del formulario. Es útil para bloquear temporalmente ciertos campos.
+El atributo `disabled` deshabilita un campo, lo que significa que no puede ser modificado por el usuario ni será enviado como parte del formulario. Es útil para bloquear temporalmente ciertos campos.
 
 <HtmlCssPlayground
   initialHtml={`<form method="get">
@@ -199,7 +202,7 @@ input:valid {
 
 ## Campos de solo lectura
 
-Con el atributo `<readonly>`, el usuario puede ver el contenido del campo, pero no modificarlo. A diferencia de los campos deshabilitados, los campos de solo lectura sí se envían con el formulario.
+Con el atributo `readonly`, el usuario puede ver el contenido del campo, pero no modificarlo. A diferencia de los campos deshabilitados, los campos de solo lectura sí se envían con el formulario.
 
 <HtmlCssPlayground
   initialHtml={`<form method="get">
@@ -219,25 +222,18 @@ input:valid {
 
 ## Coincidencias con patrones
 
-El atributo `<pattern>` permite que el contenido de un campo de texto sea validado en función de una expresión regular. Las expresiones regulares (regex) son secuencias de caracteres que definen un patrón de búsqueda o coincidencia. En los formularios HTML, las regex se utilizan para verificar que los datos introducidos por el usuario cumplan con un formato específico.
+El atributo `pattern` permite que el contenido de un campo de texto sea validado en función de una expresión regular. Las expresiones regulares (regex) son secuencias de caracteres que definen un patrón de búsqueda o coincidencia. En los formularios HTML, las regex se utilizan para verificar que los datos introducidos por el usuario cumplan con un formato específico.
+
+`pattern` solo funciona en campos `text`, `search`, `url`, `tel`, `email` y `password`; no tiene efecto en otros tipos, como `number` o `date`, que ya tienen su propia validación con `min`, `max` y `step`.
 
 A continuación, se muestran las expresiones para formar patrones de entrada más comunes:
-
-- **Comodín `.`**: Coincide con cualquier carácter.
-- **O lógico `A|B`**: Define una elección entre dos opciones. Ejemplo: `A|B` significa que se aceptará "A" o "B".
-- **Agrupación `(A|B)`**: Agrupa varias opciones dentro de una secuencia. Ejemplo: `(AB|CD)` coincide con "AB" o "CD".
-- **Rangos de caracteres `[A-Z]`**: Define un rango de caracteres aceptables. Ejemplo: `[A-Z]` coincide con cualquier letra mayúscula de la A a la Z.
-- **Exclusión `[^0-9]`**: Coincide con cualquier carácter que no esté dentro del rango especificado. Ejemplo: `[^0-9]` excluye cualquier número.
-- **Cuantificadores `*`, `+`, `?`**: Controlan cuántas veces debe repetirse un carácter o secuencia. Ejemplo: `[a-z]*` significa 0 o más letras minúsculas, `[a-z]+` significa 1 o más letras minúsculas, y `[a-z]?` significa 0 o 1 letras.
-- **Cuantificadores exactos `{5}` o con rango `{2,9}`**: Definen cuántas veces debe repetirse un carácter o secuencia. Ejemplo: `[a-z]{2,9}` acepta entre 2 y 9 letras minúsculas.
-- **Escape `\.`**: Escapa un carácter especial para que sea tratado como literal. Ejemplo: `\.` representa un punto "." literal.
 
 <table>
   <thead>
     <tr>
-      <th>Expresión</th>
-      <th>Nombre</th>
-      <th>Descripción</th>
+      <th scope="col">Expresión</th>
+      <th scope="col">Nombre</th>
+      <th scope="col">Descripción</th>
     </tr>
   </thead>
   <tbody>
@@ -294,7 +290,7 @@ A continuación, se muestran las expresiones para formar patrones de entrada má
     <tr>
       <td><strong>\\</strong>.</td>
       <td>Escape</td>
-      <td>El caracter .</td>
+      <td>El carácter .</td>
     </tr>
   </tbody>
 </table>
@@ -347,15 +343,15 @@ input:valid {
 
 ### Ejemplo con correo electrónico
 
-En este caso, el campo de correo electrónico puede ser validado de dos maneras: mediante un input de tipo `<email>`, que valida automáticamente que el valor introducido tenga el formato de un correo, o mediante una expresión regular para validar correos de servidores específicos.
+En este caso, el campo de correo electrónico puede ser validado de dos maneras: mediante un input de tipo `email`, que valida automáticamente que el valor introducido tenga el formato de un correo, o mediante una expresión regular para validar correos de servidores específicos.
 
 <details>
   <summary>Mostrar detalles</summary>
 
   En este caso, validamos direcciones de correo electrónico de dos maneras:
 
-  - **Con un input de tipo `<email>`**: HTML proporciona validación automática para asegurarse de que el campo contiene una dirección de correo con el formato correcto, es decir, algo como "usuario@dominio.com".
-  - **Con una expresión regular personalizada:** En el segundo ejemplo, usamos el atributo `<pattern>` para especificar que el formato del correo debe ser un conjunto de letras y números seguido de un símbolo "@" y un dominio válido (.es o .com).
+  - **Con un input de tipo `email`**: HTML proporciona validación automática para asegurarse de que el campo contiene una dirección de correo con el formato correcto, es decir, algo como "usuario@dominio.com".
+  - **Con una expresión regular personalizada:** En el segundo ejemplo, usamos el atributo `pattern` para especificar que el formato del correo debe ser un conjunto de letras y números seguido de un símbolo "@" y un dominio válido (.es o .com).
     - La expresión `[A-Za-z0-9]+@[A-Za-z0-9]+\.(es|com)` funciona de la siguiente manera:
       - `[A-Za-z0-9]+`: Acepta una secuencia de letras o números antes del "@"
       - `@`: Requiere la presencia del símbolo "@"
@@ -394,12 +390,12 @@ input:valid {
 
 ### Ejemplo con número de teléfono
 
-El número de teléfono se puede validar con un input de tipo `<tel>`, pero para una validación más estricta, se pueden usar expresiones regulares. En este caso, se usan patrones para aceptar números sin formato o con formato específico, como el código de España.
+El número de teléfono se puede validar con un input de tipo `tel`, pero para una validación más estricta, se pueden usar expresiones regulares. En este caso, se usan patrones para aceptar números sin formato o con formato específico, como el código de España.
 
 <details>
   <summary>Mostrar detalles</summary>
 
-  Para la validación de números de teléfono, podemos usar el input de tipo `<tel>` o una expresión regular personalizada. Aquí tienes tres ejemplos:
+  Para la validación de números de teléfono, podemos usar el input de tipo `tel` o una expresión regular personalizada. Aquí tienes tres ejemplos:
 
   - **Sin formato:** El patrón `[0-9]{9}` indica que se deben introducir exactamente 9 dígitos numéricos.
   - **Formato con espacios:** La expresión `\+34 [0-9]{3} [0-9]{2} [0-9]{2} [0-9]{2}` acepta un número de teléfono español con el prefijo "+34" y separa los grupos de dígitos con espacios.
@@ -430,7 +426,7 @@ input:valid {
 
 ### Avisar del formato requerido
 
-Para que los usuarios comprendan mejor qué formato deben seguir al introducir datos, puedes usar el atributo `<title>`. Este atributo muestra un mensaje de ayuda cuando el campo no cumple con el formato. Por ejemplo, en un número de teléfono internacional, puedes dar indicaciones sobre el prefijo y el formato correcto:
+Para que los usuarios comprendan mejor qué formato deben seguir al introducir datos, puedes usar el atributo `title`. Este atributo muestra un mensaje de ayuda cuando el campo no cumple con el formato. Por ejemplo, en un número de teléfono internacional, puedes dar indicaciones sobre el prefijo y el formato correcto:
 
 <HtmlCssPlayground
   initialHtml={`<form method="get">
@@ -450,3 +446,7 @@ input:valid {
 }`}
   layout="stacked"
 />
+
+## La validación del navegador no es suficiente
+
+Toda la validación vista en esta página ocurre en el navegador del usuario y mejora su experiencia (evita envíos con errores evidentes y da feedback inmediato), pero **no sustituye a la validación en el servidor**. Es fácil saltársela: basta con desactivar JavaScript, editar el HTML desde las herramientas de desarrollador o enviar la petición directamente a la URL del formulario sin pasar por el navegador. Por eso, los datos que llegan al servidor siempre deben volver a validarse allí antes de usarlos o guardarlos.
