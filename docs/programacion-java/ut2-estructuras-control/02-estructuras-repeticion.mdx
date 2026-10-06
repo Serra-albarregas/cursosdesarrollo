@@ -5,6 +5,16 @@ sidebar_label: 2. Estructuras de repetición
 sidebar_position: 2
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeTrace from '@site/src/components/CodeTrace';
+import trace1 from './traces/01-tabla-while.json';
+import trace2 from './traces/02-modulo-restas.json';
+import trace3 from './traces/03-adivina-numero.json';
+import trace4 from './traces/04-do-while-validar.json';
+import trace5 from './traces/05-tabla-for.json';
+import trace6 from './traces/06-tablas-anidadas.json';
+
 Las **estructuras de repetición** o iterativas permiten repetir una misma secuencia de instrucciones varias veces, mientras se cumpla una cierta condición.
 
 Llamamos **bucle** o ciclo al conjunto de instrucciones que se debe repetir un cierto número de veces, y llamamos **iteración** a cada ejecución individual del bucle.
@@ -84,6 +94,8 @@ Si olvidas actualizar la variable de control dentro del bucle (por ejemplo, olvi
 
 ### Ejemplo con contador
 
+<Tabs>
+<TabItem value="Código" label="Código" default>
 ```java
 import java.util.Scanner;
 // Un programa que muestra la tabla de multiplicar de un número.
@@ -105,9 +117,16 @@ public class Multiplicar {
     }
 }
 ```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace1} />
+</TabItem>
+</Tabs>
 
 ### Ejemplo con acumulador
 
+<Tabs>
+<TabItem value="Código" label="Código" default>
 ```java
 import java.util.Scanner;
 // Un programa que calcula el resto de una división a base de restas sucesivas.
@@ -132,9 +151,16 @@ public class Modulo {
     }
 }
 ```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace2} />
+</TabItem>
+</Tabs>
 
 ### Ejemplo con bandera
 
+<Tabs>
+<TabItem value="Código" label="Código" default>
 ```java
 import java.util.Scanner;
 // Un programa en el que hay que adivinar un número.
@@ -163,6 +189,11 @@ public class Adivina2 {
     }
 }
 ```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace3} />
+</TabItem>
+</Tabs>
 
 ## Bucle `do while`
 
@@ -192,6 +223,8 @@ Un `while` puede no ejecutarse nunca si la condición ya es falsa desde el princ
 
 ### Ejemplo
 
+<Tabs>
+<TabItem value="Código" label="Código" default>
 ```java
 import java.util.Scanner;
 // Vamos a leer un entero entre 0 y 10.
@@ -213,6 +246,11 @@ public class ComprobarDato {
     }
 }
 ```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace4} />
+</TabItem>
+</Tabs>
 
 ## Bucle `for`
 
@@ -240,6 +278,8 @@ flowchart TD
 
 ### Ejemplo
 
+<Tabs>
+<TabItem value="Código" label="Código" default>
 ```java
 import java.util.Scanner;
 // Un programa que muestra la tabla de multiplicar de un número usando for.
@@ -260,7 +300,67 @@ public class Multiplicar2 {
     }
 }
 ```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace5} />
+</TabItem>
+</Tabs>
 
 :::tip[¿`while` o `for`?]
 `for` es la opción más natural cuando sabemos de antemano cuántas veces hay que repetir el bucle (por ejemplo, recorrer una tabla del 0 al 10). `while` o `do while` encajan mejor cuando el número de iteraciones depende de una condición que no conocemos de antemano (por ejemplo, hasta que el usuario acierte un número).
+:::
+
+## Bucles anidados
+
+Al igual que ocurría con las estructuras de selección, los bucles también se pueden **anidar**: podemos colocar un bucle completo dentro del cuerpo de otro bucle. El bucle de fuera se llama **bucle exterior** y el de dentro, **bucle interior**.
+
+Por cada iteración del bucle exterior, el bucle interior se ejecuta **completo**, de principio a fin. Es decir, si el bucle exterior itera 3 veces y el interior itera 4 veces, el cuerpo del bucle interior se ejecutará en total 3 × 4 = 12 veces.
+
+```mermaid
+flowchart TD
+    A[Inicio bucle exterior] --> B{Condición exterior}
+    B -- true --> C[Inicio bucle interior]
+    C --> D{Condición interior}
+    D -- true --> E[Instrucciones del bucle interior]
+    E --> D
+    D -- false --> F[Incremento contador exterior]
+    F --> B
+    B -- false --> G[Resto de instrucciones]
+```
+
+:::note
+Puedes anidar cualquier combinación de bucles: un `for` dentro de otro `for`, un `while` dentro de un `for`, un `for` dentro de un `while`... Lo importante es que cada bucle use **su propia variable de control** (normalmente con nombres distintos, como `i` para el exterior y `j` para el interior) para no interferir con la del otro.
+:::
+
+### Ejemplo: tabla de multiplicar del 1 al 10 (todas las tablas)
+
+En el ejemplo anterior pedíamos una única tabla de multiplicar. Con un bucle anidado podemos generar **todas** las tablas, del 1 al 10, sin tener que repetir el código 10 veces: el bucle exterior recorre cada tabla y, por cada una, el bucle interior recorre sus 10 resultados.
+
+<Tabs>
+<TabItem value="Código" label="Código" default>
+```java
+// Un programa que muestra todas las tablas de multiplicar, del 1 al 10.
+public class TablasCompletas {
+    public static void main(String[] args) {
+        // Bucle exterior: recorre cada tabla (del 1 al 10)
+        for (int i = 1; i <= 10; i++) {
+            System.out.println("--- Tabla del " + i + " ---");
+
+            // Bucle interior: recorre los 10 resultados de esa tabla
+            for (int j = 1; j <= 10; j++) {
+                int resultado = i * j;
+                System.out.println(i + " x " + j + " = " + resultado);
+            }
+        }
+    }
+}
+```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace6} />
+</TabItem>
+</Tabs>
+
+:::warning[Cuidado al elegir el nombre de la variable de control]
+Si reutilizas el mismo nombre de variable (por ejemplo `i`) en los dos bucles, el compilador dará error, ya que la variable del bucle interior se declararía dos veces dentro del mismo ámbito (el del bucle exterior). Usa nombres distintos para cada nivel de anidamiento, como `i` y `j`.
 :::

@@ -1,0 +1,43 @@
+{
+  "title": "do-while: pedir un dato válido",
+  "language": "java",
+  "code": [
+    "import java.util.Scanner;",
+    "// Vamos a leer un entero entre 0 y 10.",
+    "public class ComprobarDato {",
+    "    public static void main(String[] args) {",
+    "        Scanner lector = new Scanner(System.in);",
+    "        int valor = 0;",
+    "",
+    "        do {",
+    "            // Solicitar dato, como mínimo se pregunta una vez.",
+    "            System.out.println(\"Introduce un valor entero entre 0 y 10:\");",
+    "            valor = Integer.parseInt(lector.next());",
+    "            lector.nextLine();",
+    "            // Comprobar dato.",
+    "        } while ((valor < 0) || (valor > 10));",
+    "",
+    "        // Todo correcto",
+    "        System.out.println(\"Dato correcto. Has escrito \" + valor);",
+    "    }",
+    "}"
+  ],
+  "steps": [
+    {"line": 5, "note": "Se crea el `Scanner` para leer del teclado."},
+    {"line": 6, "set": {"valor": 0}, "note": "Se declara `valor` fuera del bucle para poder usarla también en la condición del `while` y después del bucle. Empieza en 0, pero ese 0 no es un dato del usuario."},
+    {"line": 8, "note": "Empieza el `do`. A diferencia del `while`, aquí no se comprueba nada antes: el cuerpo se ejecuta siempre al menos una vez."},
+    {"line": 10, "println": "Introduce un valor entero entre 0 y 10:", "note": "Se pide el dato al usuario."},
+    {"line": 11, "set": {"valor": 15}, "println": "15", "note": "El usuario escribe `15` y se guarda en `valor`, sustituyendo al valor anterior."},
+    {"line": 12, "note": "Se consume el salto de línea pendiente."},
+    {"line": 14, "note": "Ahora se evalúa la condición, al final del cuerpo: `15 < 0` es falso, pero `15 > 10` es cierto. Con `||` basta con que una de las dos sea cierta, así que la condición se cumple y el bucle se repite."},
+    {"line": 10, "println": "Introduce un valor entero entre 0 y 10:", "note": "Se vuelve al principio del `do` y se pide el dato otra vez."},
+    {"line": 11, "set": {"valor": -3}, "println": "-3", "note": "El usuario escribe `-3` y se guarda en `valor`, sustituyendo al valor anterior."},
+    {"line": 12, "note": "Se consume el salto de línea pendiente."},
+    {"line": 14, "note": "`-3 < 0` es cierto, así que la condición se cumple (con `||` ya no hace falta ni mirar la segunda parte) y el bucle se repite."},
+    {"line": 10, "println": "Introduce un valor entero entre 0 y 10:", "note": "Se vuelve al principio del `do` y se pide el dato otra vez."},
+    {"line": 11, "set": {"valor": 7}, "println": "7", "note": "El usuario escribe `7` y se guarda en `valor`, sustituyendo al valor anterior."},
+    {"line": 12, "note": "Se consume el salto de línea pendiente."},
+    {"line": 14, "note": "`7 < 0` es falso y `7 > 10` también: la condición es falsa y el bucle termina. El dato es válido."},
+    {"line": 17, "println": "Dato correcto. Has escrito 7", "note": "Se muestra el dato aceptado."}
+  ]
+}

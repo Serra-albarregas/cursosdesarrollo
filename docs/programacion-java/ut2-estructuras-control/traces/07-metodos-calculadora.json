@@ -1,0 +1,35 @@
+{
+  "title": "Métodos: sin retorno (void) y con retorno (int)",
+  "language": "java",
+  "code": [
+    "public class Calculadora {",
+    "",
+    "    // Un método sin parámetros y sin retorno (void)",
+    "    public static void saludar() {",
+    "        System.out.println(\"Bienvenido a la calculadora.\");",
+    "    }",
+    "",
+    "    // Un método con parámetros y con retorno (int)",
+    "    public static int sumar(int numero1, int numero2) {",
+    "        int resultado = numero1 + numero2;",
+    "        return resultado;",
+    "    }",
+    "",
+    "    public static void main(String[] args) {",
+    "        saludar();",
+    "        int total = sumar(3, 5);",
+    "        System.out.println(\"El resultado es \" + total);",
+    "    }",
+    "}"
+  ],
+  "steps": [
+    { "line": 15, "call": { "name": "saludar()" }, "note": "`main` llama a `saludar()`. El método no tiene parámetros, así que su marco nace sin variables." },
+    { "line": 5, "println": "Bienvenido a la calculadora.", "note": "Dentro de `saludar` se muestra el mensaje por pantalla." },
+    { "line": 6, "return": null, "note": "`saludar` termina. Es `void`, así que no devuelve ningún valor, y su marco desaparece. La ejecución sigue en `main`, justo después de la llamada." },
+    { "line": 16, "call": { "name": "sumar(3, 5)", "args": { "numero1": 3, "numero2": 5 } }, "note": "`main` llama a `sumar(3, 5)`. Los valores 3 y 5 se copian en los parámetros `numero1` y `numero2` del marco nuevo. `total` todavía no tiene valor: lo tendrá cuando la llamada devuelva el resultado." },
+    { "line": 10, "set": { "resultado": 8 }, "note": "`numero1 + numero2` es 3 + 5 = 8, y se guarda en `resultado`, una variable local que solo existe dentro de `sumar`." },
+    { "line": 11, "return": 8, "note": "`return resultado` devuelve el valor 8 a quien hizo la llamada. El marco de `sumar` desaparece, con sus parámetros y su variable local." },
+    { "line": 16, "set": { "total": 8 }, "note": "`main` recibe el 8 y lo guarda en `total`." },
+    { "line": 17, "println": "El resultado es 8", "note": "Se muestra el mensaje final con el valor de `total`." }
+  ]
+}

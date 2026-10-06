@@ -5,6 +5,11 @@ sidebar_label: 3. Funciones
 sidebar_position: 3
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeTrace from '@site/src/components/CodeTrace';
+import trace from './traces/07-metodos-calculadora.json';
+
 Una **función** (en Java, técnicamente un **método**) es un bloque de código independiente al que le damos un nombre, para poder ejecutarlo desde distintos puntos del programa sin tener que repetir su código cada vez. Nos permiten dividir un programa grande en piezas más pequeñas, reutilizables y fáciles de probar.
 
 :::note[Función o método]
@@ -27,6 +32,8 @@ modificador tipoDeRetorno nombreDelMetodo(tipo parametro1, tipo parametro2, ...)
 | `nombreDelMetodo` | El identificador del método. Sigue las mismas reglas que las variables: **camelCase**, empezando por minúscula. |
 | `(tipo parametro1, ...)` | La **lista de parámetros**: los datos que el método necesita para trabajar. Puede estar vacía. |
 
+<Tabs>
+<TabItem value="Código" label="Código" default>
 ```java
 public class Calculadora {
 
@@ -48,6 +55,11 @@ public class Calculadora {
     }
 }
 ```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace} />
+</TabItem>
+</Tabs>
 
 :::tip
 Fíjate en que `saludar()` se invoca sin recoger ningún valor (no devuelve nada), mientras que `sumar(3, 5)` se invoca dentro de una expresión, porque su resultado se necesita para poder continuar.
