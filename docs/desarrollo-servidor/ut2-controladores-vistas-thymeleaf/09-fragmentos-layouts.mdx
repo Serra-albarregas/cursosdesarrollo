@@ -1,0 +1,195 @@
+---
+id: fragmentos-layouts
+title: 9. Fragmentos y layouts
+sidebar_label: 9. Fragmentos y layouts
+sidebar_position: 9
+description: Declarar fragmentos reutilizables con th:fragment, incluirlos con th:insert y th:replace, pasarles parámetros, y construir un layout común (cabecera, menú y pie) compartido entre todas las vistas.
+---
+
+# 9. Fragmentos y layouts
+
+Todas las plantillas que hemos escrito hasta ahora son páginas completas e independientes. En una
+aplicación real, elementos como la cabecera, el menú de navegación o el pie de página son iguales
+(o casi) en todas las vistas. Copiar ese HTML en cada plantilla es poco práctico: cualquier cambio
+habría que repetirlo en todos los archivos. Los **fragmentos** resuelven este problema.
+
+## 9.1. `th:fragment`: declarar un trozo reutilizable
+
+`th:fragment` marca una etiqueta como un fragmento con nombre, que podrá incluirse desde otras
+plantillas. El fragmento se declara dentro de una plantilla normal, que puede o no usarse también
+por sí misma.
+
+```html title="templates/fragmentos/comunes.html"
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header th:fragment="cabecera">
+    <h1>Instituto de Ejemplo</h1>
+    <nav>
+        <a th:href="@{/}">Inicio</a>
+        <a th:href="@{/alumnos}">Alumnos</a>
+    </nav>
+</header>
+
+<footer th:fragment="pie">
+    <p>&copy; 2026 Instituto de Ejemplo</p>
+</footer>
+
+</body>
+</html>
+```
+
+Este archivo no se abre directamente como una página (nunca se hace `return "fragmentos/comunes"`
+desde un controlador); existe solo para contener fragmentos que otras plantillas incluirán.
+
+## 9.2. `th:insert` frente a `th:replace`
+
+Para usar un fragmento en otra plantilla, se referencia con una **expresión de fragmento**
+(`~{...}`), con la forma `archivo :: nombreFragmento`:
+
+```html
+<div th:insert="~{fragmentos/comunes :: cabecera}"></div>
+```
+
+Hay dos formas de incluirlo, según qué ocurra con la etiqueta que lo contiene:
+
+| | `th:insert` | `th:replace` |
+|---|---|---|
+| Qué pasa con la etiqueta anfitriona (`<div>`) | Se conserva, y el fragmento se mete **dentro** | Se **sustituye por completo** por el fragmento |
+| Resultado con el ejemplo anterior | `<div><header>...</header></div>` | `<header>...</header>` |
+
+```html
+<!-- th:insert: el <div> se mantiene -->
+<div th:insert="~{fragmentos/comunes :: cabecera}"></div>
+
+<!-- th:replace: el <div> desaparece, solo queda el <header> -->
+<div th:replace="~{fragmentos/comunes :: cabecera}"></div>
+```
+
+:::note
+¿Cuál usar?
+`th:replace` es, con diferencia, el más habitual: casi nunca interesa conservar una etiqueta extra
+alrededor del fragmento. `th:insert` se reserva para los casos (poco frecuentes) en los que sí hace
+falta esa etiqueta envolvente, por ejemplo para aplicarle una clase CSS propia de cada página.
+:::
+
+## 9.3. Fragmentos con parámetros
+
+Un fragmento puede declarar parámetros, igual que un método, y recibir valores distintos cada vez
+que se incluye:
+
+```html title="templates/fragmentos/comunes.html"
+<div th:fragment="alerta(mensaje, tipo)" th:class="'alerta alerta-' + ${tipo}">
+    <span th:text="${mensaje}">Mensaje</span>
+</div>
+```
+
+Al incluirlo, los valores se pasan entre paréntesis, en el mismo orden (o por nombre):
+
+```html
+<div th:replace="~{fragmentos/comunes :: alerta('Alumno guardado correctamente', 'exito')}"></div>
+<div th:replace="~{fragmentos/comunes :: alerta('No se ha encontrado el alumno', 'error')}"></div>
+```
+
+El resultado, en el segundo caso, sería:
+
+```html
+<div class="alerta alerta-error">
+    <span>No se ha encontrado el alumno</span>
+</div>
+```
+
+## 9.4. Layout común: cabecera, menú y pie
+
+El uso más habitual de los fragmentos es construir un **layout** compartido por todas las páginas:
+una cabecera y un pie fijos, con un hueco en medio que cambia en cada vista.
+
+Plantilla de fragmentos comunes:
+
+```html title="templates/fragmentos/comunes.html"
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header th:fragment="cabecera">
+    <h1>Instituto de Ejemplo</h1>
+    <nav>
+        <a th:href="@{/}">Inicio</a>
+        <a th:href="@{/alumnos}">Alumnos</a>
+    </nav>
+</header>
+
+<footer th:fragment="pie">
+    <p>&copy; 2026 Instituto de Ejemplo</p>
+</footer>
+
+</body>
+</html>
+```
+
+Página que usa ese layout:
+
+```html title="templates/alumnos.html"
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alumnos</title>
+    <link rel="stylesheet" th:href="@{/css/estilos.css}">
+</head>
+<body>
+
+<div th:replace="~{fragmentos/comunes :: cabecera}"></div>
+
+<main>
+    <h2>Listado de alumnos</h2>
+    <table>
+        <tr th:each="alumno : ${alumnos}">
+            <td th:text="${alumno.nombre}">Nombre</td>
+            <td>
+                <a th:href="@{/alumnos/{id}(id=${alumno.id})}">Ver ficha</a>
+            </td>
+        </tr>
+    </table>
+</main>
+
+<div th:replace="~{fragmentos/comunes :: pie}"></div>
+
+</body>
+</html>
+```
+
+Cada plantilla solo tiene que preocuparse de su contenido propio (el `<main>`); la cabecera y el
+pie se mantienen en un único archivo, y cualquier cambio en el menú de navegación se aplica
+automáticamente a todas las páginas que lo incluyen.
+
+:::note
+Rutas relativas dentro de un fragmento
+Los `@{...}` escritos dentro de `comunes.html` (como `@{/alumnos}` en el menú) se resuelven igual
+que en cualquier otra plantilla, sin importar desde qué página se haya incluido el fragmento.
+:::
+
+## 9.5. Ejemplo completo con parámetros en el layout
+
+Combinando lo anterior, es habitual que la propia cabecera reciba un parámetro, por ejemplo para
+resaltar en el menú la sección activa:
+
+```html title="templates/fragmentos/comunes.html"
+<header th:fragment="cabecera(seccionActiva)">
+    <h1>Instituto de Ejemplo</h1>
+    <nav>
+        <a th:href="@{/}"
+           th:classappend="${seccionActiva == 'inicio'} ? 'activo'">Inicio</a>
+        <a th:href="@{/alumnos}"
+           th:classappend="${seccionActiva == 'alumnos'} ? 'activo'">Alumnos</a>
+    </nav>
+</header>
+```
+
+```html title="templates/alumnos.html"
+<div th:replace="~{fragmentos/comunes :: cabecera('alumnos')}"></div>
+```
+
+Al renderizarse `alumnos.html`, el enlace "Alumnos" del menú recibe la clase `activo`, mientras que
+en cualquier otra página que pase un valor distinto (o ninguno) no la recibiría.
