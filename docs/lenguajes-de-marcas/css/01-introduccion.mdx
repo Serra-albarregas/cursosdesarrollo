@@ -1,0 +1,133 @@
+---
+sidebar_position: 1
+title: "Introducción a CSS"
+---
+
+import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+CSS (Cascading Style Sheets, hojas de estilo en cascada) es el lenguaje que se usa para dar estilo a una página HTML: colores, tipografías, tamaños, espaciados, posición de los elementos... Mientras que HTML define el contenido y la estructura de una página, CSS define su presentación.
+
+En páginas anteriores ya hemos usado CSS para bordes de tablas, marcos de imágenes, validación de formularios, etc. En esta unidad vamos a verlo de forma ordenada, desde cero.
+
+## Formas de incluir CSS
+
+Hay tres formas de aplicar CSS a un documento HTML: en línea, interna y externa.
+
+### CSS en línea
+
+Se escribe directamente sobre un elemento, con el atributo `style`. Solo afecta a ese elemento concreto.
+
+<HtmlPlayground initialHtml={`<p style="color: blue; font-weight: bold;">Este párrafo tiene estilo en línea.</p>`} />
+
+Es la forma menos recomendable: mezcla contenido y estilo, es difícil de mantener y no se puede reutilizar en otros elementos. Se suele reservar para pruebas rápidas o para estilos generados dinámicamente con JavaScript.
+
+### CSS interno
+
+Se escribe dentro de una etiqueta `<style>`, normalmente en el `<head>` del documento. Afecta a todo el documento en el que está.
+
+<HtmlPlayground initialHtml={`<style>
+    p {
+        color: blue;
+        font-weight: bold;
+    }
+</style>
+
+<p>Este párrafo usa CSS interno.</p>
+<p>Y este también, porque el selector afecta a todos los párrafos.</p>`} />
+
+### CSS externo
+
+Se escribe en un archivo aparte, con extensión `.css`, y se enlaza desde el HTML con la etiqueta `<link>` dentro del `<head>`:
+
+```html
+<head>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+```
+
+```css title="estilos.css"
+p {
+    color: blue;
+    font-weight: bold;
+}
+```
+
+Es la forma más recomendable en proyectos reales: separa contenido (HTML) y presentación (CSS), y un mismo archivo `.css` se puede enlazar desde varias páginas HTML, de modo que cambiar un estilo lo actualiza en todas ellas a la vez.
+
+:::note
+Los ejemplos interactivos de esta web usan dos paneles, uno de HTML y otro de CSS, que es justo lo que ocurre con el CSS externo: el HTML no contiene directamente el estilo, solo lo enlaza.
+:::
+
+A partir de aquí, usaremos ese componente de dos paneles para todos los ejemplos.
+
+## Sintaxis básica
+
+Una regla CSS se compone de un **selector**, que indica a qué elementos se aplica, y un bloque de **declaraciones** entre llaves. Cada declaración es una **propiedad** y un **valor**, separados por dos puntos, y termina en punto y coma.
+
+```css
+selector {
+    propiedad: valor;
+    propiedad: valor;
+}
+```
+
+Por ejemplo, para poner en rojo y en negrita todos los párrafos:
+
+<HtmlCssPlayground
+  initialHtml={`<p>Este párrafo está en rojo y en negrita.</p>
+<p>Este también, porque el selector <code>p</code> afecta a todos los párrafos.</p>
+<span>Este span no cambia, porque el selector no lo incluye.</span>`}
+  initialCss={`p {
+    color: red;
+    font-weight: bold;
+}`}
+/>
+
+Un mismo selector puede agrupar varias etiquetas separándolas por comas, para no repetir el mismo bloque de declaraciones:
+
+<HtmlCssPlayground
+  initialHtml={`<h2>Título</h2>
+<p>Párrafo de ejemplo.</p>`}
+  initialCss={`h2, p {
+    color: darkslateblue;
+    font-family: sans-serif;
+}`}
+/>
+
+En las próximas páginas veremos los distintos tipos de selectores (por tipo de etiqueta, clase, id, atributo...) con más detalle.
+
+## Comentarios
+
+Los comentarios en CSS se escriben entre `/*` y `*/`, pueden ocupar una o varias líneas, y no se muestran en la página. Sirven para explicar el código o para desactivar temporalmente una declaración.
+
+<HtmlCssPlayground
+  initialHtml={`<p>Párrafo de ejemplo.</p>`}
+  initialCss={`p {
+    color: red; /* esto pone el texto en rojo */
+    /* font-size: 30px; (desactivado de momento) */
+}`}
+/>
+
+A diferencia de HTML, que usa `<!-- -->`, CSS siempre usa `/* */`, igual que lenguajes como Java.
+
+## La cascada: qué pasa si hay reglas que se contradicen
+
+CSS significa, literalmente, "hojas de estilo en **cascada**". Cuando varias reglas afectan al mismo elemento y a la misma propiedad, el navegador tiene que decidir cuál gana. Una de las normas más simples es que, a igualdad de condiciones, **gana la regla que aparece más abajo** en el CSS:
+
+<HtmlCssPlayground
+  initialHtml={`<p>¿De qué color estará este párrafo?</p>`}
+  initialCss={`p {
+    color: blue;
+}
+
+p {
+    color: green;
+}`}
+/>
+
+Esto es solo una pequeña muestra: la cascada también depende de la **especificidad** del selector (por ejemplo, un id pesa más que una clase) y del origen de la regla (en línea, interna/externa, o los estilos por defecto del navegador). Lo veremos con detalle en la página de selectores.
+
+## Qué viene a continuación
+
+En las siguientes páginas veremos, uno a uno: los distintos tipos de selectores y la especificidad, colores y unidades de medida, texto y tipografía, el modelo de caja, fondos y efectos, posicionamiento, Flexbox, Grid y diseño responsive.
