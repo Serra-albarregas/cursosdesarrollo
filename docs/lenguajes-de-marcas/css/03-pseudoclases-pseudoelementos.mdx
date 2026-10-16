@@ -1,0 +1,602 @@
+---
+sidebar_position: 3
+title: "Pseudoclases y pseudoelementos"
+---
+
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+import HtmlCssJsPlayground from '@site/src/components/Playground/HtmlCssJsPlayground';
+
+En la página anterior vimos selectores que dependen de la estructura del HTML: la etiqueta, una clase, un id, un atributo. Las **pseudoclases** y los **pseudoelementos** son distintos: seleccionan según un *estado* del elemento (como si el ratón está encima) o crean/seleccionan una *parte* de él que no existe como etiqueta propia en el HTML.
+
+Se distinguen por la sintaxis:
+
+- **Pseudoclase:** dos puntos simples, `:nombre`. Ejemplo: `:hover`.
+- **Pseudoelemento:** dos puntos dobles, `::nombre`. Ejemplo: `::before`.
+
+:::note
+Por motivos históricos, algunos pseudoelementos antiguos (como `:first-line`) también se aceptan con un solo `:`, pero en CSS3 la forma correcta es con dos, para distinguirlos claramente de las pseudoclases.
+:::
+
+## Tabla resumen
+
+Para consulta rápida. Cada una se explica con más detalle, y con ejemplo, en su apartado correspondiente.
+
+**Pseudoclases**
+
+| Pseudoclase | Selecciona |
+|---|---|
+| `:hover` | El ratón está encima del elemento |
+| `:focus` | El elemento tiene el foco |
+| `:active` | El elemento se está pulsando en ese instante |
+| `:link` | Un enlace no visitado |
+| `:visited` | Un enlace ya visitado |
+| `:target` | El elemento cuyo id coincide con el ancla (`#...`) de la URL |
+| `:first-child` | El primer hijo de su padre |
+| `:last-child` | El último hijo de su padre |
+| `:only-child` | El único hijo de su padre |
+| `:nth-child(n)` | La posición `n` entre todos los hermanos |
+| `:nth-last-child(n)` | Igual, contando desde el final |
+| `:first-of-type` | El primero de su mismo tipo de etiqueta entre sus hermanos |
+| `:last-of-type` | El último de su mismo tipo entre sus hermanos |
+| `:nth-of-type(n)` | La posición `n` entre los hermanos del mismo tipo |
+| `:nth-last-of-type(n)` | Igual, contando desde el final |
+| `:not(selector)` | Lo que NO cumple el selector indicado |
+| `:root` | El elemento raíz del documento (`<html>`) |
+| `:is(lista)` | Lo que cumple cualquiera de los selectores de la lista |
+| `:has(lista)` | El elemento que contiene algo que cumple el selector de la lista |
+| `:checked` | Un checkbox o radio marcado |
+| `:disabled` | Un campo desactivado |
+| `:enabled` | Un campo activo (lo contrario de `:disabled`) |
+| `:required` | Un campo obligatorio |
+| `:optional` | Un campo no obligatorio |
+| `:valid` | Un campo que cumple sus condiciones de validación |
+| `:invalid` | Un campo que no las cumple |
+| `:user-valid` | Como `:valid`, pero solo tras interactuar con el campo |
+| `:user-invalid` | Como `:invalid`, pero solo tras interactuar con el campo |
+
+**Pseudoelementos**
+
+| Pseudoelemento | Selecciona |
+|---|---|
+| `::before` | Contenido generado antes del contenido real |
+| `::after` | Contenido generado después del contenido real |
+| `::first-letter` | La primera letra de un texto |
+| `::first-line` | La primera línea visual de un texto |
+| `::selection` | El texto mientras está seleccionado por el usuario |
+| `::placeholder` | El texto de ayuda de un campo |
+
+## Pseudoclases de interacción
+
+Estas pseudoclases reaccionan a cómo el usuario interactúa con el elemento, normalmente un enlace o un botón.
+
+- `:hover`: el ratón está encima del elemento.
+- `:focus`: el elemento tiene el foco (por ejemplo, un campo de formulario en el que se está escribiendo).
+- `:active`: el elemento se está pulsando en ese instante.
+- `:link` / `:visited`: un enlace no visitado, o uno que ya se ha visitado antes.
+- `:target`: el elemento cuyo id coincide con el ancla (`#...`) de la URL actual.
+
+<HtmlCssPlayground
+  initialHtml={`<a href="#">Enlace no visitado (pasa el ratón por aquí)</a>
+<br />
+<a href="https://example.com">Enlace que SÍ hayas visitado antes en tu navegador</a>
+<br />
+<button>Haz clic y mantén pulsado</button>
+<br />
+<input type="text" placeholder="Haz clic para enfocar" />`}
+  initialCss={`a:link {
+    color: navy;
+}
+
+a:visited {
+    color: purple;
+}
+
+a:hover {
+    color: orange;
+}
+
+button:active {
+    background-color: darkred;
+    color: white;
+}
+
+input:focus {
+    border: 2px solid teal;
+    outline: none;
+}`}
+/>
+
+Cuando se combinan `:link`, `:visited`, `:hover` y `:active` sobre el mismo `<a>`, el orden en el que se escriben importa, porque tienen la misma especificidad y gana la última regla que coincida. El orden recomendado se suele recordar con la regla mnemotécnica **LVHA**: `:link`, `:visited`, `:hover`, `:active`.
+
+:::note
+`:visited` es difícil de demostrar en vivo: por privacidad, el navegador solo aplica `:visited` a enlaces que de verdad figuran en tu historial, y además, una vez aplicado, solo permite cambiar unas pocas propiedades (`color`, `background-color`, `border-color`, `outline-color`), nunca el tamaño del texto ni nada que pudiera usarse para "leer" el historial de alguien con JavaScript. En la demo de arriba verás `:link` funcionando siempre; `:visited` solo se notará en el segundo enlace si lo has visitado antes en tu propio navegador.
+:::
+
+### `:target`
+
+A diferencia de las anteriores, `:target` no depende de una acción del ratón, sino de la URL: selecciona el elemento cuyo `id` coincide con el ancla (la parte después de `#`) de la URL actual. Se activa al pulsar un enlace interno (`<a href="#seccion1">`), sin necesidad de JavaScript.
+
+<HtmlCssPlayground
+  initialHtml={`<nav>
+    <a href="#seccion1">Ir a la sección 1</a> |
+    <a href="#seccion2">Ir a la sección 2</a>
+</nav>
+
+<section id="seccion1">
+    <h3>Sección 1</h3>
+    <p>Contenido de la primera sección.</p>
+</section>
+
+<section id="seccion2">
+    <h3>Sección 2</h3>
+    <p>Contenido de la segunda sección.</p>
+</section>`}
+  initialCss={`section {
+    padding: 10px;
+    margin-top: 8px;
+    border: 2px solid transparent;
+}
+
+section:target {
+    border-color: teal;
+    background-color: #e0f7f7;
+}`}
+/>
+
+## Pseudoclases estructurales
+
+Seleccionan un elemento según su posición entre sus hermanos, sin necesidad de clases ni ids.
+
+- `:first-child`: es el primer hijo de su padre.
+- `:last-child`: es el último hijo de su padre.
+- `:only-child`: es el único hijo de su padre.
+- `:nth-child(n)`: ocupa la posición `n` entre sus hermanos. Admite un número (`:nth-child(3)`), o una fórmula como `:nth-child(2n)` (los pares) o `:nth-child(2n+1)` (los impares).
+- `:nth-last-child(n)`: igual que `:nth-child(n)`, pero contando las posiciones desde el final en vez de desde el principio.
+
+<HtmlCssPlayground
+  initialHtml={`<ul>
+    <li>Elemento 1</li>
+    <li>Elemento 2</li>
+    <li>Elemento 3</li>
+    <li>Elemento 4</li>
+    <li>Elemento 5</li>
+</ul>`}
+  initialCss={`li:first-child {
+    font-weight: bold;
+}
+
+li:last-child {
+    color: red;
+}
+
+li:nth-child(2n) {
+    background-color: #eee;
+}`}
+/>
+
+:::tip
+`:nth-child(2n)` es justo la técnica de "filas pares" que vimos con `tbody tr:nth-child(even)` en la página de Tablas: `even` y `odd` son alias de `2n` y `2n+1`.
+:::
+
+### Prueba tu propia fórmula
+
+La fórmula `an+b` de `:nth-child()` cuesta de visualizar solo con la teoría. Elige `:nth-child` o `:nth-last-child`, escribe una fórmula (por ejemplo `2n`, `3n+1`, `odd`, `even`, o un número suelto como `5`) y comprueba qué casillas se resaltan en la rejilla:
+
+<HtmlCssJsPlayground
+  initialHtml={`<p>
+    <select id="nthMode">
+        <option value=":nth-child">:nth-child</option>
+        <option value=":nth-last-child">:nth-last-child</option>
+    </select>
+    <input type="text" id="nthInput" placeholder="2n, 3n+1, odd, 3n of .itemB" />
+</p>
+<pre><code>.grid-item<span id="selectorMode"></span>(<span id="selectorFormula"></span>) {
+    background-color: #ff5722;
+    color: white;
+}</code></pre>
+<div class="grid">
+    <div class="grid-item">1</div>
+    <div class="grid-item">2</div>
+    <div class="grid-item">3</div>
+    <div class="grid-item">4</div>
+    <div class="grid-item itemB">5<div class="small">itemB</div></div>
+    <div class="grid-item">6</div>
+    <div class="grid-item">7</div>
+    <div class="grid-item">8</div>
+    <div class="grid-item">9</div>
+    <div class="grid-item">10</div>
+    <div class="grid-item">11</div>
+    <div class="grid-item itemB">12<div class="small">itemB</div></div>
+    <div class="grid-item">13</div>
+    <div class="grid-item">14</div>
+    <div class="grid-item">15</div>
+    <div class="grid-item itemB">16<div class="small">itemB</div></div>
+    <div class="grid-item">17</div>
+    <div class="grid-item">18</div>
+    <div class="grid-item">19</div>
+    <div class="grid-item">20</div>
+    <div class="grid-item">21</div>
+    <div class="grid-item">22</div>
+    <div class="grid-item">23</div>
+    <div class="grid-item">24</div>
+    <div class="grid-item">25</div>
+    <div class="grid-item">26</div>
+    <div class="grid-item itemB">27<div class="small">itemB</div></div>
+    <div class="grid-item itemB">28<div class="small">itemB</div></div>
+    <div class="grid-item">29</div>
+    <div class="grid-item">30</div>
+    <div class="grid-item">31</div>
+    <div class="grid-item">32</div>
+    <div class="grid-item">33</div>
+    <div class="grid-item">34</div>
+    <div class="grid-item itemB">35<div class="small">itemB</div></div>
+    <div class="grid-item">36</div>
+    <div class="grid-item">37</div>
+    <div class="grid-item">38</div>
+    <div class="grid-item">39</div>
+    <div class="grid-item">40</div>
+</div>`}
+  initialCss={`.grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    max-width: 480px;
+}
+
+.grid-item {
+    position: relative;
+    background-color: #eee;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+    padding: 10px 0;
+}
+
+.itemB {
+    outline: 2px dashed #999;
+}
+
+.small {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    font-size: 0.6em;
+    color: #777;
+}
+
+.highlighted {
+    background-color: #ff5722;
+    color: white;
+}
+
+pre {
+    background-color: #272822;
+    color: #f8f8f2;
+    padding: 10px;
+    border-radius: 4px;
+}`}
+  initialJs={`const nthInput = document.getElementById('nthInput');
+const nthMode = document.getElementById('nthMode');
+const gridItems = document.querySelectorAll('.grid-item');
+const selectorMode = document.getElementById('selectorMode');
+const selectorFormula = document.getElementById('selectorFormula');
+
+const patronValido = /^(\\d+n?|\\d+n\\+\\d+|\\d+|odd|even)( of( [.#]?[A-Za-z0-9]+))?$/;
+
+function actualizar() {
+    const formula = nthInput.value.trim();
+    const pseudoclase = nthMode.value;
+
+    gridItems.forEach(item => item.classList.remove('highlighted'));
+    selectorMode.textContent = pseudoclase;
+    selectorFormula.textContent = formula;
+
+    if (formula === '') {
+        return;
+    }
+
+    if (!patronValido.test(formula)) {
+        selectorFormula.textContent = formula + ' (fórmula no válida)';
+        return;
+    }
+
+    const selector = '.grid-item' + pseudoclase + '(' + formula + ')';
+
+    try {
+        document.querySelectorAll(selector).forEach(item => {
+            item.classList.add('highlighted');
+        });
+    } catch (error) {
+        selectorFormula.textContent = formula + ' (selector no válido)';
+    }
+}
+
+nthInput.addEventListener('input', actualizar);
+nthMode.addEventListener('change', actualizar);`}
+  layout="stacked"
+/>
+
+Prueba, por ejemplo, `3` (solo el tercer elemento), `3n` (cada tres), `-n+10` con `:nth-last-child` (los últimos 10) o `3n of .itemB` (cada tercer elemento, contando solo entre los marcados como `itemB`; esta sintaxis con `of` es más moderna y puede no funcionar en navegadores antiguos).
+
+`:nth-child` solo se fija en la posición entre **todos** los hermanos, sin importar su etiqueta. Si necesitas contar solo entre hermanos del mismo tipo, existe la variante `:nth-of-type(n)` (y también `:first-of-type` / `:last-of-type`):
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja">
+    <h3>Título</h3>
+    <p>Primer párrafo.</p>
+    <p>Segundo párrafo.</p>
+    <p>Tercer párrafo.</p>
+</div>`}
+  initialCss={`p:first-child {
+    color: red;
+}
+
+p:first-of-type {
+    font-weight: bold;
+}`}
+/>
+
+En este ejemplo, ningún `<p>` es `:first-child` (el primer hijo del `div` es el `<h3>`), así que la primera regla no se aplica a nadie. En cambio, el primer párrafo sí es `:first-of-type` dentro de los párrafos, así que se pone en negrita.
+
+La familia completa de `:nth-of-type` tiene cuatro pseudoclases, con el mismo matiz en todas: cuentan solo entre los hermanos del mismo tipo de etiqueta, ignorando el resto.
+
+| Pseudoclase | Selecciona |
+|---|---|
+| `:first-of-type` | El primer elemento de ese tipo entre sus hermanos |
+| `:last-of-type` | El último elemento de ese tipo entre sus hermanos |
+| `:nth-of-type(n)` | El elemento que ocupa la posición `n` **entre los de ese tipo**, contando desde el principio. Admite las mismas fórmulas que `:nth-child` (`2n`, `odd`, `even`...) |
+| `:nth-last-of-type(n)` | Igual que `:nth-of-type(n)`, pero contando desde el final |
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja">
+    <h3>Título</h3>
+    <p>Párrafo 1</p>
+    <p>Párrafo 2</p>
+    <p>Párrafo 3</p>
+    <p>Párrafo 4</p>
+    <p>Párrafo 5</p>
+</div>`}
+  initialCss={`p:nth-of-type(2n) {
+    background-color: #eee;
+}
+
+p:last-of-type {
+    font-weight: bold;
+}
+
+p:nth-last-of-type(1) {
+    color: red;
+}`}
+/>
+
+`p:last-of-type` y `p:nth-last-of-type(1)` seleccionan, en este ejemplo, al mismo elemento (el último párrafo): son dos formas distintas de llegar al mismo sitio, igual que `:first-child` y `:nth-child(1)` cuando el primer hijo es del tipo que buscas.
+
+### Negación con `:not()`
+
+`:not(selector)` selecciona los elementos que **no** cumplen el selector que lleva dentro. Es útil para aplicar un estilo a "todos menos uno".
+
+<HtmlCssPlayground
+  initialHtml={`<ul>
+    <li>Elemento 1</li>
+    <li class="activo">Elemento 2</li>
+    <li>Elemento 3</li>
+</ul>`}
+  initialCss={`li:not(.activo) {
+    opacity: 0.5;
+}`}
+/>
+
+### `:root`
+
+Selecciona el elemento raíz del documento: en HTML, siempre es `<html>`. Hace lo mismo que el selector de tipo `html`, pero con la especificidad de una clase en vez de un tipo, así que gana si hay conflicto entre ambos. Se usa sobre todo para declarar **variables CSS** (propiedades personalizadas), que veremos más adelante, porque así quedan disponibles en todo el documento:
+
+<HtmlCssPlayground
+  initialHtml={`<p class="aviso">Este párrafo usa el color definido en :root.</p>`}
+  initialCss={`:root {
+    --color-aviso: darkorange;
+}
+
+.aviso {
+    color: var(--color-aviso);
+    border: 2px solid var(--color-aviso);
+    padding: 8px;
+}`}
+/>
+
+### `:is()`
+
+`:is(lista-de-selectores)` selecciona cualquier elemento que cumpla **al menos uno** de los selectores de la lista. Sirve para evitar repetir el mismo selector varias veces cuando varias rutas comparten una parte final.
+
+<HtmlCssPlayground
+  initialHtml={`<article>
+    <h3>Título en artículo</h3>
+</article>
+<aside>
+    <h3>Título en aside</h3>
+</aside>
+<footer>
+    <h3>Título en footer (no cambia)</h3>
+</footer>`}
+  initialCss={`:is(article, aside) h3 {
+    color: darkslateblue;
+}`}
+/>
+
+Esto equivale a escribir `article h3, aside h3`, pero resulta más corto cuanto más larga es la parte que se repite.
+
+### `:has()`
+
+`:has(lista-de-selectores)` selecciona un elemento si **contiene** algo que cumple el selector indicado. Es la pseudoclase "al revés": en vez de describir al propio elemento, describe lo que hay dentro de él. Por ejemplo, para resaltar el contenedor de un campo de formulario cuando el campo que lleva dentro es inválido:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="campo">
+    <label for="nombre">Nombre</label>
+    <input type="text" id="nombre" required />
+</div>
+<div class="campo">
+    <label for="email">Email (opcional)</label>
+    <input type="email" id="email" />
+</div>`}
+  initialCss={`.campo {
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.campo:has(input:invalid) {
+    background-color: #ffe5e5;
+}`}
+/>
+
+El primer campo, obligatorio y vacío, es `:invalid`, así que su `.campo` contenedor se resalta. El segundo, al no ser obligatorio y estar vacío, es `:valid` por defecto (como vimos en la página de validación), así que no se resalta.
+
+:::note
+`:has()` es de las pseudoclases más recientes de CSS; ya está disponible en las versiones actuales de los navegadores principales, pero conviene tenerlo en cuenta si el proyecto necesita dar soporte a navegadores antiguos.
+:::
+
+## Pseudoclases de formularios
+
+Ya usamos `:valid` e `:invalid` en la página de validación de formularios. Hay varias más que reaccionan al estado de un campo:
+
+- `:checked`: un checkbox o radio button marcado.
+- `:disabled` / `:enabled`: un campo desactivado o activo.
+- `:required` / `:optional`: un campo obligatorio o no.
+- `:valid` / `:invalid`: un campo que cumple, o no, sus condiciones de validación.
+
+<HtmlCssPlayground
+  initialHtml={`<form>
+    <p><input type="checkbox" id="c1" /> <label for="c1">Marca esta casilla</label></p>
+    <p><input type="text" disabled value="Campo desactivado" /> (:disabled)</p>
+    <p><input type="text" value="Campo activo" /> (:enabled)</p>
+    <p><input type="text" required placeholder="Campo obligatorio" /> (:required)</p>
+    <p><input type="text" placeholder="Campo opcional" /> (:optional)</p>
+</form>`}
+  initialCss={`input:checked + label {
+    font-weight: bold;
+    color: teal;
+}
+
+input:disabled {
+    background-color: #eee;
+    color: #999;
+}
+
+input:enabled {
+    border: 2px solid teal;
+}
+
+input:required {
+    border-left: 4px solid darkorange;
+}
+
+input:optional {
+    border-left: 4px solid lightgray;
+}`}
+/>
+
+### `:user-valid` y `:user-invalid`
+
+`:valid` e `:invalid` se aplican desde el primer instante, incluso antes de que el usuario haya escrito nada. Eso significa que un campo obligatorio y vacío aparece en rojo nada más cargar la página, lo cual puede resultar agresivo.
+
+`:user-valid` y `:user-invalid` resuelven esto: se comportan igual que `:valid`/`:invalid`, pero **solo después de que el usuario haya interactuado** con el campo (lo haya rellenado y perdido el foco, o se haya intentado enviar el formulario). Compara los dos campos siguientes, ambos obligatorios y con un mínimo de 3 caracteres: haz clic dentro, sal sin escribir nada y compara.
+
+<HtmlCssPlayground
+  initialHtml={`<form>
+    <p>
+        <label for="a">Con <code>:invalid</code> (se marca nada más cargar la página):</label><br />
+        <input type="text" id="a" required minlength="3" />
+    </p>
+    <p>
+        <label for="b">Con <code>:user-invalid</code> (se marca solo tras interactuar):</label><br />
+        <input type="text" id="b" required minlength="3" />
+    </p>
+</form>`}
+  initialCss={`#a:invalid {
+    border: 2px solid red;
+    background-color: #ffe5e5;
+}
+
+#b:user-invalid {
+    border: 2px solid red;
+    background-color: #ffe5e5;
+}`}
+/>
+
+:::note
+`:user-valid`/`:user-invalid` tienen buen soporte en navegadores modernos, pero son más recientes que `:valid`/`:invalid`. En la página de validación de formularios decidimos mantener los ejemplos solo con `:valid`/`:invalid` por sencillez; estas pseudoclases son la forma "correcta" de resolver ese mismo problema cuando quieras pulir la experiencia de usuario.
+:::
+
+## Pseudoelementos
+
+Un pseudoelemento selecciona una parte del elemento que no tiene una etiqueta propia en el HTML.
+
+### `::before` y `::after`
+
+Insertan contenido antes o después del contenido real del elemento, sin necesidad de añadirlo al HTML. Requieren siempre la propiedad `content` (puede estar vacía, `content: "";`, si solo se quiere usar para decorar con CSS).
+
+<HtmlCssPlayground
+  initialHtml={`<p class="nota">Esto es una nota importante.</p>`}
+  initialCss={`.nota::before {
+    content: "⚠️ ";
+}
+
+.nota::after {
+    content: " (léelo con atención)";
+    font-style: italic;
+    color: gray;
+}`}
+/>
+
+`::before` y `::after` también se usan mucho para añadir formas o decoraciones puramente visuales con `content: "";`, combinado con `position` (que veremos más adelante) o con `border`.
+
+### `::first-letter` y `::first-line`
+
+Seleccionan la primera letra o la primera línea (visual, no una frase) de un elemento de texto.
+
+<HtmlCssPlayground
+  initialHtml={`<p class="capitular">Érase una vez un lenguaje de marcas que organizaba el contenido de las páginas web, mientras que otro lenguaje se encargaba de darle estilo.</p>`}
+  initialCss={`.capitular::first-letter {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: darkred;
+}
+
+.capitular::first-line {
+    font-variant: small-caps;
+}`}
+/>
+
+### `::selection`
+
+Da estilo al texto mientras está seleccionado por el usuario (al arrastrar el ratón sobre él).
+
+<HtmlCssPlayground
+  initialHtml={`<p>Selecciona este texto para ver el efecto.</p>`}
+  initialCss={`::selection {
+    background-color: yellow;
+    color: black;
+}`}
+/>
+
+### `::placeholder`
+
+Da estilo al texto de ayuda de un campo (el que se define con el atributo `placeholder`), antes de que el usuario escriba nada.
+
+<HtmlCssPlayground
+  initialHtml={`<input type="text" placeholder="Escribe aquí..." />`}
+  initialCss={`::placeholder {
+    color: lightgray;
+    font-style: italic;
+}`}
+/>
+
+## Especificidad
+
+Como vimos en la página anterior: las **pseudoclases** cuentan como una clase a efectos de especificidad (mismo nivel que `.clase` o `[atributo]`), y los **pseudoelementos** cuentan como un tipo (mismo nivel que `p` o `div`). Por eso `a:hover` tiene la misma especificidad que `a.destacado`, y `p::first-letter` la misma que `p span`.
+
+`:is()` y `:has()` son una excepción: no cuentan como una clase fija, sino que adoptan la especificidad de su argumento más específico. Por ejemplo, `:is(#aviso, p)` cuenta como un id, porque `#aviso` es el más específico de los dos argumentos.
+
+## Qué viene a continuación
+
+En la siguiente página veremos los colores y las unidades de medida de CSS.
