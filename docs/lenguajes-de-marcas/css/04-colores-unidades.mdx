@@ -1,0 +1,363 @@
+---
+sidebar_position: 4
+title: "Colores y unidades"
+---
+
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+Colores y unidades de medida son dos de las piezas que más vamos a usar en el resto del tema. Ya han aparecido de forma suelta en páginas anteriores (`color`, `%`, `px`...); aquí los vemos de forma ordenada, y además aprendemos a guardarlos en variables para no repetirlos por todo el CSS.
+
+## Formatos de color
+
+CSS admite varias formas de escribir el mismo color:
+
+- **Nombre:** `red`, `teal`, `darkorange`... CSS reconoce unos 140 nombres de color.
+- **Hexadecimal:** `#ff0000`, tres pares de dígitos (rojo, verde, azul) en base 16. También existe la forma corta de 3 dígitos, `#f00`, cuando cada par se repite.
+- **`rgb()`:** los mismos tres componentes (rojo, verde, azul), pero en base 10, de 0 a 255.
+- **`hsl()`:** tono (`hue`, un ángulo de 0 a 360), saturación y luminosidad, ambas en porcentaje. Es el más intuitivo para ajustar un color a mano: cambiar el tono es girar la rueda de color, sin tener que recalcular tres números a la vez.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja nombre">red</div>
+<div class="caja hex">#ff0000</div>
+<div class="caja rgb">rgb(255, 0, 0)</div>
+<div class="caja hsl">hsl(0, 100%, 50%)</div>`}
+  initialCss={`.caja {
+    display: inline-block;
+    width: 110px;
+    padding: 10px;
+    color: white;
+    text-align: center;
+}
+
+.nombre {
+    background-color: red;
+}
+
+.hex {
+    background-color: #ff0000;
+}
+
+.rgb {
+    background-color: rgb(255, 0, 0);
+}
+
+.hsl {
+    background-color: hsl(0, 100%, 50%);
+}`}
+/>
+
+Los cuatro recuadros muestran exactamente el mismo color, escrito de cuatro formas distintas.
+
+### Transparencia
+
+`rgba()` y `hsl()` (con una barra `/`) añaden un cuarto valor, el **canal alfa**, de 0 (totalmente transparente) a 1 (totalmente opaco):
+
+<HtmlCssPlayground
+  initialHtml={`<div class="fondo">
+    <div class="caja">rgba 25%</div>
+    <div class="caja hsl">hsl 75%</div>
+</div>`}
+  initialCss={`.fondo {
+    background-image: repeating-linear-gradient(45deg, #ccc 0 10px, #eee 10px 20px);
+    padding: 10px;
+}
+
+.caja {
+    display: inline-block;
+    width: 120px;
+    padding: 10px;
+    color: black;
+    text-align: center;
+    background-color: rgba(255, 0, 0, 0.25);
+}
+
+.hsl {
+    background-color: hsl(0 100% 50% / 0.75);
+}`}
+/>
+
+El fondo a cuadros deja ver, a través del color semitransparente, cuánto se nota el patrón de debajo: con un 25% de opacidad se ve casi todo el fondo; con un 75%, casi nada.
+
+## `currentColor`
+
+`currentColor` es una palabra clave especial: siempre vale lo mismo que la propiedad `color` calculada en ese elemento. Es útil para que un borde, una sombra o cualquier otra propiedad de color "seiga" automáticamente al color del texto, sin tener que repetirlo ni crear una variable para algo tan puntual.
+
+<HtmlCssPlayground
+  initialHtml={`<blockquote class="cita cita-1">Esta cita usa un azul.</blockquote>
+<blockquote class="cita cita-2">Esta cita usa un verde.</blockquote>`}
+  initialCss={`.cita {
+    padding: 8px 12px;
+    border-left: 4px solid currentColor;
+    font-style: italic;
+}
+
+.cita-1 {
+    color: darkslateblue;
+}
+
+.cita-2 {
+    color: darkgreen;
+}`}
+/>
+
+El `border-left` no menciona ningún color propio: toma el que tenga `color` en cada cita, así que cambiar `color` cambia también el borde, sin tocar la regla del borde.
+
+## Accesibilidad: contraste de color
+
+No todas las combinaciones de color de texto y de fondo se leen bien. Un contraste insuficiente (por ejemplo, gris claro sobre blanco) dificulta la lectura, especialmente a personas con baja visión. Antes de dar por buena una combinación de colores, conviene comprobar el contraste con alguna herramienta:
+
+- **WebAIM Contrast Checker:** página web donde se introducen los dos colores (texto y fondo) y da el ratio de contraste y si cumple los niveles de accesibilidad AA/AAA.
+- **El inspector del navegador:** en Chrome y Firefox, al inspeccionar un elemento y abrir el selector de color de la propiedad `color`, se muestra directamente el ratio de contraste frente al fondo.
+- **Lighthouse:** la auditoría de accesibilidad integrada en Chrome (pestaña "Lighthouse" de las herramientas de desarrollador) señala automáticamente los contrastes insuficientes de toda la página.
+
+## Unidades de medida
+
+| Unidad | Tipo | Es relativa a... |
+|---|---|---|
+| `px` | Absoluta | Nada, siempre mide lo mismo |
+| `%` | Relativa | El tamaño del elemento contenedor |
+| `em` | Relativa | El `font-size` del propio elemento (o del padre, si no se ha definido en el propio elemento) |
+| `rem` | Relativa | El `font-size` del elemento raíz (`<html>`) |
+| `vw` / `vh` | Relativa | El ancho/alto de la ventana del navegador |
+| `svh` / `dvh` | Relativa | El alto "pequeño"/"dinámico" de la ventana (ver más abajo) |
+
+### `em` frente a `rem`
+
+Ambas se basan en un tamaño de fuente, pero `em` se acumula con el anidamiento (porque cada elemento mira al `font-size` de su padre) y `rem` no (porque siempre mira a la raíz, sin importar cuántos niveles de anidamiento haya):
+
+<HtmlCssPlayground
+  initialHtml={`<div class="nivel-em">
+    Nivel 1 (em)
+    <div class="nivel-em">
+        Nivel 2 (em)
+        <div class="nivel-em">
+            Nivel 3 (em)
+        </div>
+    </div>
+</div>
+
+<div class="nivel-rem">
+    Nivel 1 (rem)
+    <div class="nivel-rem">
+        Nivel 2 (rem)
+        <div class="nivel-rem">
+            Nivel 3 (rem)
+        </div>
+    </div>
+</div>`}
+  initialCss={`.nivel-em {
+    font-size: 1.2em;
+    border: 1px solid #ccc;
+    padding: 6px;
+}
+
+.nivel-rem {
+    font-size: 1.2rem;
+    border: 1px solid #ccc;
+    padding: 6px;
+}`}
+/>
+
+En el primer bloque, el texto crece en cada nivel (1.2em del padre, que a su vez ya era 1.2em del suyo...). En el segundo, los tres niveles miden exactamente lo mismo, porque `rem` ignora el anidamiento y siempre mira al tamaño de fuente de `<html>`.
+
+:::tip
+Por eso `rem` suele preferirse para tamaños de fuente y espaciados generales (resultado predecible, sin sorpresas por anidamiento), y `em` se reserva para cuando sí interesa que algo escale junto con el texto que lo rodea (por ejemplo, el espaciado interno de un botón, para que crezca si el texto del botón crece).
+:::
+
+### Unidades de viewport: `vh` frente a `svh`/`dvh`
+
+`100vh` mide toda la altura de la ventana del navegador. El problema aparece en móvil: muchos navegadores muestran y ocultan barras (la de direcciones, por ejemplo) al hacer scroll, y `vh` no se recalculaba con ese cambio, lo que provocaba que un elemento con `height: 100vh` quedara cortado o dejara un hueco según el momento.
+
+Para resolverlo existen variantes más nuevas:
+
+- `svh` (*small viewport height*): la altura cuando las barras del navegador están visibles (el valor más pequeño posible).
+- `lvh` (*large viewport height*): la altura cuando las barras están ocultas (el valor más grande posible).
+- `dvh` (*dynamic viewport height*): se recalcula en tiempo real según las barras estén visibles o no en cada momento.
+
+Este efecto no se puede apreciar bien en el entorno de prueba de esta página, porque el tamaño de la ventana de la demo es fijo; pruébalo directamente en el móvil con `height: 100dvh` para notar la diferencia frente a `100vh`.
+
+## `calc()`
+
+`calc()` permite combinar unidades distintas en un mismo cálculo, algo que no se puede hacer con una simple suma de números. Es imprescindible, por ejemplo, para "el 100% del ancho menos un margen fijo en píxeles":
+
+<HtmlCssPlayground
+  initialHtml={`<div class="contenedor">
+    <div class="caja-100">width: 100%</div>
+    <div class="caja-calc">width: calc(100% - 40px)</div>
+</div>`}
+  initialCss={`.contenedor {
+    background-color: #eee;
+    padding: 10px;
+}
+
+.caja-100, .caja-calc {
+    background-color: teal;
+    color: white;
+    padding: 8px;
+    margin-bottom: 6px;
+    box-sizing: border-box;
+}
+
+.caja-calc {
+    background-color: darkorange;
+}`}
+/>
+
+Fíjate en el espacio que queda a la derecha de la caja naranja: son los 40px que `calc()` ha restado al 100% del contenedor. La sintaxis exige espacios alrededor de `+` y `-` (`calc(100% - 40px)`, nunca `calc(100%-40px)`), porque si no, CSS no sabría distinguir el signo del operador de un signo pegado al número.
+
+## Variables CSS (propiedades personalizadas)
+
+Una variable CSS se declara con dos guiones delante del nombre (`--color-principal`) y se lee con la función `var()`. Se pueden declarar en cualquier selector, pero lo habitual es declararlas en `:root` para que estén disponibles en todo el documento:
+
+<HtmlCssPlayground
+  initialHtml={`<button class="boton">Aceptar</button>
+<p class="aviso">Aviso con el mismo color.</p>`}
+  initialCss={`:root {
+    --color-principal: teal;
+}
+
+.boton {
+    background-color: var(--color-principal);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+}
+
+.aviso {
+    color: var(--color-principal);
+    font-weight: bold;
+}`}
+/>
+
+Cambiar `--color-principal` en un solo sitio actualiza a la vez el botón y el aviso, en vez de tener que buscar y cambiar `teal` en cada regla que lo use.
+
+### Valor por defecto
+
+`var()` admite un segundo argumento: el valor que se usará si la variable no existe (por ejemplo, porque aún no se ha declarado, o se ha escrito mal el nombre):
+
+<HtmlCssPlayground
+  initialHtml={`<p class="correcta">Usa --color-texto (sí existe)</p>
+<p class="con-fallback">Usa --color-inexistente (no existe, usa el valor por defecto)</p>`}
+  initialCss={`:root {
+    --color-texto: darkslateblue;
+}
+
+.correcta {
+    color: var(--color-texto, black);
+}
+
+.con-fallback {
+    color: var(--color-inexistente, gray);
+}`}
+/>
+
+El segundo párrafo queda en gris: como `--color-inexistente` no se ha declarado en ningún sitio, `var()` recurre al valor alternativo en vez de fallar o dejar la propiedad sin aplicar.
+
+### Ámbito: redefinir una variable
+
+Una variable se puede volver a declarar dentro de un selector más concreto, y ese nuevo valor solo afecta a ese selector y a lo que haya dentro de él, sin tocar el valor general:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="tarjeta">Tarjeta normal</div>
+<div class="tarjeta tarjeta-alerta">Tarjeta de alerta</div>
+<div class="tarjeta">Otra tarjeta normal</div>`}
+  initialCss={`:root {
+    --color-tarjeta: teal;
+}
+
+.tarjeta {
+    border: 3px solid var(--color-tarjeta);
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.tarjeta-alerta {
+    --color-tarjeta: crimson;
+}`}
+/>
+
+Las dos tarjetas normales usan el valor de `:root` (`teal`); la de alerta redefine `--color-tarjeta` solo para sí misma, y como el borde se sigue leyendo con `var(--color-tarjeta)`, cambia de color sin tocar la regla `.tarjeta`.
+
+### Variables más allá del color
+
+Una variable CSS puede guardar cualquier valor, no solo colores: un espaciado, un radio de borde, una fuente... Declarando varias variables relacionadas se puede montar un pequeño "sistema de diseño" que varios componentes comparten:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="tarjeta">
+    <h3>Tarjeta 1</h3>
+    <p>Todo el espaciado y los bordes salen de las mismas variables.</p>
+</div>
+<div class="tarjeta">
+    <h3>Tarjeta 2</h3>
+    <p>Cambia una variable y las dos tarjetas cambian a la vez.</p>
+</div>`}
+  initialCss={`:root {
+    --color-principal: teal;
+    --espaciado: 12px;
+    --radio-borde: 8px;
+}
+
+.tarjeta {
+    border: 2px solid var(--color-principal);
+    border-radius: var(--radio-borde);
+    padding: var(--espaciado);
+    margin-bottom: var(--espaciado);
+}
+
+.tarjeta h3 {
+    color: var(--color-principal);
+    margin-top: 0;
+}`}
+/>
+
+Prueba a cambiar solo `--espaciado` o `--radio-borde` en el CSS: como todas las propiedades que lo usan son `var(--espaciado)` y `var(--radio-borde)`, un solo cambio se nota en todas partes a la vez.
+
+### `calc()` con variables
+
+`calc()` y `var()` se combinan a menudo: es una forma habitual de derivar un valor a partir de otro sin declarar una segunda variable aparte, por ejemplo para que un espaciado "grande" sea siempre el doble que el espaciado base:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja">padding = var(--espaciado)</div>
+<div class="caja caja-grande">padding = calc(var(--espaciado) * 2)</div>`}
+  initialCss={`:root {
+    --espaciado: 10px;
+}
+
+.caja {
+    background-color: teal;
+    color: white;
+    padding: var(--espaciado);
+    margin-bottom: 8px;
+}
+
+.caja-grande {
+    background-color: darkorange;
+    padding: calc(var(--espaciado) * 2);
+}`}
+/>
+
+Si cambias `--espaciado` en `:root`, la segunda caja sigue manteniendo el doble de espaciado que la primera, porque su valor depende del de la variable en vez de estar escrito a mano.
+
+## `clamp()`, `min()` y `max()`
+
+Estas tres funciones permiten que un valor se adapte a su contexto sin necesidad de escribir una media query:
+
+- `min(a, b)`: usa el **más pequeño** de los dos valores.
+- `max(a, b)`: usa el **más grande** de los dos valores.
+- `clamp(mínimo, preferido, máximo)`: usa el valor preferido, pero sin bajar del mínimo ni subir del máximo. Es, en realidad, un atajo de `max(mínimo, min(preferido, máximo))`.
+
+Se usan mucho para tamaños de fuente "fluidos": que crezcan con el ancho de la ventana, pero sin hacerse nunca demasiado pequeños ni demasiado grandes.
+
+<HtmlCssPlayground
+  initialHtml={`<p class="fluido">Cambia el ancho de la ventana de la demo (o del navegador) para ver cómo cambia este texto.</p>`}
+  initialCss={`.fluido {
+    font-size: clamp(1rem, 4vw, 2.5rem);
+}`}
+/>
+
+Aquí, `1rem` es el tamaño mínimo, `4vw` el tamaño "preferido" (que depende del ancho de la ventana) y `2.5rem` el máximo. En una ventana estrecha, `4vw` da un valor menor que `1rem`, así que `clamp()` usa el mínimo; en una ventana muy ancha, `4vw` supera `2.5rem`, así que usa el máximo; en medio, usa el valor fluido tal cual.
+
+:::tip
+`clamp()` resuelve de un plumazo muchos casos en los que antes hacían falta dos o tres media queries solo para ir ajustando un `font-size`. No sustituye a las media queries para cambios de diseño más grandes (eso lo veremos en la página de diseño responsive), pero para un valor numérico que solo necesita "crecer un poco, con límites", suele ser la opción más simple.
+:::
