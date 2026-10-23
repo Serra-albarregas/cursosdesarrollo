@@ -1,0 +1,244 @@
+---
+id: validaciones-personalizadas
+title: 5. Validaciones personalizadas
+sidebar_label: 5. Validaciones personalizadas
+sidebar_position: 5
+description: Cómo crear una anotación de validación propia con @Constraint y ConstraintValidator, usando como ejemplo una fecha de nacimiento que solo admite mayores de edad, y cómo hacerla configurable.
+---
+
+# 5. Validaciones personalizadas
+
+Las anotaciones de Bean Validation que vimos en la página de validación (`@NotBlank`, `@Size`,
+`@Email`, `@Pattern`...) cubren muchos casos, pero no todos. Hay reglas que dependen de la lógica de
+nuestra aplicación y que ninguna anotación estándar sabe comprobar. En esta página aprendemos a
+crear **nuestra propia anotación**, que se usará exactamente igual que las demás.
+
+Como ejemplo, validaremos una fecha de nacimiento para que solo se acepten personas **mayores de
+edad**.
+
+## 5.1. Las piezas
+
+Una validación personalizada se compone de dos clases, más su uso en el formulario:
+
+| Pieza | Qué es | Qué hace |
+|---|---|---|
+| La **anotación** (`@MayorDeEdad`) | Una `@interface` | Es lo que se escribe sobre el atributo; declara el nombre y el mensaje por defecto |
+| El **validador** (`MayorDeEdadValidator`) | Una clase que implementa `ConstraintValidator` | Contiene la lógica: decide si un valor es válido o no |
+| El **uso** | La anotación sobre un atributo de la clase del formulario | Activa la regla |
+
+La anotación y el validador se enlazan entre sí: la anotación indica qué validador la comprueba
+(`@Constraint(validatedBy = ...)`), y el validador declara a qué anotación pertenece.
+
+Estas dos clases suelen colocarse en un paquete propio, junto a `controllers`, `services` y el resto:
+
+```text
+es.centro.miproyecto/
+├── controllers/
+├── services/
+├── models/
+└── validation/
+    ├── MayorDeEdad.java
+    └── MayorDeEdadValidator.java
+```
+
+## 5.2. La anotación
+
+```java
+package es.centro.miproyecto.validation;
+
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = MayorDeEdadValidator.class)
+public @interface MayorDeEdad {
+
+    String message() default "Debes ser mayor de edad";
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+}
+```
+
+Casi todo es plantilla que se repite en cualquier anotación de validación. Lo que significa cada
+parte:
+
+| Elemento | Para qué sirve |
+|---|---|
+| `@interface` | Declara que esto es una anotación, no una clase normal |
+| `@Target(ElementType.FIELD)` | Indica dónde se puede escribir: aquí, solo sobre atributos |
+| `@Retention(RetentionPolicy.RUNTIME)` | Hace que la anotación siga existiendo cuando la aplicación se ejecuta; sin esto, Spring no podría leerla |
+| `@Constraint(validatedBy = ...)` | Enlaza la anotación con la clase validadora que contiene la lógica |
+| `message()` | El mensaje de error por defecto, que se puede cambiar al usar la anotación |
+| `groups()` y `payload()` | Los exige el estándar de Bean Validation. Aquí no los usaremos, pero deben estar declarados tal cual, o la validación falla al arrancar |
+
+## 5.3. El validador
+
+```java
+package es.centro.miproyecto.validation;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import java.time.LocalDate;
+import java.time.Period;
+
+public class MayorDeEdadValidator implements ConstraintValidator<MayorDeEdad, LocalDate> {
+
+    @Override
+    public boolean isValid(LocalDate fechaNacimiento, ConstraintValidatorContext context) {
+        if (fechaNacimiento == null) {
+            return true; // de los valores nulos se encarga @NotNull
+        }
+        return Period.between(fechaNacimiento, LocalDate.now()).getYears() >= 18;
+    }
+}
+```
+
+Los elementos que intervienen:
+
+- **`ConstraintValidator<MayorDeEdad, LocalDate>`**: la interfaz que hay que implementar. Los dos
+  tipos entre `<...>` son, en orden, **la anotación** a la que pertenece este validador y **el tipo
+  de dato** sobre el que se puede aplicar. Aquí, `@MayorDeEdad` solo será válida sobre atributos
+  `LocalDate`.
+- **`isValid(valor, context)`**: el único método obligatorio. Recibe el valor del atributo y
+  **devuelve `true` si es válido** y `false` si no lo es. Si devuelve `false`, Spring registra el
+  error en el `BindingResult`, con el mensaje de la anotación.
+- **`ConstraintValidatorContext`**: permite personalizar el error (por ejemplo, cambiar el mensaje
+  desde el código). Para casos sencillos como este no se utiliza.
+
+:::note
+¿Por qué los nulos son válidos?
+Las anotaciones estándar siguen la convención de considerar válido un valor `null`: solo comprueban
+el dato cuando existe. Así se puede combinar cada regla con `@NotNull` cuando el campo es
+obligatorio, y cada anotación se ocupa de **una única cosa**. Es recomendable seguir la misma
+convención en las anotaciones propias.
+:::
+
+:::note
+Aplicarla sobre un tipo incorrecto
+Si se escribe `@MayorDeEdad` sobre un atributo que no es `LocalDate` (por ejemplo, un `String`),
+la aplicación falla en tiempo de ejecución con un error de tipo `UnexpectedTypeException`: Spring no
+encuentra ningún validador que sepa comprobar ese tipo.
+:::
+
+## 5.4. Usar la anotación
+
+Se escribe sobre el atributo, como cualquier otra, y se puede combinar con el resto:
+
+```java
+@NotNull(message = "La fecha de nacimiento es obligatoria")
+@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+@MayorDeEdad(message = "Debes tener al menos 18 años")
+private LocalDate fechaNacimiento;
+```
+
+- `@NotNull` exige que haya fecha.
+- `@DateTimeFormat` es necesaria para que Spring convierta el texto de `<input type="date">` en un
+  `LocalDate` (visto en la página de validación).
+- `@MayorDeEdad` comprueba la regla. El `message` es opcional: si se omite, se usa el de la anotación.
+
+A partir de aquí, **todo lo demás funciona sin cambios**: `@Valid` y `BindingResult` en el
+controlador, y `th:errors` y `th:errorclass` en la plantilla.
+
+```html
+<label for="fechaNacimiento">Fecha de nacimiento:</label>
+<input type="date" th:field="*{fechaNacimiento}" th:errorclass="campo-error">
+<span class="mensaje-error" th:if="${#fields.hasErrors('fechaNacimiento')}"
+      th:errors="*{fechaNacimiento}">Error</span>
+```
+
+También se puede personalizar el mensaje en `messages.properties`, con el mismo sistema de códigos
+de la página de validación. El código empieza por el nombre de la anotación:
+
+```properties title="src/main/resources/messages.properties"
+MayorDeEdad.alumno.fechaNacimiento=Solo se admiten alumnos mayores de edad
+MayorDeEdad=No cumples la edad mínima
+```
+
+## 5.5. Hacerla configurable
+
+Con la edad escrita dentro del validador, la anotación solo sirve para los 18 años. Una anotación
+puede tener **atributos propios**, igual que `@Size` tiene `min` y `max`. Así, la misma anotación
+se puede reutilizar con otra edad mínima.
+
+Se añade el atributo a la anotación, con un valor por defecto:
+
+```java
+public @interface MayorDeEdad {
+
+    String message() default "Debes tener al menos {edadMinima} años";
+
+    int edadMinima() default 18;
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+}
+```
+
+Y el validador lo lee en el método `initialize`, que Spring ejecuta una vez al crear el validador:
+
+```java
+public class MayorDeEdadValidator implements ConstraintValidator<MayorDeEdad, LocalDate> {
+
+    private int edadMinima;
+
+    @Override
+    public void initialize(MayorDeEdad anotacion) {
+        this.edadMinima = anotacion.edadMinima();
+    }
+
+    @Override
+    public boolean isValid(LocalDate fechaNacimiento, ConstraintValidatorContext context) {
+        if (fechaNacimiento == null) {
+            return true;
+        }
+        return Period.between(fechaNacimiento, LocalDate.now()).getYears() >= edadMinima;
+    }
+}
+```
+
+Ahora se puede usar con el valor por defecto o con otro:
+
+```java
+@MayorDeEdad                      // 18 años
+private LocalDate fechaNacimiento;
+
+@MayorDeEdad(edadMinima = 16)     // 16 años
+private LocalDate fechaIncorporacion;
+```
+
+En el `message`, `{edadMinima}` se sustituye por el valor del atributo: el error de la segunda
+línea diría "Debes tener al menos 16 años".
+
+## 5.6. Probarla
+
+1. Añade `fechaNacimiento` con sus anotaciones a la clase `Alumno`, y el campo a la plantilla.
+2. Pon `novalidate` en el `<form>` para que el navegador no interfiera.
+3. Envía una fecha de hace menos de 18 años: debe aparecer el error.
+4. Envía una fecha de hace 18 años exactos, o más: debe aceptarse.
+5. Deja la fecha vacía: debe salir el error de `@NotNull`, no el de `@MayorDeEdad`.
+
+## 5.7. Resumen
+
+| Pieza | Función |
+|---|---|
+| `@interface` + `@Constraint(validatedBy = ...)` | Declara la anotación y la enlaza con su validador |
+| `message()`, `groups()`, `payload()` | Atributos obligatorios de cualquier anotación de validación |
+| `ConstraintValidator<A, T>` | Interfaz del validador: `A` es la anotación y `T` el tipo que valida |
+| `isValid(valor, context)` | Devuelve `true` si el valor es válido |
+| `initialize(anotacion)` | Opcional: lee los atributos de la anotación, si los tiene |
+| Valores `null` | Se consideran válidos; para exigirlos, se combina con `@NotNull` |
+
+:::note
+Otras formas de validar
+Existen alternativas para reglas muy concretas (por ejemplo, `@AssertTrue` sobre un método de la
+clase, o añadir un error a mano desde el controlador con `BindingResult`). Una anotación propia es
+la opción más ordenada cuando la regla se va a reutilizar, y es la que usaremos en esta unidad.
+:::

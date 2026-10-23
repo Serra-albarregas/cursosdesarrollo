@@ -1,0 +1,135 @@
+---
+sidebar_position: 6
+title: "Filtros"
+---
+
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+La propiedad `filter` aplica efectos visuales a un elemento (habitualmente una imagen, aunque funciona sobre cualquier elemento), de forma parecida a los filtros de una app de fotos: sin modificar el archivo original, solo cómo se muestra.
+
+## Funciones de filtro
+
+`filter` acepta una o varias funciones, separadas por espacios. Estas son las más habituales:
+
+| Función | Efecto |
+|---|---|
+| `blur(px)` | Desenfoque |
+| `grayscale(%)` | Quita el color (0% = sin cambios, 100% = blanco y negro) |
+| `brightness(%)` | Brillo (100% = sin cambios) |
+| `contrast(%)` | Contraste (100% = sin cambios) |
+| `saturate(%)` | Saturación del color (100% = sin cambios) |
+| `sepia(%)` | Tono sepia (como una foto antigua) |
+| `invert(%)` | Invierte los colores |
+| `hue-rotate(deg)` | Gira el tono de color sobre la rueda de color |
+
+<HtmlCssPlayground
+  initialHtml={`<div class="muestra original">Original</div>
+<div class="muestra blur">blur(4px)</div>
+<div class="muestra grayscale">grayscale(100%)</div>
+<div class="muestra brightness">brightness(1.6)</div>
+<div class="muestra contrast">contrast(200%)</div>
+<div class="muestra saturate">saturate(3)</div>
+<div class="muestra sepia">sepia(100%)</div>
+<div class="muestra invert">invert(100%)</div>
+<div class="muestra hue">hue-rotate(120deg)</div>`}
+  initialCss={`.muestra {
+    display: inline-block;
+    width: 110px;
+    height: 80px;
+    margin: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 0.75rem;
+    text-align: center;
+    background: linear-gradient(135deg, #ff5e5e, #5ea1ff);
+}
+
+.blur {
+    filter: blur(4px);
+}
+
+.grayscale {
+    filter: grayscale(100%);
+}
+
+.brightness {
+    filter: brightness(1.6);
+}
+
+.contrast {
+    filter: contrast(200%);
+}
+
+.saturate {
+    filter: saturate(3);
+}
+
+.sepia {
+    filter: sepia(100%);
+}
+
+.invert {
+    filter: invert(100%);
+}
+
+.hue {
+    filter: hue-rotate(120deg);
+}`}
+  layout="stacked"
+/>
+
+Todas parten exactamente del mismo degradado de fondo; lo único que cambia es el filtro aplicado.
+
+## Combinar varios filtros a la vez
+
+Se pueden encadenar varias funciones en la misma propiedad, separadas por espacios. Se aplican en el orden en que se escriben:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="muestra combo">grayscale(50%) brightness(1.2) blur(1px)</div>`}
+  initialCss={`.muestra {
+    display: inline-block;
+    width: 140px;
+    height: 100px;
+    padding: 6px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 0.75rem;
+    text-align: center;
+    background: linear-gradient(135deg, #ff5e5e, #5ea1ff);
+}
+
+.combo {
+    filter: grayscale(50%) brightness(1.2) blur(1px);
+}`}
+/>
+
+## `drop-shadow()` frente a `box-shadow`
+
+`filter: drop-shadow()` se parece a `box-shadow`, pero con una diferencia importante: `box-shadow` siempre dibuja la sombra con la forma rectangular (o redondeada) de la caja del elemento, mientras que `drop-shadow()` sigue la silueta real de lo que se ve, aunque el elemento tenga una forma recortada con `clip-path`.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="forma forma-box">box-shadow</div>
+<div class="forma forma-drop">drop-shadow</div>`}
+  initialCss={`.forma {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    margin: 20px;
+    background-color: teal;
+    color: white;
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+}
+
+.forma-box {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.forma-drop {
+    filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.6));
+}`}
+/>
+
+Fíjate en la diferencia: la sombra de `box-shadow` se nota con forma rectangular por detrás de la figura (sigue la caja, no el recorte), mientras que la de `drop-shadow` abraza la forma de la estrella. Por eso `drop-shadow()` es la opción recomendada para dar sombra a iconos o imágenes con transparencia.

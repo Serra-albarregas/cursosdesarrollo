@@ -1,0 +1,245 @@
+---
+sidebar_position: 5
+title: "Texto y tipografía"
+---
+
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+El texto es, con diferencia, lo que más aparece en cualquier página web. Las propiedades de esta página controlan tanto la fuente en sí (qué letra se usa, de qué tamaño, con qué peso) como su disposición (alineación, espaciado, interlineado).
+
+## `font-family`
+
+`font-family` indica la fuente a usar. Se escribe como una lista de opciones, de más a menos preferida, separadas por comas: el navegador usa la primera que tenga instalada o disponible, y sigue probando con las siguientes si no la encuentra.
+
+<HtmlCssPlayground
+  initialHtml={`<p class="texto">Este texto usa una pila de fuentes con alternativas.</p>`}
+  initialCss={`.texto {
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 1.2rem;
+}`}
+/>
+
+Si un nombre de fuente tiene espacios (como `"Segoe UI"`), hay que escribirlo entre comillas. El último elemento de la lista suele ser una **familia genérica**: no es una fuente concreta, sino una categoría que el navegador resuelve con su propia fuente por defecto de ese tipo.
+
+| Familia genérica | Aspecto |
+|---|---|
+| `serif` | Con remates (como Times New Roman) |
+| `sans-serif` | Sin remates (como Arial) |
+| `monospace` | Todos los caracteres con el mismo ancho (para código) |
+| `cursive` | Estilo manuscrito |
+| `fantasy` | Decorativa |
+
+<HtmlCssPlayground
+  initialHtml={`<p class="serif">Texto con serif</p>
+<p class="sans">Texto con sans-serif</p>
+<p class="mono">Texto con monospace</p>`}
+  initialCss={`.serif {
+    font-family: serif;
+}
+
+.sans {
+    font-family: sans-serif;
+}
+
+.mono {
+    font-family: monospace;
+}`}
+/>
+
+:::tip
+Terminar siempre la pila de fuentes con una familia genérica es una buena práctica: si ninguna de las fuentes concretas está disponible, el texto sigue siendo legible con un estilo razonable, en vez de usar una fuente aleatoria del sistema.
+:::
+
+### Fuentes web
+
+Para usar una fuente que el sistema operativo del usuario no tenga instalada, se puede enlazar una fuente web, por ejemplo de Google Fonts, igual que se enlaza una hoja de estilos CSS externa:
+
+```html
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+</head>
+```
+
+```css
+body {
+    font-family: "Roboto", sans-serif;
+}
+```
+
+También es posible alojar la propia fuente en el servidor, con `@font-face`, en vez de depender de un servicio externo:
+
+```css
+@font-face {
+    font-family: "MiFuente";
+    src: url("mifuente.woff2") format("woff2");
+}
+
+body {
+    font-family: "MiFuente", sans-serif;
+}
+```
+
+## Tamaño, peso y estilo
+
+- `font-size`: el tamaño de la fuente. Admite las unidades que ya vimos (`px`, `em`, `rem`...), e incluso `clamp()` para un tamaño fluido.
+- `font-weight`: el grosor del trazo. Los valores con nombre más comunes son `normal` (400) y `bold` (700), pero también se puede usar directamente un número de 100 a 900.
+- `font-style`: `normal`, `italic` (cursiva) u `oblique` (una versión inclinada de la fuente normal, en vez de un diseño cursivo propio).
+
+<HtmlCssPlayground
+  initialHtml={`<p class="ligera">font-weight: 300</p>
+<p class="normal">font-weight: normal (400)</p>
+<p class="negrita">font-weight: bold (700)</p>
+<p class="extra">font-weight: 900</p>
+<p class="cursiva">font-style: italic</p>`}
+  initialCss={`p {
+    font-size: 1.1rem;
+}
+
+.ligera {
+    font-weight: 300;
+}
+
+.normal {
+    font-weight: normal;
+}
+
+.negrita {
+    font-weight: bold;
+}
+
+.extra {
+    font-weight: 900;
+}
+
+.cursiva {
+    font-style: italic;
+}`}
+/>
+
+:::note
+No todas las fuentes incluyen los nueve pesos: muchas fuentes del sistema solo distinguen entre normal y negrita, así que pedir `font-weight: 300` puede no notarse si la fuente activa no trae ese peso concreto.
+:::
+
+## `line-height`
+
+`line-height` controla el alto de cada línea de texto, no solo el espacio "extra" entre líneas: incluye también el propio tamaño del texto. Se puede dar con una unidad fija (`24px`) o, más habitualmente, como un número sin unidad (`1.5`), que se interpreta como "1.5 veces el `font-size` de ese elemento":
+
+<HtmlCssPlayground
+  initialHtml={`<p class="apretado">Un interlineado demasiado ajustado, como este, dificulta seguir la línea al leer un párrafo largo, porque las líneas quedan muy pegadas entre sí y el ojo tiende a saltar a la línea equivocada.</p>
+<p class="comodo">Un interlineado más cómodo, como este, separa visualmente cada línea y hace que el párrafo largo se lea con más facilidad, sin que el ojo se pierda al pasar de una línea a la siguiente.</p>`}
+  initialCss={`p {
+    max-width: 350px;
+    font-size: 1rem;
+}
+
+.apretado {
+    line-height: 1;
+}
+
+.comodo {
+    line-height: 1.6;
+}`}
+/>
+
+:::tip
+Se prefiere el valor sin unidad porque se recalcula correctamente si el tamaño de fuente cambia (por herencia, por `rem`, por `clamp()`...). Un `line-height: 24px` fijo, en cambio, deja de tener sentido si el `font-size` del elemento cambia pero el alto de línea se queda igual.
+:::
+
+## Alineación y decoración
+
+- `text-align`: `left`, `right`, `center`, `justify` (estira los espacios para que el texto llegue justo al margen derecho en todas las líneas menos la última).
+- `text-decoration`: `underline`, `line-through`, `none` (para quitar, por ejemplo, el subrayado por defecto de un enlace). Admite también color y estilo de línea: `text-decoration: underline wavy red;`.
+- `text-transform`: `uppercase`, `lowercase`, `capitalize` (pone en mayúscula la primera letra de cada palabra), sin modificar el texto real del HTML, solo cómo se muestra.
+
+<HtmlCssPlayground
+  initialHtml={`<p class="centrado">Texto centrado</p>
+<p class="justificado">Este párrafo está justificado, así que el texto llega exactamente al margen derecho en todas las líneas completas, repartiendo el espacio sobrante entre las palabras de cada línea.</p>
+<p class="subrayado">Texto subrayado con una línea ondulada</p>
+<p class="tachado">Texto tachado</p>
+<p class="mayusculas">texto transformado a mayúsculas</p>`}
+  initialCss={`.centrado {
+    text-align: center;
+}
+
+.justificado {
+    text-align: justify;
+    max-width: 300px;
+}
+
+.subrayado {
+    text-decoration: underline wavy red;
+}
+
+.tachado {
+    text-decoration: line-through;
+}
+
+.mayusculas {
+    text-transform: uppercase;
+}`}
+/>
+
+:::note
+`text-align: justify` puede dejar huecos raros entre palabras en párrafos estrechos o con palabras largas, porque el navegador reparte el espacio sobrante sin ningún criterio tipográfico avanzado. Conviene probarlo con el texto real antes de darlo por bueno.
+:::
+
+## Espaciado de texto
+
+`letter-spacing` ajusta el espacio entre letras, y `word-spacing` el espacio entre palabras. Un uso típico de `letter-spacing` es "abrir" un poco un título en mayúsculas, para que no se vea apelmazado:
+
+<HtmlCssPlayground
+  initialHtml={`<h2 class="titulo">Título de sección</h2>
+<p class="espaciado">Texto con más separación entre palabras.</p>`}
+  initialCss={`.titulo {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.espaciado {
+    word-spacing: 8px;
+}`}
+/>
+
+## Truncar texto con puntos suspensivos
+
+Cuando el espacio es limitado (una tarjeta, un elemento de menú, una celda de tabla), es habitual cortar el texto que no cabe y mostrar puntos suspensivos en vez de desbordarlo o partirlo en varias líneas. Hacen falta tres propiedades a la vez:
+
+- `white-space: nowrap`: evita que el texto salte de línea.
+- `overflow: hidden`: oculta lo que no cabe en el ancho disponible.
+- `text-overflow: ellipsis`: sustituye lo oculto por `...`.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="tarjeta">
+    <p class="truncado">Este es un título bastante largo que no cabe en el ancho de la tarjeta</p>
+</div>`}
+  initialCss={`.tarjeta {
+    width: 200px;
+    border: 1px solid #ccc;
+    padding: 8px;
+}
+
+.truncado {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}`}
+/>
+
+Las tres propiedades son necesarias a la vez: sin `nowrap` el texto saltaría de línea en vez de desbordar, sin `overflow: hidden` el texto que no cabe se saldría de la caja en vez de ocultarse, y sin `text-overflow: ellipsis` simplemente se cortaría sin puntos suspensivos.
+
+## `text-shadow`
+
+`text-shadow` añade una sombra al texto, con una sintaxis muy parecida a la de `box-shadow` que ya vimos en Imágenes: desplazamiento horizontal, desplazamiento vertical, desenfoque (opcional) y color.
+
+<HtmlCssPlayground
+  initialHtml={`<h2 class="con-sombra">Título con sombra</h2>`}
+  initialCss={`.con-sombra {
+    color: white;
+    background-color: darkslateblue;
+    padding: 16px;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+}`}
+/>
