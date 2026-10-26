@@ -1,0 +1,299 @@
+---
+sidebar_position: 7
+title: "El modelo de caja"
+---
+
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+En CSS, todo elemento es una caja rectangular, aunque visualmente no lo parezca. Entender cómo se compone esa caja es la base para controlar tamaños y espaciados sin sorpresas.
+
+## Las cuatro capas de una caja
+
+De dentro hacia fuera, una caja se compone de:
+
+- **`content`**: el propio contenido (texto, una imagen...). Su tamaño lo controlan `width` y `height`.
+- **`padding`**: el espacio entre el contenido y el borde. Forma parte del "interior" de la caja; si la caja tiene color de fondo, el `padding` también se pinta con ese color.
+- **`border`**: la línea que rodea el `padding` y el `content`.
+- **`margin`**: el espacio entre esta caja y las cajas vecinas. Es transparente: nunca se pinta con el fondo del elemento.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja-margin">
+    margin
+    <div class="caja-border">
+        border
+        <div class="caja-padding">
+            padding
+            <div class="caja-content">content</div>
+        </div>
+    </div>
+</div>`}
+  initialCss={`div {
+    text-align: center;
+    font-size: 0.75rem;
+    font-family: sans-serif;
+}
+
+.caja-margin {
+    background-color: #fdf0d5;
+    padding: 30px;
+}
+
+.caja-border {
+    background-color: #f4a261;
+    padding: 20px;
+}
+
+.caja-padding {
+    background-color: #e9c46a;
+    padding: 20px;
+}
+
+.caja-content {
+    background-color: #2a9d8f;
+    color: white;
+    padding: 20px;
+}`}
+/>
+
+Esto es justo lo que muestran las herramientas de desarrollador del navegador cuando se inspecciona un elemento y se mira su "Box Model": cuatro capas de colores, una dentro de otra.
+
+## `box-sizing`
+
+Por defecto, `width` y `height` miden solo el `content`: el `padding` y el `border` se suman por fuera, así que la caja ocupa más espacio del que indica `width`. Este comportamiento se llama `content-box`, y es el valor por defecto.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="referencia">Esta línea mide 200px de ancho</div>
+<div class="caja content-box">width: 200px (content-box)</div>`}
+  initialCss={`.referencia {
+    width: 200px;
+    border-top: 2px dashed red;
+    font-size: 0.75rem;
+    margin-bottom: 8px;
+}
+
+.caja {
+    background-color: teal;
+    color: white;
+    font-size: 0.8rem;
+    padding: 20px;
+    border: 5px solid black;
+}
+
+.content-box {
+    width: 200px;
+    box-sizing: content-box;
+}`}
+/>
+
+La caja se sale claramente de la línea de referencia de 200px, porque `width: 200px` solo mide el contenido: los `20px` de `padding` a cada lado y los `5px` de `border` a cada lado se han sumado por fuera.
+
+Con `box-sizing: border-box`, en cambio, `width`/`height` pasan a incluir el `padding` y el `border`, así que la caja mide exactamente lo que se le indica, y es el propio `content` el que se encoge para dejarle sitio:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="referencia">Esta línea mide 200px de ancho</div>
+<div class="caja border-box">width: 200px (border-box)</div>`}
+  initialCss={`.referencia {
+    width: 200px;
+    border-top: 2px dashed red;
+    font-size: 0.75rem;
+    margin-bottom: 8px;
+}
+
+.caja {
+    background-color: teal;
+    color: white;
+    font-size: 0.8rem;
+    padding: 20px;
+    border: 5px solid black;
+}
+
+.border-box {
+    width: 200px;
+    box-sizing: border-box;
+}`}
+/>
+
+:::tip
+Por eso es tan habitual ver, al principio de casi cualquier hoja de estilos, una regla como `* { box-sizing: border-box; }`: con `content-box`, combinar `width: 100%` con cualquier `padding` hace que el elemento se desborde de su contenedor, algo que sorprende constantemente a quien empieza con CSS. `border-box` evita ese problema por completo.
+:::
+
+## `margin`
+
+### Shorthand
+
+Como `padding`, `margin` admite una forma abreviada con 1, 2, 3 o 4 valores:
+
+| Valores | Significado |
+|---|---|
+| `margin: 10px;` | Los cuatro lados |
+| `margin: 10px 20px;` | Arriba/abajo, izquierda/derecha |
+| `margin: 10px 20px 30px;` | Arriba, izquierda/derecha, abajo |
+| `margin: 10px 20px 30px 40px;` | Arriba, derecha, abajo, izquierda (sentido horario) |
+
+También se pueden usar las propiedades individuales: `margin-top`, `margin-right`, `margin-bottom`, `margin-left`.
+
+### Centrar con `margin: auto`
+
+Cuando un elemento de bloque tiene un ancho fijo (`width`) menor que su contenedor, `margin: 0 auto;` lo centra horizontalmente: el espacio sobrante se reparte a partes iguales entre el margen izquierdo y el derecho.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="contenedor">
+    <div class="centrada">Caja centrada</div>
+</div>`}
+  initialCss={`.contenedor {
+    background-color: #eee;
+    padding: 10px;
+}
+
+.centrada {
+    width: 150px;
+    background-color: teal;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    margin: 0 auto;
+}`}
+/>
+
+### Colapso de márgenes
+
+Cuando dos márgenes verticales se encuentran (el margen inferior de un elemento y el superior del siguiente, por ejemplo), **no se suman**: se queda solo el más grande de los dos. Esto se llama colapso de márgenes, y solo afecta a los márgenes verticales (nunca a los horizontales).
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja1">margin-bottom: 40px</div>
+<div class="caja2">margin-top: 20px</div>`}
+  initialCss={`div {
+    background-color: teal;
+    color: white;
+    padding: 8px;
+}
+
+.caja1 {
+    margin-bottom: 40px;
+}
+
+.caja2 {
+    margin-top: 20px;
+}`}
+/>
+
+El espacio entre ambas cajas es de `40px`, no de `60px`: gana el margen más grande, y el más pequeño se ignora. Es uno de los comportamientos de CSS que más sorprende al principio, porque no es intuitivo a partir del propio código: hay que verlo para creerlo.
+
+:::note
+El colapso de márgenes solo ocurre con `margin` normal entre elementos en flujo normal de bloque. No ocurre, por ejemplo, con `padding`, ni con elementos que usan Flexbox o Grid (que veremos más adelante) para organizarse.
+:::
+
+## `padding`
+
+El shorthand de `padding` funciona exactamente igual que el de `margin` (1 a 4 valores, mismo orden). La diferencia principal con `margin` es que **`padding` no puede ser negativo**: un valor negativo de `padding` simplemente no se aplica, mientras que un `margin` negativo sí es válido y se usa (por ejemplo, para superponer ligeramente dos elementos).
+
+## `border`
+
+`border` también tiene una forma abreviada, que combina tres valores en cualquier orden: grosor, estilo y color.
+
+```css
+.caja {
+    border: 2px solid black;
+}
+```
+
+Se puede escribir por separado con `border-width`, `border-style` y `border-color`, y también por lado: `border-top`, `border-right`, `border-bottom`, `border-left` (cada uno admite a su vez su propio shorthand de grosor/estilo/color).
+
+<HtmlCssPlayground
+  initialHtml={`<div class="b-solid">solid</div>
+<div class="b-dashed">dashed</div>
+<div class="b-dotted">dotted</div>
+<div class="b-double">double</div>
+<div class="b-lado">Solo border-bottom</div>`}
+  initialCss={`div {
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.b-solid {
+    border: 3px solid teal;
+}
+
+.b-dashed {
+    border: 3px dashed teal;
+}
+
+.b-dotted {
+    border: 3px dotted teal;
+}
+
+.b-double {
+    border: 6px double teal;
+}
+
+.b-lado {
+    border-bottom: 3px solid teal;
+}`}
+/>
+
+Esto es justo lo que usamos en la página de Tablas para los bordes de celdas, y en Imágenes para los marcos.
+
+## `display: block`, `inline` e `inline-block`
+
+El valor de `display` decide, entre otras cosas, si un elemento respeta `width`/`height` y los márgenes verticales:
+
+| `display` | Ocupa toda la línea | Respeta `width`/`height` | Respeta `margin`/`padding` vertical |
+|---|---|---|---|
+| `block` | Sí | Sí | Sí |
+| `inline` | No (se coloca en la misma línea que lo de alrededor) | No (los ignora) | Solo el horizontal; el vertical no empuja a otros elementos |
+| `inline-block` | No | Sí | Sí |
+
+<HtmlCssPlayground
+  initialHtml={`<span class="caja-inline">inline</span>
+<span class="caja-inline">inline</span>
+<div class="caja-block">block</div>
+<span class="caja-inline-block">inline-block</span>
+<span class="caja-inline-block">inline-block</span>`}
+  initialCss={`.caja-inline {
+    display: inline;
+    width: 100px;
+    height: 60px;
+    background-color: teal;
+    color: white;
+    margin: 20px;
+    padding: 10px;
+}
+
+.caja-block {
+    display: block;
+    width: 100px;
+    height: 60px;
+    background-color: darkorange;
+    color: white;
+    margin: 20px;
+    padding: 10px;
+}
+
+.caja-inline-block {
+    display: inline-block;
+    width: 100px;
+    height: 60px;
+    background-color: darkslateblue;
+    color: white;
+    margin: 20px;
+    padding: 10px;
+}`}
+/>
+
+Fíjate en que las dos cajas `inline` ni siquiera llegan a medir 100x60: `width` y `height` se ignoran por completo en un elemento `inline`. Las `inline-block`, en cambio, sí respetan el tamaño, pero se colocan una junto a otra en vez de ocupar toda la línea como la `block`.
+
+## `outline` frente a `border`
+
+`outline` dibuja una línea alrededor del elemento, visualmente parecida a `border`, pero **no forma parte del modelo de caja**: no ocupa espacio, no empuja a los elementos vecinos, y puede incluso solaparse con ellos. Se usa sobre todo como indicador de foco accesible (recuerda `:focus`, de la página de pseudoclases), precisamente porque añadirlo o quitarlo no mueve nada del resto del diseño.
+
+<HtmlCssPlayground
+  initialHtml={`<input type="text" class="campo" placeholder="Haz clic para enfocar">`}
+  initialCss={`.campo {
+    padding: 8px;
+    border: 1px solid #999;
+}
+
+.campo:focus {
+    outline: 3px solid teal;
+}`}
+/>
