@@ -1,0 +1,320 @@
+---
+id: puesta-en-marcha-jpa
+title: 2. Puesta en marcha
+sidebar_label: 2. Puesta en marcha
+sidebar_position: 2
+description: Dependencias de Spring Data JPA, base de datos MySQL en un contenedor Docker con docker-compose, conexión desde Spring Boot con application.properties, ddl-auto, y H2 como base de datos para pruebas.
+---
+
+# 2. Puesta en marcha
+
+Antes de escribir ninguna entidad, hay que preparar el terreno: añadir las dependencias, disponer de
+una base de datos y decirle a Spring cómo conectarse a ella. En esta página montamos **MySQL en un
+contenedor de Docker**, que será la base de datos de la unidad, y dejamos preparada **H2** para
+las pruebas.
+
+## 2.1. Dependencias
+
+Hacen falta dos cosas: el *starter* de Spring Data JPA, que trae JPA e Hibernate, y un *driver* JDBC
+para cada base de datos que se vaya a usar. En el `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>com.mysql</groupId>
+    <artifactId>mysql-connector-j</artifactId>
+    <scope>runtime</scope>
+</dependency>
+
+<dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <scope>runtime</scope>
+</dependency>
+```
+
+Si generas el proyecto con Spring Initializr, las dependencias se llaman **Spring Data JPA**,
+**MySQL Driver** y **H2 Database**.
+
+El `scope` `runtime` indica que el *driver* solo se necesita al ejecutar la aplicación, no al
+compilarla: nuestro código nunca usa sus clases directamente.
+
+:::note
+No hace falta indicar la versión
+Spring Boot gestiona las versiones de estas dependencias, igual que las de los demás *starters*.
+:::
+
+## 2.2. MySQL en un contenedor Docker
+
+En lugar de instalar MySQL en el ordenador, lo ejecutamos dentro de un **contenedor**: un entorno
+aislado, ligero y fácil de arrancar y de borrar. Para describirlo se usa **Docker Compose**, que
+permite definir el contenedor en un archivo y levantarlo con un solo comando.
+
+:::note
+Requisitos
+Necesitas Docker instalado: Docker Desktop en Windows y macOS, o Docker Engine con el plugin de
+Compose en Linux. Para comprobarlo, el comando `docker compose version` debe mostrar una versión.
+En instalaciones antiguas el comando se escribe con guion: `docker-compose`.
+:::
+
+### El archivo `docker-compose.yml`
+
+Se crea en la raíz del proyecto, junto al `pom.xml`:
+
+```text
+mi-proyecto/
+├── docker-compose.yml
+├── pom.xml
+└── src/
+```
+
+```yaml title="docker-compose.yml"
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: mysql-centro
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: centro
+      MYSQL_USER: centro_user
+      MYSQL_PASSWORD: centro_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
+```
+
+| Línea | Qué hace |
+|---|---|
+| `services` / `mysql` | Define un servicio llamado `mysql`: un contenedor |
+| `image: mysql:8.4` | La imagen que se descarga y ejecuta (MySQL, versión 8.4) |
+| `container_name` | El nombre que tendrá el contenedor |
+| `MYSQL_ROOT_PASSWORD` | Contraseña del administrador (`root`); es obligatoria |
+| `MYSQL_DATABASE` | Crea automáticamente una base de datos con este nombre |
+| `MYSQL_USER` y `MYSQL_PASSWORD` | Crean un usuario con permisos sobre esa base de datos |
+| `ports: "3306:3306"` | Conecta el puerto 3306 del ordenador (izquierda) con el 3306 del contenedor (derecha) |
+| `volumes: mysql-data` | Guarda los datos fuera del contenedor, para que no se pierdan al apagarlo |
+
+:::note
+Sobre el archivo
+No hace falta la línea `version:` que aparece en tutoriales antiguos: las versiones actuales de
+Compose la ignoran. Además, las contraseñas del ejemplo son solo para desarrollo en local: nunca
+se deben subir contraseñas reales a un repositorio.
+:::
+
+### Los comandos básicos
+
+Desde la carpeta donde está el archivo:
+
+| Comando | Qué hace |
+|---|---|
+| `docker compose up -d` | Descarga la imagen (la primera vez) y arranca el contenedor en segundo plano |
+| `docker compose ps` | Muestra el estado de los contenedores |
+| `docker compose logs -f mysql` | Muestra los mensajes de MySQL en directo (se sale con `Ctrl+C`) |
+| `docker compose stop` | Detiene el contenedor, conservando los datos |
+| `docker compose down` | Detiene y elimina el contenedor, **conservando** los datos del volumen |
+| `docker compose down -v` | Detiene y elimina el contenedor **y el volumen**: se pierden todos los datos |
+
+La primera vez, MySQL tarda unos segundos en inicializarse. Está listo cuando en los registros
+aparece un mensaje que termina en `ready for connections`.
+
+### Entrar en MySQL desde el contenedor
+
+Para comprobar que la base de datos y el usuario se han creado, se puede abrir el cliente de MySQL
+dentro del contenedor:
+
+```bash
+docker compose exec mysql mysql -ucentro_user -pcentro_pass centro
+```
+
+Y, dentro, ejecutar por ejemplo:
+
+```sql
+SHOW TABLES;
+```
+
+Mientras no tengamos entidades, la lista saldrá vacía. Se sale con `exit`.
+
+## 2.3. Conectar Spring con MySQL
+
+La conexión se configura en `src/main/resources/application.properties`:
+
+```properties title="src/main/resources/application.properties"
+spring.datasource.url=jdbc:mysql://localhost:3306/centro
+spring.datasource.username=centro_user
+spring.datasource.password=centro_pass
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+```
+
+Las tres primeras propiedades son los datos de la conexión, y deben coincidir con lo que se definió
+en `docker-compose.yml`:
+
+| Propiedad | Valor | Origen en el `docker-compose.yml` |
+|---|---|---|
+| `spring.datasource.url` | `jdbc:mysql://localhost:3306/centro` | Puerto del contenedor y `MYSQL_DATABASE` |
+| `spring.datasource.username` | `centro_user` | `MYSQL_USER` |
+| `spring.datasource.password` | `centro_pass` | `MYSQL_PASSWORD` |
+
+La URL tiene la forma `jdbc:mysql://servidor:puerto/nombreDeLaBaseDeDatos`. Como el contenedor
+publica su puerto en el ordenador, el servidor es `localhost`.
+
+No hace falta indicar el *driver* ni el dialecto SQL: Spring Boot deduce el primero a partir de la
+URL, e Hibernate detecta el segundo al conectarse.
+
+## 2.4. Qué hace Hibernate con las tablas: `ddl-auto`
+
+La propiedad `spring.jpa.hibernate.ddl-auto` indica qué debe hacer Hibernate con el esquema (las
+tablas) de la base de datos al arrancar la aplicación:
+
+| Valor | Qué hace |
+|---|---|
+| `none` | No toca el esquema |
+| `validate` | Comprueba que las tablas coinciden con las entidades y falla si no es así; no cambia nada |
+| `update` | Crea las tablas y columnas que falten; no borra nada de lo que ya existe |
+| `create` | Borra las tablas y las vuelve a crear al arrancar: se pierden los datos |
+| `create-drop` | Como `create`, y además borra las tablas al cerrar la aplicación |
+
+Si no se indica, el valor por defecto es `create-drop` para bases de datos embebidas como H2, y
+`none` para el resto.
+
+En esta unidad usaremos `update`, que es cómodo para desarrollar: las tablas aparecen a partir de
+las entidades y los datos se conservan entre reinicios.
+
+:::note
+Solo para desarrollo
+`update` no es una opción segura para una aplicación en producción: no sabe renombrar columnas ni
+eliminar las que sobran, y un cambio mal planteado puede dejar la base de datos inconsistente. En
+producción se usa `none` o `validate`, y los cambios en el esquema se gestionan con herramientas de
+migraciones. Y `create` y `create-drop` **borran datos**: no los dejes activos contra
+una base de datos con información que importe.
+:::
+
+## 2.5. Ver el SQL que genera Hibernate
+
+Las dos últimas propiedades del ejemplo sirven para entender qué ocurre por debajo:
+
+- `spring.jpa.show-sql=true` muestra en la consola cada sentencia SQL que ejecuta Hibernate.
+- `spring.jpa.properties.hibernate.format_sql=true` las muestra con saltos de línea y sangrado, para
+  que se lean mejor.
+
+Con `show-sql`, los valores de los parámetros aparecen como signos de interrogación (`?`). Si se
+quiere ver también el valor con el que se ejecuta cada sentencia, se añade:
+
+```properties
+logging.level.org.hibernate.orm.jdbc.bind=trace
+```
+
+Al ser un recurso de depuración, conviene desactivarlo en una aplicación en producción.
+
+## 2.6. H2 para pruebas
+
+H2 es una base de datos escrita en Java que se ejecuta **dentro de la propia aplicación**, en
+memoria: no hay que instalar ni arrancar nada, y desaparece al cerrarla. Es ideal para **pruebas
+automáticas** y para probar algo rápidamente sin tener Docker en marcha.
+
+Para tener las dos configuraciones sin tocar `application.properties` cada vez, se usan los
+**perfiles** de Spring: un archivo `application-NOMBRE.properties` solo se aplica cuando el perfil
+`NOMBRE` está activo, y **sobrescribe** las propiedades del archivo principal.
+
+```properties title="src/main/resources/application-h2.properties"
+spring.datasource.url=jdbc:h2:mem:centro
+spring.datasource.username=sa
+spring.datasource.password=
+
+spring.jpa.hibernate.ddl-auto=create-drop
+
+spring.h2.console.enabled=true
+```
+
+Para arrancar la aplicación con H2 en lugar de MySQL basta con activar el perfil `h2`, por ejemplo
+con el argumento:
+
+```text
+--spring.profiles.active=h2
+```
+
+En IntelliJ IDEA se escribe en la configuración de ejecución (*Active profiles*), y en Visual
+Studio Code se puede indicar como argumento del programa. Y en una prueba automática, con una
+anotación sobre la clase de la prueba:
+
+```java
+@SpringBootTest
+@ActiveProfiles("h2")
+class AlumnoRepositoryTest {
+    // ...
+}
+```
+
+### La consola de H2
+
+Con `spring.h2.console.enabled=true`, mientras la aplicación está en marcha, se puede abrir un
+cliente web en:
+
+```text
+http://localhost:8080/h2-console
+```
+
+En la pantalla de inicio hay que indicar la URL de la conexión, `jdbc:h2:mem:centro`, el usuario
+`sa` y dejar la contraseña vacía. Desde ahí se pueden ver las tablas y lanzar consultas SQL.
+
+:::note
+H2 no es exactamente MySQL
+Aunque H2 imita bastante bien a las bases de datos reales, no se comporta igual en todos los
+detalles. Una prueba que pasa con H2 no garantiza al cien por cien que funcione igual con MySQL:
+para lo importante, conviene probar también contra la base de datos real. H2 incluye un modo de
+compatibilidad que se activa en la URL (`jdbc:h2:mem:centro;MODE=MySQL`), que acerca su
+comportamiento al de MySQL.
+:::
+
+## 2.7. Comprobar que todo funciona
+
+Con el contenedor de MySQL en marcha, arranca la aplicación Spring Boot. Si la conexión es
+correcta:
+
+- En la consola aparece un mensaje indicando que el *pool* de conexiones se ha iniciado
+  (`HikariPool-1 - Start completed`).
+- La aplicación termina de arrancar sin errores, y el servidor queda disponible en el puerto 8080.
+
+Todavía no hay ninguna entidad, así que no se crea ninguna tabla: lo único que comprobamos en este
+punto es que la aplicación **es capaz de conectarse**.
+
+## 2.8. Errores habituales
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| `Communications link failure` o `Connection refused` | El contenedor no está arrancado, aún se está inicializando, o el puerto no coincide | Comprueba `docker compose ps`, espera al mensaje `ready for connections` y revisa el puerto de la URL |
+| `Access denied for user` | El usuario o la contraseña no coinciden con los del contenedor | Revisa `application.properties`. Ojo: las variables `MYSQL_*` solo se aplican **la primera vez** que se crea el volumen; si las cambias después, hay que ejecutar `docker compose down -v` para que se vuelvan a aplicar |
+| `Unknown database 'centro'` | El nombre de la base de datos de la URL no es el de `MYSQL_DATABASE` | Haz que coincidan |
+| `Public Key Retrieval is not allowed` | Autenticación de MySQL 8 sin conexión cifrada | Para desarrollo en local, añade `?allowPublicKeyRetrieval=true` al final de la URL |
+| `Failed to determine a suitable driver class` | Falta el *driver* en el `pom.xml` o no hay URL configurada | Revisa la dependencia y las propiedades |
+| `port is already allocated` al hacer `docker compose up` | Ya hay algo usando el puerto 3306 del ordenador (por ejemplo, otro MySQL) | Cambia el mapeo a `"3307:3306"` en `docker-compose.yml` y usa el puerto 3307 en la URL |
+
+:::note
+Docker Compose desde Spring Boot
+Desde Spring Boot 3.1 existe una dependencia (`spring-boot-docker-compose`) que arranca el
+contenedor y configura la conexión automáticamente al iniciar la aplicación. Es práctico, pero aquí
+preferimos la configuración explícita, para que se vea cada pieza de la conexión.
+:::
+
+## 2.9. Resumen
+
+| Pieza | Para qué sirve |
+|---|---|
+| `spring-boot-starter-data-jpa` | Trae JPA, Hibernate y Spring Data JPA |
+| `mysql-connector-j` / `h2` | *Drivers* de cada base de datos |
+| `docker-compose.yml` | Define el contenedor de MySQL |
+| `docker compose up -d` | Arranca la base de datos |
+| `spring.datasource.*` | Datos de la conexión |
+| `spring.jpa.hibernate.ddl-auto` | Qué hace Hibernate con las tablas al arrancar |
+| `spring.jpa.show-sql` | Muestra el SQL que se ejecuta |
+| Perfil `h2` | Configuración alternativa con H2, para pruebas |

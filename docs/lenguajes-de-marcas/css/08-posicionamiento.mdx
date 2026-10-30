@@ -1,0 +1,295 @@
+---
+sidebar_position: 8
+title: "Posicionamiento"
+---
+
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+Por defecto, el navegador coloca los elementos uno detrás de otro, de arriba abajo (los de bloque) o de izquierda a derecha (los inline). La propiedad `position` permite romper ese orden y colocar un elemento en un sitio concreto, o hacer que se comporte de forma especial al hacer scroll.
+
+## El flujo normal y `position: static`
+
+`static` es el valor por defecto de todos los elementos: se colocan en el **flujo normal**, tal como vimos en el modelo de caja. Con `static`, las propiedades `top`, `right`, `bottom` y `left` no tienen ningún efecto.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja">Caja 1</div>
+<div class="caja desplazada">Caja 2 (top y left ignorados)</div>
+<div class="caja">Caja 3</div>`}
+  initialCss={`.caja {
+    background-color: teal;
+    color: white;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.desplazada {
+    position: static;
+    top: 20px;
+    left: 40px;
+}`}
+/>
+
+La segunda caja no se mueve: aunque se le han dado `top` y `left`, con `position: static` esas propiedades se ignoran.
+
+## `position: relative`
+
+Con `relative`, el elemento se desplaza respecto a **su propia posición original** usando `top`, `right`, `bottom` y `left`. Lo importante es que el hueco que ocupaba se conserva: los demás elementos no se recolocan.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja">Caja 1</div>
+<div class="caja desplazada">Caja 2 (relative)</div>
+<div class="caja">Caja 3</div>`}
+  initialCss={`.caja {
+    background-color: teal;
+    color: white;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.desplazada {
+    position: relative;
+    top: 15px;
+    left: 40px;
+    background-color: darkorange;
+}`}
+/>
+
+La caja naranja se ha movido 15px hacia abajo y 40px hacia la derecha, pero la caja 3 no ha subido para ocupar su sitio: el hueco original sigue reservado, y por eso la caja naranja se solapa un poco con la siguiente.
+
+Los valores de `top`, `right`, `bottom` y `left` funcionan como "empuja desde ese lado": `top: 15px` empuja el elemento 15px **hacia abajo** desde su borde superior original (no lo sube), y `left: 40px` lo empuja 40px hacia la derecha.
+
+:::tip
+En la práctica, `relative` se usa más como "punto de referencia" para elementos `absolute` que como forma de desplazar cosas. Lo vemos justo a continuación.
+:::
+
+## `position: absolute`
+
+Un elemento `absolute` **sale del flujo**: los demás elementos se colocan como si no existiera, sin dejar hueco. Se coloca con `top`, `right`, `bottom` y `left`, pero no respecto a su posición original, sino respecto a su **ancestro posicionado más cercano**: el primer elemento por encima de él en el HTML que tenga una `position` distinta de `static`. Si no hay ninguno, se coloca respecto a la página.
+
+El patrón clásico es un padre con `position: relative` y un hijo con `position: absolute`, por ejemplo una insignia en la esquina de una tarjeta. Compara qué ocurre con y sin el `position: relative` en el padre:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="tarjeta con-relative">
+    Tarjeta con position: relative
+    <span class="insignia">1</span>
+</div>
+
+<div class="tarjeta">
+    Tarjeta sin position: relative
+    <span class="insignia">2</span>
+</div>`}
+  initialCss={`.tarjeta {
+    width: 220px;
+    height: 70px;
+    border: 2px solid teal;
+    padding: 10px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.con-relative {
+    position: relative;
+}
+
+.insignia {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: crimson;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+}`}
+/>
+
+Las dos insignias tienen exactamente las mismas reglas (`top: 8px; right: 8px`). La primera queda en la esquina de su tarjeta porque su padre tiene `position: relative`; la segunda, al no tener ningún ancestro posicionado, se coloca en la esquina superior derecha de toda la página.
+
+### `inset`
+
+`inset` es una abreviatura de `top`, `right`, `bottom` y `left`, con la misma sintaxis de 1 a 4 valores que `margin`. Un uso muy habitual es `inset: 0`, que hace que un elemento `absolute` cubra por completo a su ancestro posicionado, por ejemplo para superponer una capa semitransparente:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="tarjeta">
+    <p>Contenido de la tarjeta</p>
+    <div class="capa">Capa superpuesta</div>
+</div>`}
+  initialCss={`.tarjeta {
+    position: relative;
+    width: 220px;
+    height: 100px;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: teal;
+    color: white;
+}
+
+.capa {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    text-align: center;
+    padding-top: 40px;
+    box-sizing: border-box;
+}`}
+/>
+
+## `position: fixed`
+
+Un elemento `fixed` también sale del flujo, pero se coloca respecto a la **ventana del navegador** y se queda ahí aunque se haga scroll. Es lo que se usa para cabeceras fijas, banners de cookies o el botón de "volver arriba".
+
+<HtmlCssPlayground
+  initialHtml={`<button class="subir">↑ Subir</button>
+<p>Desplázate hacia abajo dentro de esta demo y observa el botón.</p>
+<div class="largo">Contenido muy largo</div>`}
+  initialCss={`.subir {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    padding: 8px 12px;
+}
+
+.largo {
+    height: 800px;
+    background: linear-gradient(#eee, teal);
+    text-align: center;
+    padding-top: 20px;
+    box-sizing: border-box;
+}`}
+/>
+
+En esta demo, "la ventana" es el propio recuadro de la demo (es una página aparte incrustada en esta), pero el comportamiento es el mismo que en una página real: el botón no se mueve del rincón inferior derecho mientras haces scroll.
+
+:::note
+Si un ancestro del elemento `fixed` tiene `transform` o `filter` (como vimos en la página de Filtros), `fixed` deja de colocarse respecto a la ventana y pasa a colocarse respecto a ese ancestro. Es una fuente habitual de errores difíciles de localizar.
+:::
+
+## `position: sticky`
+
+`sticky` es un híbrido: el elemento se comporta como `relative` (ocupa su sitio en el flujo) hasta que el scroll lo lleva a un umbral que tú defines con `top`, `right`, `bottom` o `left`, y a partir de ahí se "pega" y deja de moverse. Es ideal para cabeceras de sección o de tabla.
+
+<HtmlCssPlayground
+  initialHtml={`<h3 class="cabecera">Cabecera pegajosa</h3>
+<p>Desplázate hacia abajo dentro de esta demo.</p>
+<div class="largo">Contenido muy largo</div>`}
+  initialCss={`.cabecera {
+    position: sticky;
+    top: 0;
+    margin: 0;
+    padding: 8px;
+    background-color: teal;
+    color: white;
+}
+
+.largo {
+    height: 800px;
+    background: linear-gradient(#eee, #aaa);
+    padding-top: 20px;
+    box-sizing: border-box;
+}`}
+/>
+
+Mientras la cabecera no llega a `top: 0`, se comporta como un elemento normal; al llegar a la parte superior de la ventana, se queda pegada. Se queda pegada solo mientras su elemento padre siga a la vista: cuando el padre termina, la cabecera se va con él.
+
+:::warning
+`sticky` tiene dos condiciones que fallan con facilidad:
+- **Hace falta un umbral** (`top`, `bottom`...): sin él, no tiene dónde "pegarse" y se comporta como `relative`.
+- **Ningún ancestro puede tener `overflow` distinto de `visible`** (`hidden`, `auto`, `scroll`): ese ancestro pasaría a ser el contenedor de scroll respecto al que se pega, y normalmente deja de funcionar como se espera.
+:::
+
+## `z-index`
+
+Cuando dos elementos se solapan, el navegador decide cuál se pinta encima. Por defecto, gana el que aparece **después** en el HTML. `z-index` permite cambiar ese orden con un número entero: a mayor valor, más arriba (los valores negativos también son válidos, y llevan el elemento por detrás).
+
+`z-index` solo afecta a elementos **posicionados** (con una `position` distinta de `static`) y a los hijos directos de contenedores Flexbox o Grid.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="contenedor">
+    <div class="caja c1">1</div>
+    <div class="caja c2">2</div>
+    <div class="caja c3">3</div>
+</div>`}
+  initialCss={`.contenedor {
+    position: relative;
+    height: 170px;
+}
+
+.caja {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    color: white;
+    font-size: 1.5rem;
+    padding: 6px;
+    box-sizing: border-box;
+}
+
+.c1 {
+    top: 0;
+    left: 0;
+    background-color: teal;
+    z-index: 3;
+}
+
+.c2 {
+    top: 30px;
+    left: 50px;
+    background-color: darkorange;
+}
+
+.c3 {
+    top: 60px;
+    left: 100px;
+    background-color: darkslateblue;
+}`}
+/>
+
+Sin `z-index`, la caja 3 (la última en el HTML) quedaría encima de todas. Al darle `z-index: 3` a la caja 1, pasa a pintarse por encima de las demás aunque sea la primera. Prueba a quitar esa línea para ver la diferencia.
+
+:::tip
+Cuando un elemento posicionado tiene un `z-index`, forma un **contexto de apilado**: sus hijos se ordenan entre sí dentro de él, pero ya no pueden saltar por encima de elementos que estén por encima de su padre, por muy alto que sea su propio `z-index`. Si un `z-index` enorme "no funciona", casi siempre es porque algún ancestro lo está encerrando en su propio contexto.
+:::
+
+## `float` y `clear`
+
+`float` saca un elemento hacia la izquierda o la derecha de su contenedor, y hace que el contenido que va a continuación (sobre todo el texto) lo **rodee**. Hoy se sigue usando para ese fin concreto: que el texto envuelva una imagen, como en una revista.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="foto">Foto</div>
+<p>Este texto rodea la foto flotante. Es corto a propósito.</p>
+<p class="pie">Este pie de página usa clear: both.</p>`}
+  initialCss={`.foto {
+    float: left;
+    width: 100px;
+    height: 100px;
+    margin: 0 12px 8px 0;
+    background-color: teal;
+    color: white;
+    text-align: center;
+    line-height: 100px;
+}
+
+.pie {
+    clear: both;
+    background-color: #eee;
+    padding: 6px;
+}`}
+/>
+
+`clear` hace que un elemento no pueda tener un flotante a su lado, y por eso baja hasta quedar por debajo de él. Quita `clear: both` del pie para ver cómo, sin él, el pie intentaría colocarse al lado de la foto.
+
+:::note
+Hace años `float` era la herramienta habitual para maquetar columnas y páginas enteras, pero hoy esa tarea la hacen Flexbox y Grid (que veremos en las siguientes páginas), mucho más cómodos y predecibles.
+:::
+
+## Tabla resumen
+
+| `position` | ¿Ocupa hueco en el flujo? | Se coloca respecto a... | Uso típico |
+|---|---|---|---|
+| `static` | Sí | Su posición normal (`top`, `left`... se ignoran) | Valor por defecto |
+| `relative` | Sí (conserva el hueco original) | Su propia posición original | Punto de referencia para hijos `absolute`, ajustes pequeños |
+| `absolute` | No | El ancestro posicionado más cercano (o la página) | Insignias, capas superpuestas, menús desplegables |
+| `fixed` | No | La ventana del navegador | Cabeceras fijas, botón "volver arriba" |
+| `sticky` | Sí | Su posición normal, hasta que el scroll alcanza el umbral | Cabeceras de sección o de tabla |
