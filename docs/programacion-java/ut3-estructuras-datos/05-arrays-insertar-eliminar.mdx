@@ -1,0 +1,159 @@
+---
+id: arrays-insertar-eliminar
+title: 5. Insertar y eliminar elementos
+sidebar_label: 5. Insertar y eliminar
+sidebar_position: 5
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeTrace from '@site/src/components/CodeTrace';
+import trace1 from './traces/arrays-insertar.json';
+import trace2 from './traces/arrays-eliminar.json';
+
+Un array tiene **tamaño fijo**: una vez creado no puede crecer ni encogerse. Pero en muchos programas necesitamos añadir o quitar datos (una lista de la compra, los jugadores de una partida...). En esta página vemos cómo simular esas operaciones con arrays.
+
+La idea clave es distinguir entre dos conceptos:
+
+- **Capacidad**: el tamaño real del array (`array.length`).
+- **Número de elementos**: cuántas posiciones están realmente ocupadas. Lo guardamos en una variable aparte.
+
+```java
+int[] numeros = new int[10];   // capacidad: 10
+int numElementos = 0;          // de momento, ninguna posición ocupada
+```
+
+Las posiciones de `0` a `numElementos - 1` contienen datos válidos. El resto es espacio libre.
+
+## Añadir al final
+
+Es la operación más sencilla: escribimos en la primera posición libre (`numElementos`) y aumentamos el contador.
+
+```java
+int[] numeros = new int[10];
+int numElementos = 0;
+
+// añadimos tres valores
+numeros[numElementos] = 15;
+numElementos++;
+numeros[numElementos] = 8;
+numElementos++;
+numeros[numElementos] = 23;
+numElementos++;
+
+// numeros = [15, 8, 23, 0, 0, 0, 0, 0, 0, 0]   numElementos = 3
+```
+
+Antes de añadir hay que comprobar que **hay sitio**:
+
+```java
+if (numElementos < numeros.length) {
+    numeros[numElementos] = 42;
+    numElementos++;
+} else {
+    System.out.println("El array está lleno");
+}
+```
+
+## Insertar en una posición
+
+Para insertar un valor en el **medio** del array hay que hacerle hueco: desplazamos una posición a la derecha todos los elementos desde la posición de inserción hasta el final. Se empieza **por el último** para no pisar datos.
+
+<Tabs>
+<TabItem value="Código" label="Código" default>
+```java
+int[] numeros = {15, 8, 23, 4, 0, 0, 0, 0, 0, 0};
+int numElementos = 4;
+
+int posicion = 1;     // dónde queremos insertar
+int valor = 99;
+
+if (numElementos < numeros.length) {
+    // 1. desplazar a la derecha, de atrás hacia delante
+    for (int i = numElementos; i > posicion; i--) {
+        numeros[i] = numeros[i - 1];
+    }
+    // 2. colocar el nuevo valor en el hueco
+    numeros[posicion] = valor;
+    numElementos++;
+}
+// numeros = [15, 99, 8, 23, 4, 0, ...]   numElementos = 5
+```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace1} />
+</TabItem>
+</Tabs>
+
+:::warning[El sentido del bucle importa]
+Si desplazáramos de **izquierda a derecha**, cada copia sobrescribiría el elemento siguiente antes de haberlo copiado, y todas las posiciones acabarían con el mismo valor. Al insertar se recorre **de derecha a izquierda**.
+:::
+
+## Eliminar de una posición
+
+Para eliminar, hacemos lo contrario: desplazamos una posición a la **izquierda** todos los elementos que hay después del que queremos quitar. Esta vez se recorre **de izquierda a derecha**, para no pisar datos.
+
+<Tabs>
+<TabItem value="Código" label="Código" default>
+```java
+int[] numeros = {15, 99, 8, 23, 4, 0, 0, 0, 0, 0};
+int numElementos = 5;
+
+int posicion = 1;     // posición del elemento a eliminar
+
+// 1. desplazar a la izquierda
+for (int i = posicion; i < numElementos - 1; i++) {
+    numeros[i] = numeros[i + 1];
+}
+// 2. reducir el contador y limpiar la última posición
+numElementos--;
+numeros[numElementos] = 0;
+// numeros = [15, 8, 23, 4, 0, 0, ...]   numElementos = 4
+```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace2} />
+</TabItem>
+</Tabs>
+
+## Mostrar solo la parte ocupada
+
+Ahora `numeros.length` ya no nos dice cuántos datos hay. Para recorrer los datos válidos usamos `numElementos`:
+
+```java
+for (int i = 0; i < numElementos; i++) {
+    System.out.println(numeros[i]);
+}
+```
+
+:::warning
+`Arrays.toString(numeros)` mostraría **todo** el array, incluidas las posiciones libres. Si solo queremos la parte ocupada, hay que recorrerla con un bucle o usar `Arrays.copyOf(numeros, numElementos)` para obtener una copia con los datos válidos.
+:::
+
+## Cuando el array se llena: ampliarlo
+
+Si necesitamos más espacio del que tiene el array, la única solución es **crear otro más grande y copiar los datos**. `Arrays.copyOf` lo hace en una sola línea:
+
+```java
+int[] numeros = {15, 8, 23};
+
+// ampliamos de 3 a 6 posiciones: se copian los datos y las nuevas valen 0
+numeros = Arrays.copyOf(numeros, 6);
+System.out.println(Arrays.toString(numeros));   // [15, 8, 23, 0, 0, 0]
+```
+
+Fíjate en que reasignamos `numeros`: la variable pasa a apuntar al array nuevo, y el antiguo queda sin referencias.
+
+Con esto podemos decidir qué hacer cuando el array está lleno: avisar al usuario (como antes) o ampliarlo automáticamente:
+
+```java
+if (numElementos == numeros.length) {
+    numeros = Arrays.copyOf(numeros, numeros.length * 2);   // duplicamos la capacidad
+}
+numeros[numElementos] = nuevoValor;
+numElementos++;
+```
+
+:::note[¿Hay otra forma?]
+Todo este trabajo (desplazar, ampliar, controlar el contador) es tedioso. Por eso Java incluye estructuras de datos **dinámicas**, como `ArrayList`, que lo hacen por nosotros. Las veremos más adelante; antes conviene entender cómo funciona por debajo un array.
+:::

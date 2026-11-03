@@ -1,0 +1,18 @@
+{
+  "title": "Alias: dos variables, un mismo array",
+  "language": "java",
+  "code": [
+    "int[] d = {1, 2, 3};",
+    "int[] e = d;",
+    "",
+    "e[0] = 99;",
+    "",
+    "System.out.println(d[0]);   // 99, ¡aunque hemos modificado e!"
+  ],
+  "steps": [
+    {"line": 1, "set": {"d": [1, 2, 3]}, "note": "Se crea el array en memoria (#1) y `d` guarda su referencia, no los datos."},
+    {"line": 2, "set": {"e": {"ref": "d"}}, "note": "`e = d` copia la referencia, no el array. Ahora `e` y `d` apuntan al mismo array #1: no existe un segundo array."},
+    {"line": 4, "set": {"e[0]": 99}, "note": "Se modifica la posición 0 del array al que apunta `e`, que es el #1."},
+    {"line": 6, "println": "99", "note": "`d[0]` lee la posición 0 del array #1, el mismo que modificamos a través de `e`: vale 99."}
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "title": "Eliminar la posición 1 de un array",
+  "language": "java",
+  "code": [
+    "int[] numeros = {15, 99, 8, 23, 4, 0, 0, 0, 0, 0};",
+    "int numElementos = 5;",
+    "",
+    "int posicion = 1;     // posición del elemento a eliminar",
+    "",
+    "// 1. desplazar a la izquierda",
+    "for (int i = posicion; i < numElementos - 1; i++) {",
+    "    numeros[i] = numeros[i + 1];",
+    "}",
+    "// 2. reducir el contador y limpiar la última posición",
+    "numElementos--;",
+    "numeros[numElementos] = 0;",
+    "// numeros = [15, 8, 23, 4, 0, 0, ...]   numElementos = 4"
+  ],
+  "steps": [
+    {"line": 1, "set": {"numeros": [15, 99, 8, 23, 4, 0, 0, 0, 0, 0]}, "note": "Se crea el array de 10 posiciones (#1), con 5 datos ocupados y 5 huecos."},
+    {"line": 2, "set": {"numElementos": 5}, "note": "El contador indica que hay 5 posiciones ocupadas."},
+    {"line": 4, "set": {"posicion": 1}, "note": "Vamos a eliminar el elemento de la posición 1: el 99."},
+    {"line": 7, "set": {"i": 1}, "note": "Se desplaza hacia la izquierda, empezando por la posición que se elimina. `i = 1` y la condición es `i < numElementos - 1`, es decir, `1 < 4`: cierto."},
+    {"line": 8, "set": {"numeros[1]": 8}, "note": "`numeros[1] = numeros[2]`: el 8 se copia sobre el 99, que desaparece del array."},
+    {"line": 7, "set": {"i": 2}, "note": "`i++` sube `i` a 2 y `2 < 4` es cierto."},
+    {"line": 8, "set": {"numeros[2]": 23}, "note": "`numeros[2] = numeros[3]`: el 23 sube una posición, sobre el 8 repetido."},
+    {"line": 7, "set": {"i": 3}, "note": "`i` vale 3 y `3 < 4` es cierto."},
+    {"line": 8, "set": {"numeros[3]": 4}, "note": "`numeros[3] = numeros[4]`: el 4 sube una posición. Ahora el 4 está en las posiciones 3 y 4: la última copia queda duplicada."},
+    {"line": 7, "set": {"i": 4}, "note": "`i` vale 4 y `4 < 4` es falso: el bucle termina. El límite es `numElementos - 1` porque dentro se lee `numeros[i + 1]`, que no debe salirse de la parte ocupada."},
+    {"line": 11, "unset": ["i"], "set": {"numElementos": 4}, "note": "`i` desaparece. `numElementos--` baja el contador a 4: el 4 duplicado de la posición 4 queda fuera de la parte ocupada."},
+    {"line": 12, "set": {"numeros[4]": 0}, "note": "`numeros[numElementos]` es `numeros[4]`: se limpia esa posición poniéndola a 0. El array queda como [15, 8, 23, 4, 0, 0, ...]."}
+  ]
+}

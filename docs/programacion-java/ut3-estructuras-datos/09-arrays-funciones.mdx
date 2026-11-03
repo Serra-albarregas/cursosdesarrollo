@@ -1,0 +1,233 @@
+---
+id: arrays-funciones
+title: 9. Arrays y funciones
+sidebar_label: 9. Arrays y funciones
+sidebar_position: 9
+---
+
+Los programas con arrays crecen rápido: leer datos, mostrarlos, sumarlos, buscar... Si todo está en el `main`, el código se vuelve largo y difícil de leer. Lo natural es **dividirlo en funciones**, cada una con una única tarea. En esta página vemos cómo pasar arrays a una función, cómo devolverlos y qué ocurre con los cambios que hagamos dentro.
+
+## Pasar un array como parámetro
+
+Un parámetro de tipo array se declara con el tipo seguido de corchetes: `int[] numeros`.
+
+```java
+public static void mostrar(int[] numeros) {
+    for (int i = 0; i < numeros.length; i++) {
+        System.out.println(numeros[i]);
+    }
+}
+
+public static void main(String[] args) {
+    int[] datos = {4, 8, 15, 16, 23, 42};
+    mostrar(datos);
+}
+```
+
+No hace falta pasar la longitud como parámetro aparte: dentro de la función, `numeros.length` ya nos la da.
+
+## Devolver un valor calculado a partir de un array
+
+Una función que **calcula** algo con el array y devuelve el resultado con `return`:
+
+```java
+public static int sumar(int[] numeros) {
+    int suma = 0;
+    for (int numero : numeros) {
+        suma += numero;
+    }
+    return suma;
+}
+
+public static double media(int[] numeros) {
+    return (double) sumar(numeros) / numeros.length;
+}
+```
+
+Fíjate en que `media` reutiliza `sumar`. Dividir en funciones pequeñas permite combinarlas.
+
+### Buscar un valor
+
+Un patrón muy habitual: devolver la **posición** del valor, o `-1` si no está.
+
+```java
+public static int buscar(int[] numeros, int buscado) {
+    for (int i = 0; i < numeros.length; i++) {
+        if (numeros[i] == buscado) {
+            return i;       // al encontrarlo, la función termina
+        }
+    }
+    return -1;              // si el bucle termina, no estaba
+}
+```
+
+Aquí el `return` dentro del bucle hace de «freno»: la función termina en cuanto encuentra el valor, sin recorrer el resto.
+
+## Devolver un array
+
+Una función también puede **crear y devolver un array**. El tipo de retorno es el tipo del array:
+
+```java
+public static int[] crearAleatorios(int cantidad, int maximo) {
+    Random generador = new Random();
+    int[] resultado = new int[cantidad];
+    for (int i = 0; i < cantidad; i++) {
+        resultado[i] = generador.nextInt(maximo) + 1;
+    }
+    return resultado;
+}
+
+public static void main(String[] args) {
+    int[] dados = crearAleatorios(5, 6);
+    System.out.println(Arrays.toString(dados));
+}
+```
+
+Lo que se devuelve es la **referencia** al array, así que no se copian los datos.
+
+## Los cambios dentro de la función sí se ven fuera
+
+Recuerda lo que vimos al hablar de funciones: los parámetros se pasan **por valor**. Pero con un array, el «valor» que se copia es la **referencia**. La función recibe, por tanto, un alias del mismo array.
+
+Consecuencia: **si la función modifica los elementos del array, el cambio se ve en quien la llamó**.
+
+```java
+public static void duplicar(int[] numeros) {
+    for (int i = 0; i < numeros.length; i++) {
+        numeros[i] = numeros[i] * 2;
+    }
+}
+
+public static void main(String[] args) {
+    int[] datos = {1, 2, 3};
+    duplicar(datos);
+    System.out.println(Arrays.toString(datos));   // [2, 4, 6]
+}
+```
+
+Fíjate en que `duplicar` es `void`: no devuelve nada, y aun así `datos` ha cambiado.
+
+### Pero reasignar el parámetro no afecta al original
+
+Lo que **no** se puede hacer desde dentro de la función es cambiar a qué array apunta la variable de fuera. Si dentro de la función hacemos `numeros = new int[10];`, estamos cambiando el alias local, pero la variable `datos` del `main` sigue apuntando al array original:
+
+```java
+public static void reasignar(int[] numeros) {
+    numeros = new int[]{9, 9, 9};   // solo cambia la referencia local
+}
+
+public static void main(String[] args) {
+    int[] datos = {1, 2, 3};
+    reasignar(datos);
+    System.out.println(Arrays.toString(datos));   // [1, 2, 3], sin cambios
+}
+```
+
+:::warning[Resumen del paso de arrays]
+- **Modificar elementos** (`numeros[i] = ...`) dentro de la función **sí** afecta al array original.
+- **Reasignar el parámetro** (`numeros = new int[...]`) **no** afecta al original.
+:::
+
+## Cuándo modificar y cuándo devolver un array nuevo
+
+Hay dos estilos y conviene tener claro cuál usa cada función:
+
+| Estilo | Ejemplo | Ventaja |
+| --- | --- | --- |
+| **Modifica** el array recibido | `void ordenar(int[] numeros)` | No gasta memoria extra |
+| **Devuelve** un array nuevo | `int[] ordenado(int[] numeros)` | El original no se toca |
+
+Si la función devuelve un array nuevo y no queremos tocar el original, empezamos haciendo una copia:
+
+```java
+public static int[] invertido(int[] numeros) {
+    int[] resultado = new int[numeros.length];
+    for (int i = 0; i < numeros.length; i++) {
+        resultado[i] = numeros[numeros.length - 1 - i];
+    }
+    return resultado;
+}
+```
+
+:::tip
+Documenta con Javadoc si una función **modifica** el array que recibe. Es una información importante para quien la use, y no se deduce de la cabecera.
+:::
+
+## Matrices como parámetros
+
+Una matriz se pasa igual, con dos pares de corchetes. Todo lo anterior sobre referencias sigue siendo válido.
+
+```java
+public static void mostrar(int[][] matriz) {
+    for (int i = 0; i < matriz.length; i++) {
+        for (int j = 0; j < matriz[i].length; j++) {
+            System.out.print(matriz[i][j] + "\t");
+        }
+        System.out.println();
+    }
+}
+
+public static int[][] crearMatriz(int filas, int columnas, int valor) {
+    int[][] matriz = new int[filas][columnas];
+    for (int i = 0; i < filas; i++) {
+        Arrays.fill(matriz[i], valor);    // cada fila es un array
+    }
+    return matriz;
+}
+```
+
+## Ejemplo completo: estadísticas de notas
+
+Un programa pequeño que combina todo: cada tarea es una función y el `main` solo coordina.
+
+```java
+import java.util.Scanner;
+
+public class EstadisticasNotas {
+
+    public static int[] leerNotas(int cantidad) {
+        Scanner lector = new Scanner(System.in);
+        int[] notas = new int[cantidad];
+        for (int i = 0; i < cantidad; i++) {
+            System.out.println("Nota " + (i + 1) + ":");
+            notas[i] = lector.nextInt();
+        }
+        return notas;
+    }
+
+    public static double media(int[] notas) {
+        int suma = 0;
+        for (int nota : notas) {
+            suma += nota;
+        }
+        return (double) suma / notas.length;
+    }
+
+    public static int maximo(int[] notas) {
+        int max = notas[0];
+        for (int i = 1; i < notas.length; i++) {
+            if (notas[i] > max) {
+                max = notas[i];
+            }
+        }
+        return max;
+    }
+
+    public static int contarAprobados(int[] notas) {
+        int aprobados = 0;
+        for (int nota : notas) {
+            if (nota >= 5) {
+                aprobados++;
+            }
+        }
+        return aprobados;
+    }
+
+    public static void main(String[] args) {
+        int[] notas = leerNotas(5);
+        System.out.println("Media: " + media(notas));
+        System.out.println("Nota máxima: " + maximo(notas));
+        System.out.println("Aprobados: " + contarAprobados(notas));
+    }
+}
+```

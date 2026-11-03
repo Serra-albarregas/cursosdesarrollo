@@ -1,0 +1,171 @@
+---
+id: arrays-resumen
+title: 11. Resumen y errores frecuentes
+sidebar_label: 11. Resumen y errores frecuentes
+sidebar_position: 11
+---
+
+Una página de consulta rápida para repasar la unidad: la sintaxis esencial, los errores que más se repiten y unas preguntas para comprobar si lo has entendido.
+
+## Sintaxis esencial
+
+### Arrays de una dimensión
+
+| Quiero... | Código |
+| --- | --- |
+| Declarar un array | `int[] notas;` |
+| Crearlo con un tamaño | `notas = new int[10];` |
+| Crearlo con valores | `int[] notas = {7, 5, 9};` |
+| Leer un elemento | `notas[2]` |
+| Modificar un elemento | `notas[2] = 8;` |
+| Saber su tamaño | `notas.length` (sin paréntesis) |
+| Último elemento | `notas[notas.length - 1]` |
+| Recorrerlo (con índice) | `for (int i = 0; i < notas.length; i++) { ... }` |
+| Recorrerlo (solo leer) | `for (int nota : notas) { ... }` |
+
+### Matrices
+
+| Quiero... | Código |
+| --- | --- |
+| Crear una matriz | `int[][] m = new int[filas][columnas];` |
+| Crearla con valores | `int[][] m = {{1, 2}, {3, 4}};` |
+| Leer un elemento | `m[fila][columna]` |
+| Número de filas | `m.length` |
+| Número de columnas | `m[0].length` (o `m[i].length`) |
+| Recorrerla por filas | dos `for` anidados: exterior en `i` (filas), interior en `j` (columnas) |
+
+### Métodos útiles
+
+| Método | Para qué sirve |
+| --- | --- |
+| `Arrays.toString(a)` | Mostrar un array |
+| `Arrays.deepToString(m)` | Mostrar una matriz |
+| `Arrays.equals(a, b)` | Comparar el contenido de dos arrays |
+| `Arrays.fill(a, valor)` | Rellenar con un valor |
+| `Arrays.sort(a)` | Ordenar de menor a mayor |
+| `Arrays.copyOf(a, n)` | Copia con longitud `n` (también sirve para ampliar) |
+| `Arrays.copyOfRange(a, desde, hasta)` | Copiar un rango (el final no se incluye) |
+| `System.arraycopy(f, pf, d, pd, n)` | Copiar elementos a un array ya existente |
+
+## Errores frecuentes
+
+| Error | Qué ocurre | Cómo evitarlo |
+| --- | --- | --- |
+| Usar `i <= notas.length` en el bucle | `ArrayIndexOutOfBoundsException` en la última vuelta | La condición es `i < notas.length` |
+| Escribir `notas.length()` | Error de compilación: `length` en arrays no lleva paréntesis | `notas.length` |
+| Olvidar el `new` | `NullPointerException` al usar el array | Crear el array antes de usarlo |
+| Comparar arrays con `==` | Compara referencias, casi siempre da `false` | `Arrays.equals(a, b)` |
+| Hacer `b = a` creyendo que copia | Dos variables sobre el mismo array: los cambios se ven en ambas | `Arrays.copyOf(a, a.length)` |
+| Mostrar con `println(array)` | Aparece `[I@4617c264` | `Arrays.toString(array)` |
+| Modificar elementos con `for-each` | El array no cambia: se modifica una copia | Usar el `for` clásico con índice |
+| Confundir filas y columnas | Recorridos incorrectos o fuera de rango | `m.length` → filas; `m[0].length` → columnas |
+| Reiniciar mal un acumulador en una matriz | La suma de una fila arrastra las anteriores | Declararlo dentro del bucle exterior, antes del interior |
+| Crear la traspuesta con las dimensiones originales | Error o resultado incompleto si no es cuadrada | `new int[columnas][filas]` |
+| Poner `array[i] != 0` antes de `i < array.length` | Se lee fuera del array antes de comprobar el límite | Primero el límite: `i < array.length && array[i] != 0` |
+
+## Preguntas de repaso
+
+Intenta responderlas antes de abrir el desplegable.
+
+**1. ¿Cuántos elementos tiene `int[] a = new int[8];` y cuál es el índice del último?**
+
+<details>
+<summary>Ver respuesta</summary>
+
+Tiene 8 elementos, con índices del 0 al 7. El último es `a[7]` (o `a[a.length - 1]`).
+
+</details>
+
+**2. ¿Qué muestra este código?**
+
+```java
+int[] a = {1, 2, 3};
+int[] b = a;
+b[1] = 20;
+System.out.println(a[1]);
+```
+
+<details>
+<summary>Ver respuesta</summary>
+
+Muestra `20`. `b = a` no copia el array: ambas variables apuntan al mismo array, así que el cambio hecho a través de `b` se ve desde `a`.
+
+</details>
+
+**3. ¿Qué muestra este código?**
+
+```java
+int[] a = {1, 2, 3};
+int[] b = Arrays.copyOf(a, 5);
+System.out.println(Arrays.toString(b));
+```
+
+<details>
+<summary>Ver respuesta</summary>
+
+Muestra `[1, 2, 3, 0, 0]`. `copyOf` crea un array nuevo de longitud 5: copia los 3 datos y las posiciones sobrantes se rellenan con el valor por defecto (`0`).
+
+</details>
+
+**4. ¿Qué diferencia hay entre `matriz.length` y `matriz[0].length`?**
+
+<details>
+<summary>Ver respuesta</summary>
+
+`matriz.length` es el número de filas (el número de arrays que contiene la matriz). `matriz[0].length` es el número de columnas de la fila 0.
+
+</details>
+
+**5. ¿Qué hace este bucle y qué valor tiene `x` al final?**
+
+```java
+int[] n = {3, 8, 2, 9, 4};
+int x = n[0];
+for (int i = 1; i < n.length; i++) {
+    if (n[i] > x) {
+        x = n[i];
+    }
+}
+```
+
+<details>
+<summary>Ver respuesta</summary>
+
+Calcula el **máximo** del array. Al final, `x` vale `9`.
+
+</details>
+
+**6. ¿Se modifica el array original en este código? ¿Y en el siguiente?**
+
+```java
+public static void a(int[] v) {
+    v[0] = 100;
+}
+
+public static void b(int[] v) {
+    v = new int[]{100, 100};
+}
+```
+
+<details>
+<summary>Ver respuesta</summary>
+
+En `a` **sí**: se modifica un elemento del array al que apunta `v`, que es el mismo array que pasó quien llamó a la función. En `b` **no**: se reasigna la variable local `v` a un array nuevo, pero eso no cambia la variable original de fuera.
+
+</details>
+
+**7. ¿Qué errores tiene este código?**
+
+```java
+int[] datos = new int[5];
+for (int i = 1; i <= datos.length; i++) {
+    datos[i] = i * 2;
+}
+```
+
+<details>
+<summary>Ver respuesta</summary>
+
+El bucle empieza en `1` (nunca se escribe en la posición `0`) y termina en `i <= datos.length`, es decir, hasta `i = 5`, que no es un índice válido: lanza `ArrayIndexOutOfBoundsException`. Lo correcto es `for (int i = 0; i < datos.length; i++)`.
+
+</details>

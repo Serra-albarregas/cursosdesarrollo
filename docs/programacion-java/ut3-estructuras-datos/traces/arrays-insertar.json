@@ -1,0 +1,38 @@
+{
+  "title": "Insertar 99 en la posición 1 de un array",
+  "language": "java",
+  "code": [
+    "int[] numeros = {15, 8, 23, 4, 0, 0, 0, 0, 0, 0};",
+    "int numElementos = 4;",
+    "",
+    "int posicion = 1;     // dónde queremos insertar",
+    "int valor = 99;",
+    "",
+    "if (numElementos < numeros.length) {",
+    "    // 1. desplazar a la derecha, de atrás hacia delante",
+    "    for (int i = numElementos; i > posicion; i--) {",
+    "        numeros[i] = numeros[i - 1];",
+    "    }",
+    "    // 2. colocar el nuevo valor en el hueco",
+    "    numeros[posicion] = valor;",
+    "    numElementos++;",
+    "}",
+    "// numeros = [15, 99, 8, 23, 4, 0, ...]   numElementos = 5"
+  ],
+  "steps": [
+    {"line": 1, "set": {"numeros": [15, 8, 23, 4, 0, 0, 0, 0, 0, 0]}, "note": "Se crea el array de 10 posiciones (#1). Solo las 4 primeras tienen datos útiles; las demás son huecos libres que valen 0."},
+    {"line": 2, "set": {"numElementos": 4}, "note": "El contador `numElementos` recuerda cuántas posiciones están ocupadas: 4."},
+    {"line": 4, "set": {"posicion": 1}, "note": "Queremos insertar en la posición 1, es decir, delante del 8."},
+    {"line": 5, "set": {"valor": 99}, "note": "Este es el valor que vamos a insertar."},
+    {"line": 7, "note": "Se comprueba que hay sitio: `4 < 10` es cierto."},
+    {"line": 9, "set": {"i": 4}, "note": "Para hacer hueco se desplaza hacia la derecha, empezando por el último dato. `i` empieza en `numElementos` (4), la primera posición libre, y `4 > 1` es cierto."},
+    {"line": 10, "set": {"numeros[4]": 4}, "note": "`numeros[4] = numeros[3]`: el 4 de la posición 3 se copia en la 4, que estaba libre. Ahora el 4 aparece repetido, pero no se ha perdido nada."},
+    {"line": 9, "set": {"i": 3}, "note": "`i--` baja `i` a 3 y `3 > 1` es cierto."},
+    {"line": 10, "set": {"numeros[3]": 23}, "note": "`numeros[3] = numeros[2]`: el 23 se copia sobre el 4 repetido, que ya estaba a salvo en la posición 4."},
+    {"line": 9, "set": {"i": 2}, "note": "`i` vale 2 y `2 > 1` es cierto."},
+    {"line": 10, "set": {"numeros[2]": 8}, "note": "`numeros[2] = numeros[1]`: el 8 se copia sobre el 23 repetido. Ahora el 8 está en las posiciones 1 y 2."},
+    {"line": 9, "set": {"i": 1}, "note": "`i` vale 1 y `1 > 1` es falso: el bucle termina. La posición 1 es ahora el hueco: su 8 ya está copiado en la 2, así que se puede sobrescribir sin perder nada."},
+    {"line": 13, "unset": ["i"], "set": {"numeros[1]": 99}, "note": "`i` desaparece. `numeros[posicion] = valor` coloca el 99 en el hueco."},
+    {"line": 14, "set": {"numElementos": 5}, "note": "Hay un dato más: el contador sube a 5. El array queda como [15, 99, 8, 23, 4, 0, ...]."}
+  ]
+}

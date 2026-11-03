@@ -1,0 +1,135 @@
+---
+id: arrays-ordenacion
+title: 6. Ordenar un array
+sidebar_label: 6. Ordenar un array
+sidebar_position: 6
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeTrace from '@site/src/components/CodeTrace';
+import trace from './traces/arrays-burbuja.json';
+
+Ordenar datos es una de las tareas más habituales en programación. Java ya incluye `Arrays.sort`, pero entender **cómo se ordena** un array a mano es un ejercicio excelente para practicar bucles anidados y el manejo de índices. En esta página vemos dos algoritmos sencillos: el de **burbuja** y el de **selección**.
+
+Todos los ejemplos ordenan de **menor a mayor**.
+
+## Intercambiar dos elementos
+
+Ambos algoritmos se basan en una operación: **intercambiar** dos posiciones del array. Para ello se necesita una variable auxiliar; sin ella, uno de los valores se perdería.
+
+```java
+int auxiliar = numeros[i];
+numeros[i] = numeros[j];
+numeros[j] = auxiliar;
+```
+
+:::warning
+Un error muy frecuente es escribir `numeros[i] = numeros[j]; numeros[j] = numeros[i];`. Tras la primera línea, el valor original de `numeros[i]` ya se ha perdido y las dos posiciones acaban con el mismo valor.
+:::
+
+## Ordenación por burbuja
+
+La idea es **comparar elementos vecinos** y, si están en el orden incorrecto, intercambiarlos. Al recorrer el array de principio a fin, el elemento mayor va «subiendo» como una burbuja hasta la última posición. Repetimos el proceso hasta que todo queda ordenado.
+
+<Tabs>
+<TabItem value="Código" label="Código" default>
+```java
+int[] numeros = {5, 3, 8, 1, 4};
+
+for (int i = 0; i < numeros.length - 1; i++) {
+    for (int j = 0; j < numeros.length - 1 - i; j++) {
+        if (numeros[j] > numeros[j + 1]) {
+            int auxiliar = numeros[j];
+            numeros[j] = numeros[j + 1];
+            numeros[j + 1] = auxiliar;
+        }
+    }
+}
+// numeros = [1, 3, 4, 5, 8]
+```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace} />
+</TabItem>
+</Tabs>
+
+- El bucle exterior (`i`) cuenta las **pasadas** por el array.
+- El bucle interior (`j`) compara cada elemento con el siguiente.
+- El límite `numeros.length - 1 - i` va disminuyendo: tras cada pasada, los `i` últimos elementos ya están en su sitio definitivo y no hace falta volver a mirarlos.
+- Se compara hasta `length - 1 - i` porque dentro se usa `numeros[j + 1]`, y `j + 1` no debe pasarse del último índice.
+
+### Qué ocurre en cada pasada
+
+Con el array `{5, 3, 8, 1, 4}`:
+
+| Pasada | Estado del array al terminar |
+| --- | --- |
+| 1 | `3, 5, 1, 4, 8` (el 8 ya está en su sitio) |
+| 2 | `3, 1, 4, 5, 8` (el 5 ya está en su sitio) |
+| 3 | `1, 3, 4, 5, 8` |
+| 4 | `1, 3, 4, 5, 8` (sin cambios) |
+
+### Mejora: parar cuando ya está ordenado
+
+Si en una pasada completa no se ha hecho **ningún intercambio**, el array ya está ordenado y podemos parar. Usamos una **bandera** para detectarlo:
+
+```java
+boolean hayIntercambio = true;
+int pasada = 0;
+
+while (hayIntercambio) {
+    hayIntercambio = false;
+    for (int j = 0; j < numeros.length - 1 - pasada; j++) {
+        if (numeros[j] > numeros[j + 1]) {
+            int auxiliar = numeros[j];
+            numeros[j] = numeros[j + 1];
+            numeros[j + 1] = auxiliar;
+            hayIntercambio = true;
+        }
+    }
+    pasada++;
+}
+```
+
+## Ordenación por selección
+
+La idea es distinta: en cada vuelta **seleccionamos el menor** de los elementos que quedan por ordenar y lo colocamos en su posición definitiva.
+
+```java
+int[] numeros = {5, 3, 8, 1, 4};
+
+for (int i = 0; i < numeros.length - 1; i++) {
+    // 1. buscar la posición del menor entre i y el final
+    int posMenor = i;
+    for (int j = i + 1; j < numeros.length; j++) {
+        if (numeros[j] < numeros[posMenor]) {
+            posMenor = j;
+        }
+    }
+    // 2. intercambiarlo con el elemento de la posición i
+    int auxiliar = numeros[i];
+    numeros[i] = numeros[posMenor];
+    numeros[posMenor] = auxiliar;
+}
+// numeros = [1, 3, 4, 5, 8]
+```
+
+Fíjate en que el bucle interior es exactamente el algoritmo del **mínimo con su posición** que vimos en la página de algoritmos básicos, solo que ahora se aplica al trozo del array que falta por ordenar.
+
+| Vuelta (`i`) | Menor encontrado | Array al terminar |
+| --- | --- | --- |
+| 0 | `1` (posición 3) | `1, 3, 8, 5, 4` |
+| 1 | `3` (posición 1) | `1, 3, 8, 5, 4` |
+| 2 | `4` (posición 4) | `1, 3, 4, 5, 8` |
+| 3 | `5` (posición 3) | `1, 3, 4, 5, 8` |
+
+## ¿Y `Arrays.sort`?
+
+En la práctica casi nunca programaremos nosotros la ordenación: usaremos `Arrays.sort(numeros)`, que está optimizado y es mucho más rápido con arrays grandes. Los algoritmos de esta página tienen un valor **didáctico**: nos enseñan a razonar con bucles anidados, índices e intercambios, y son la base para entender algoritmos más avanzados.
+
+| | Burbuja | Selección | `Arrays.sort` |
+| --- | --- | --- | --- |
+| Idea | Comparar vecinos e intercambiar | Elegir el menor y colocarlo | Algoritmo optimizado de la API |
+| Intercambios | Muchos | Como máximo uno por vuelta | — |
+| Cuándo usarlo | Para aprender | Para aprender | En programas reales |

@@ -1,0 +1,41 @@
+{
+  "title": "Matriz traspuesta",
+  "language": "java",
+  "code": [
+    "int[][] original = {",
+    "    {1, 2, 3},",
+    "    {4, 5, 6}",
+    "};   // 2 filas x 3 columnas",
+    "",
+    "int[][] traspuesta = new int[original[0].length][original.length];   // 3 filas x 2 columnas",
+    "",
+    "for (int i = 0; i < original.length; i++) {",
+    "    for (int j = 0; j < original[i].length; j++) {",
+    "        traspuesta[j][i] = original[i][j];",
+    "    }",
+    "}",
+    "System.out.println(Arrays.deepToString(traspuesta));   // [[1, 4], [2, 5], [3, 6]]"
+  ],
+  "steps": [
+    {"line": [1, 4], "set": {"original": [[1, 2, 3], [4, 5, 6]]}, "note": "Se crea la matriz original, de 2 filas y 3 columnas: `original` apunta al array #1, que contiene una referencia a cada fila (#2 y #3)."},
+    {"line": 6, "set": {"traspuesta": [[0, 0], [0, 0], [0, 0]]}, "note": "Se crea la traspuesta con las dimensiones cambiadas: `original[0].length` (3) filas y `original.length` (2) columnas. `traspuesta` apunta al array #4, y sus tres filas (#5, #6 y #7) empiezan llenas de ceros."},
+    {"line": 8, "set": {"i": 0}, "note": "Empieza el bucle exterior, el de las filas de la original: `i = 0`."},
+    {"line": 9, "set": {"j": 0}, "note": "Empieza el bucle interior, el de las columnas de la original: `j = 0`."},
+    {"line": 10, "set": {"traspuesta[0][0]": 1}, "note": "`traspuesta[0][0] = original[0][0]`: el 1 que estaba en la fila 0, columna 0, pasa a la fila 0, columna 0 de la traspuesta."},
+    {"line": 9, "set": {"j": 1}, "note": "`j++` sube `j` a 1."},
+    {"line": 10, "set": {"traspuesta[1][0]": 2}, "note": "`traspuesta[1][0] = original[0][1]`: el 2 que estaba en la fila 0, columna 1, pasa a la fila 1, columna 0 de la traspuesta."},
+    {"line": 9, "set": {"j": 2}, "note": "`j++` sube `j` a 2."},
+    {"line": 10, "set": {"traspuesta[2][0]": 3}, "note": "`traspuesta[2][0] = original[0][2]`: el 3 que estaba en la fila 0, columna 2, pasa a la fila 2, columna 0 de la traspuesta."},
+    {"line": 9, "set": {"j": 3}, "note": "`j++` sube `j` a 3 y `3 < 3` es falso: se ha terminado la fila de la original."},
+    {"line": 8, "unset": ["j"], "set": {"i": 1}, "note": "`i++` sube `i` a 1. `j` desaparece. Hasta ahora se ha rellenado la primera columna de la traspuesta con la primera fila de la original."},
+    {"line": 9, "set": {"j": 0}, "note": "El bucle interior vuelve a empezar desde `j = 0` para la fila siguiente."},
+    {"line": 10, "set": {"traspuesta[0][1]": 4}, "note": "`traspuesta[0][1] = original[1][0]`: el 4 que estaba en la fila 1, columna 0, pasa a la fila 0, columna 1 de la traspuesta."},
+    {"line": 9, "set": {"j": 1}, "note": "`j++` sube `j` a 1."},
+    {"line": 10, "set": {"traspuesta[1][1]": 5}, "note": "`traspuesta[1][1] = original[1][1]`: el 5 que estaba en la fila 1, columna 1, pasa a la fila 1, columna 1 de la traspuesta."},
+    {"line": 9, "set": {"j": 2}, "note": "`j++` sube `j` a 2."},
+    {"line": 10, "set": {"traspuesta[2][1]": 6}, "note": "`traspuesta[2][1] = original[1][2]`: el 6 que estaba en la fila 1, columna 2, pasa a la fila 2, columna 1 de la traspuesta."},
+    {"line": 9, "set": {"j": 3}, "note": "`j++` sube `j` a 3 y `3 < 3` es falso: se ha terminado la fila de la original."},
+    {"line": 8, "unset": ["j"], "set": {"i": 2}, "note": "`i++` sube `i` a 2 y `2 < 2` es falso: el bucle exterior termina. La traspuesta está completa."},
+    {"line": 13, "unset": ["i"], "println": "[[1, 4], [2, 5], [3, 6]]", "note": "`i` desaparece. Se muestra la traspuesta: las filas de la original son ahora columnas."}
+  ]
+}

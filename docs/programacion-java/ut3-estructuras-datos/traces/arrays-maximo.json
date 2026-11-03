@@ -1,0 +1,33 @@
+{
+  "title": "Buscar el máximo de un array",
+  "language": "java",
+  "code": [
+    "int[] numeros = {12, 45, 7, 89, 23, 56};",
+    "",
+    "int maximo = numeros[0];",
+    "for (int i = 1; i < numeros.length; i++) {",
+    "    if (numeros[i] > maximo) {",
+    "        maximo = numeros[i];",
+    "    }",
+    "}",
+    "System.out.println(\"El máximo es \" + maximo);   // 89"
+  ],
+  "steps": [
+    {"line": 1, "set": {"numeros": [12, 45, 7, 89, 23, 56]}, "note": "Se crea el array de 6 elementos (#1)."},
+    {"line": 3, "set": {"maximo": 12}, "note": "Se supone que el primer elemento es el máximo: `maximo = numeros[0]` = 12."},
+    {"line": 4, "set": {"i": 1}, "note": "Empieza el `for` en `i = 1` (el elemento 0 ya se ha usado como punto de partida). `1 < 6` es cierto."},
+    {"line": 5, "note": "`numeros[1]` vale 45. `45 > 12` es cierto: aparece un valor mayor."},
+    {"line": 6, "set": {"maximo": 45}, "note": "`maximo` pasa a valer 45."},
+    {"line": 4, "set": {"i": 2}, "note": "`i++` sube `i` a 2; `2 < 6` es cierto."},
+    {"line": 5, "note": "`numeros[2]` vale 7. `7 > 45` es falso: `maximo` se queda como está."},
+    {"line": 4, "set": {"i": 3}, "note": "`i++` sube `i` a 3; `3 < 6` es cierto."},
+    {"line": 5, "note": "`numeros[3]` vale 89. `89 > 45` es cierto: aparece un valor mayor."},
+    {"line": 6, "set": {"maximo": 89}, "note": "`maximo` pasa a valer 89."},
+    {"line": 4, "set": {"i": 4}, "note": "`i++` sube `i` a 4; `4 < 6` es cierto."},
+    {"line": 5, "note": "`numeros[4]` vale 23. `23 > 89` es falso: `maximo` se queda como está."},
+    {"line": 4, "set": {"i": 5}, "note": "`i++` sube `i` a 5; `5 < 6` es cierto."},
+    {"line": 5, "note": "`numeros[5]` vale 56. `56 > 89` es falso: `maximo` se queda como está."},
+    {"line": 4, "set": {"i": 6}, "note": "`i++` deja `i` en 6 y `6 < 6` es falso: el bucle termina. Se han recorrido todos los elementos."},
+    {"line": 9, "unset": ["i"], "println": "El máximo es 89", "note": "`i` desaparece. Se muestra el máximo, que es el 89."}
+  ]
+}

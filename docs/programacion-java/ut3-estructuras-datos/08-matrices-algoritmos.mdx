@@ -1,0 +1,247 @@
+---
+id: matrices-algoritmos
+title: 8. Algoritmos con matrices
+sidebar_label: 8. Algoritmos con matrices
+sidebar_position: 8
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeTrace from '@site/src/components/CodeTrace';
+import trace from './traces/matriz-traspuesta.json';
+
+Con las matrices aplicamos las mismas ideas que con los arrays de una dimensión (acumuladores, contadores, máximos...), pero recorriendo con **dos bucles anidados**. En esta página vemos los algoritmos más habituales. En todos los ejemplos partimos de esta matriz:
+
+```java
+int[][] matriz = {
+    {4, 7, 1},
+    {9, 2, 6},
+    {3, 8, 5}
+};
+```
+
+## Suma de todos los elementos
+
+Un acumulador que recorre toda la matriz:
+
+```java
+int suma = 0;
+for (int i = 0; i < matriz.length; i++) {
+    for (int j = 0; j < matriz[i].length; j++) {
+        suma += matriz[i][j];
+    }
+}
+System.out.println("Suma total: " + suma);   // 45
+```
+
+## Suma por filas
+
+El acumulador se **reinicia a 0 al empezar cada fila**, y se muestra al terminarla:
+
+```java
+for (int i = 0; i < matriz.length; i++) {
+    int sumaFila = 0;
+    for (int j = 0; j < matriz[i].length; j++) {
+        sumaFila += matriz[i][j];
+    }
+    System.out.println("Fila " + i + ": " + sumaFila);
+}
+// Fila 0: 12
+// Fila 1: 17
+// Fila 2: 16
+```
+
+:::warning[¿Dónde se declara el acumulador?]
+`int sumaFila = 0;` va **dentro** del bucle exterior y **antes** del interior. Si lo declarásemos fuera del bucle exterior, la suma de una fila continuaría sumándose a la de las anteriores.
+:::
+
+## Suma por columnas
+
+Para sumar por columnas, **intercambiamos el orden de los bucles**: el exterior recorre las columnas y el interior las filas.
+
+```java
+for (int j = 0; j < matriz[0].length; j++) {
+    int sumaColumna = 0;
+    for (int i = 0; i < matriz.length; i++) {
+        sumaColumna += matriz[i][j];
+    }
+    System.out.println("Columna " + j + ": " + sumaColumna);
+}
+// Columna 0: 16
+// Columna 1: 17
+// Columna 2: 12
+```
+
+## Máximo y su posición
+
+Igual que en una dimensión, pero guardamos **dos** índices: fila y columna.
+
+```java
+int maximo = matriz[0][0];
+int filaMax = 0;
+int colMax = 0;
+
+for (int i = 0; i < matriz.length; i++) {
+    for (int j = 0; j < matriz[i].length; j++) {
+        if (matriz[i][j] > maximo) {
+            maximo = matriz[i][j];
+            filaMax = i;
+            colMax = j;
+        }
+    }
+}
+System.out.println("Máximo " + maximo + " en [" + filaMax + "][" + colMax + "]");
+// Máximo 9 en [1][0]
+```
+
+## Diagonales de una matriz cuadrada
+
+Una matriz es **cuadrada** si tiene el mismo número de filas que de columnas.
+
+### Diagonal principal
+
+Son los elementos donde **fila y columna coinciden**: `[0][0]`, `[1][1]`, `[2][2]`... Basta **un solo bucle**:
+
+```java
+int sumaDiagonal = 0;
+for (int i = 0; i < matriz.length; i++) {
+    sumaDiagonal += matriz[i][i];
+}
+System.out.println("Diagonal principal: " + sumaDiagonal);   // 4 + 2 + 5 = 11
+```
+
+### Diagonal secundaria
+
+Es la que va de la esquina superior derecha a la inferior izquierda: `[0][2]`, `[1][1]`, `[2][0]`. Cumple que **fila + columna = tamaño - 1**:
+
+```java
+int n = matriz.length;
+int sumaSecundaria = 0;
+for (int i = 0; i < n; i++) {
+    sumaSecundaria += matriz[i][n - 1 - i];
+}
+System.out.println("Diagonal secundaria: " + sumaSecundaria);   // 1 + 2 + 3 = 6
+```
+
+### Recorriendo toda la matriz con una condición
+
+Otra forma de verlo es recorrer todos los elementos y quedarnos solo con los que cumplan la condición:
+
+```java
+for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        if (i == j) {
+            // elemento de la diagonal principal
+        }
+        if (i + j == n - 1) {
+            // elemento de la diagonal secundaria
+        }
+    }
+}
+```
+
+## Sumar dos matrices
+
+Se suman los elementos que ocupan la **misma posición**. Las dos matrices deben tener las mismas dimensiones, y el resultado se guarda en una tercera:
+
+```java
+int[][] a = {{1, 2}, {3, 4}};
+int[][] b = {{10, 20}, {30, 40}};
+int[][] resultado = new int[a.length][a[0].length];
+
+for (int i = 0; i < a.length; i++) {
+    for (int j = 0; j < a[i].length; j++) {
+        resultado[i][j] = a[i][j] + b[i][j];
+    }
+}
+System.out.println(Arrays.deepToString(resultado));   // [[11, 22], [33, 44]]
+```
+
+## Matriz traspuesta
+
+La **traspuesta** de una matriz intercambia filas y columnas: el elemento `[i][j]` pasa a la posición `[j][i]`. Si la matriz original tiene `F` filas y `C` columnas, la traspuesta tendrá `C` filas y `F` columnas.
+
+<Tabs>
+<TabItem value="Código" label="Código" default>
+```java
+int[][] original = {
+    {1, 2, 3},
+    {4, 5, 6}
+};   // 2 filas x 3 columnas
+
+int[][] traspuesta = new int[original[0].length][original.length];   // 3 filas x 2 columnas
+
+for (int i = 0; i < original.length; i++) {
+    for (int j = 0; j < original[i].length; j++) {
+        traspuesta[j][i] = original[i][j];
+    }
+}
+System.out.println(Arrays.deepToString(traspuesta));   // [[1, 4], [2, 5], [3, 6]]
+```
+</TabItem>
+<TabItem value="Demo" label="Demo" default>
+    <CodeTrace trace={trace} />
+</TabItem>
+</Tabs>
+
+:::tip
+Fíjate en los tamaños al crear la nueva matriz: `new int[columnas][filas]`. Es el error más típico: crear la traspuesta con las mismas dimensiones que la original solo funciona si la matriz es cuadrada.
+:::
+
+## Ejemplo: un tablero de tres en raya
+
+Las matrices son ideales para representar tableros. Usamos un `char[][]` de 3x3 donde `' '` es una casilla libre:
+
+```java
+char[][] tablero = new char[3][3];
+
+// 1. Vaciar el tablero (un char[] nuevo vale '\u0000', no ' ')
+for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+        tablero[i][j] = ' ';
+    }
+}
+
+// 2. Colocar algunas fichas
+tablero[0][0] = 'X';
+tablero[1][1] = 'O';
+tablero[2][2] = 'X';
+
+// 3. Mostrar el tablero
+for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+        System.out.print("[" + tablero[i][j] + "]");
+    }
+    System.out.println();
+}
+```
+
+```
+[X][ ][ ]
+[ ][O][ ]
+[ ][ ][X]
+```
+
+Y para comprobar si una ficha ha ganado **por una fila** (por ejemplo, `'X'`), usamos una **bandera**:
+
+```java
+char ficha = 'X';
+boolean hayLinea = false;
+
+for (int i = 0; i < 3; i++) {
+    boolean filaCompleta = true;
+    for (int j = 0; j < 3; j++) {
+        if (tablero[i][j] != ficha) {
+            filaCompleta = false;
+        }
+    }
+    if (filaCompleta) {
+        hayLinea = true;
+    }
+}
+System.out.println("¿Línea de " + ficha + " en alguna fila? " + hayLinea);
+```
+
+:::note[Para pensar]
+¿Qué cambiarías para comprobar también las **columnas** y las **dos diagonales**? Con lo visto en esta página, ya tienes todas las piezas.
+:::
