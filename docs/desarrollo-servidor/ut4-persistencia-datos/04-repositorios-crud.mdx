@@ -1,0 +1,387 @@
+---
+id: repositorios-crud
+title: 4. Repositorios y operaciones CRUD
+sidebar_label: 4. Repositorios y CRUD
+sidebar_position: 4
+description: La interfaz JpaRepository y su jerarquía, métodos heredados (save, findById, findAll, deleteById, count, existsById), el tratamiento de Optional, cómo decide save entre insertar y actualizar, y datos de prueba con import.sql.
+---
+
+# 4. Repositorios y operaciones CRUD
+
+Ya tenemos la base de datos conectada y una entidad. Falta lo que permite usarlas: el
+**repositorio**, el objeto que sabe guardar, buscar y borrar entidades. Con Spring Data JPA,
+conseguir un repositorio completo no requiere escribir ninguna clase.
+
+## 4.1. Crear un repositorio
+
+Un repositorio es una **interfaz** que extiende `JpaRepository`, indicando dos tipos: la entidad que
+gestiona y el tipo de su `@Id`.
+
+```java
+package es.centro.miproyecto.repositories;
+
+import es.centro.miproyecto.models.Alumno;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AlumnoRepository extends JpaRepository<Alumno, Long> { }
+```
+
+- **`Alumno`**: la entidad con la que trabaja este repositorio.
+- **`Long`**: el tipo del atributo marcado con `@Id` en `Alumno`. Debe coincidir; si el `id` fuese un
+  `UUID`, aquí iría `UUID`.
+
+Es todo lo que hace falta. La interfaz queda vacía y, aun así, ya ofrece una veintena de métodos.
+
+:::note
+No hace falta `@Repository`
+Al arrancar, Spring Boot busca las interfaces que extienden `JpaRepository` dentro del paquete de la
+clase principal y de sus subpaquetes, y las registra como *beans*. No es necesario anotarlas.
+:::
+
+## 4.2. De dónde salen los métodos
+
+`JpaRepository` forma parte de una jerarquía de interfaces, cada una añade capacidades a la anterior:
+
+| Interfaz | Qué aporta |
+|---|---|
+| `CrudRepository` | Las operaciones básicas: guardar, buscar por `id`, listar, contar y borrar |
+| `PagingAndSortingRepository` | Listados ordenados y por páginas (los veremos en su propia página) |
+| `JpaRepository` | Reúne las anteriores y añade operaciones propias de JPA, como `flush` o `saveAndFlush` |
+
+Al extender `JpaRepository` se heredan los métodos de todas. Y, como vimos en el adelanto de la
+primera página, **no hay ninguna clase nuestra que implemente `AlumnoRepository`**: Spring Data JPA
+genera la implementación al arrancar, y es ese objeto el que se inyecta donde se pida el repositorio.
+
+```java
+@Service
+public class ServicioAlumnos {
+
+    private final AlumnoRepository repositorio;
+
+    public ServicioAlumnos(AlumnoRepository repositorio) {
+        this.repositorio = repositorio;
+    }
+}
+```
+
+Si imprimes `repositorio.getClass()`, verás que no es una clase del proyecto, sino un objeto
+intermedio (*proxy*) creado por Spring.
+
+## 4.3. Los métodos heredados
+
+Estos son los más utilizados. `T` es la entidad (`Alumno`) e `ID`, el tipo de su identificador.
+
+| Método | Devuelve | Qué hace |
+|---|---|---|
+| `save(entidad)` | `T` | Guarda la entidad (la inserta si es nueva, o la actualiza si ya existe) y devuelve la entidad guardada |
+| `saveAll(entidades)` | `List<T>` | Lo mismo con varias entidades |
+| `findById(id)` | `Optional<T>` | Busca una entidad por su identificador |
+| `existsById(id)` | `boolean` | Indica si existe una entidad con ese identificador |
+| `findAll()` | `List<T>` | Devuelve todas las entidades |
+| `findAllById(ids)` | `List<T>` | Devuelve las que correspondan a una lista de identificadores |
+| `count()` | `long` | Cuenta cuántas entidades hay |
+| `deleteById(id)` | `void` | Borra la entidad con ese identificador, si existe |
+| `delete(entidad)` | `void` | Borra la entidad indicada |
+| `deleteAll()` | `void` | Borra todas las entidades |
+
+Cada uno se traduce en SQL, que se ve en la consola gracias a `show-sql`. La correspondencia
+aproximada es:
+
+| Llamada | SQL que ejecuta Hibernate (aproximado) |
+|---|---|
+| `save(alumnoNuevo)` | `insert into alumnos (...) values (...)` |
+| `findById(1L)` | `select ... from alumnos where id = ?` |
+| `findAll()` | `select ... from alumnos` |
+| `count()` | `select count(*) from alumnos` |
+| `save(alumnoExistente)` | `select ...` (para cargarlo) y, si algo ha cambiado, `update alumnos set ... where id = ?` |
+| `deleteById(1L)` | `select ...` (para cargarlo) y `delete from alumnos where id = ?` |
+
+## 4.4. `findById` y `Optional`
+
+Un `findAll()` devuelve una lista (vacía si no hay nada). Pero al buscar por `id` puede que **no exista
+ninguna fila**. Para no devolver `null`, `findById` devuelve un `Optional<Alumno>`: una "caja" que
+contiene el alumno, o que está vacía.
+
+```java
+Optional<Alumno> resultado = repositorio.findById(7L);
+```
+
+Formas habituales de trabajar con él:
+
+| Forma | Cuándo usarla |
+|---|---|
+| `resultado.isPresent()` / `resultado.isEmpty()` | Para preguntar si hay valor |
+| `resultado.ifPresent(alumno -> ...)` | Para hacer algo solo si existe |
+| `resultado.orElse(valorPorDefecto)` | Para usar un valor alternativo si no existe |
+| `resultado.orElseThrow(() -> new ...)` | Para lanzar una excepción si no existe |
+
+La última es la más útil en un controlador: si el alumno no existe, hay que responder con un error
+**404**.
+
+```java
+@GetMapping("/{id}")
+public String detalle(@PathVariable Long id, Model model) {
+    Alumno alumno = repositorio.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No existe el alumno " + id));
+
+    model.addAttribute("alumno", alumno);
+    return "alumno-detalle";
+}
+```
+
+`ResponseStatusException` es una excepción de Spring que hace que la respuesta HTTP tenga el código
+indicado.
+
+:::note
+Evita `.get()`
+`Optional` también tiene un método `get()`, pero si la caja está vacía lanza una excepción
+(`NoSuchElementException: No value present`) que acaba en un error 500 poco explicativo. Usa
+`orElseThrow` con una excepción que diga qué ha pasado.
+:::
+
+## 4.5. `save`: ¿insertar o actualizar?
+
+Con Spring Data JPA no existen métodos separados para insertar y para actualizar: ambos se hacen con
+`save`. Para decidir qué hacer, mira el `id` de la entidad:
+
+| Estado del `id` | Qué hace `save` |
+|---|---|
+| `null` (objeto nuevo) | **Inserta** una fila nueva. La base de datos asigna el `id` |
+| Con valor (objeto existente) | Busca la fila con ese `id` y la **actualiza** con los datos del objeto |
+
+```java
+Alumno nuevo = new Alumno();
+nuevo.setNombre("Lucía Márquez");
+// ... resto de campos
+
+System.out.println(nuevo.getId());          // null: todavía no se ha guardado
+
+Alumno guardado = repositorio.save(nuevo);   // INSERT
+
+System.out.println(guardado.getId());       // 1: ya tiene identificador
+```
+
+Dos consecuencias:
+
+- **Hay que usar el objeto que devuelve `save`**, que es el que lleva el `id` asignado. Para
+  entidades nuevas suele ser el mismo objeto, pero no se debe dar por hecho.
+- **Para modificar un alumno, se carga, se cambia y se vuelve a guardar**:
+
+```java
+Alumno alumno = repositorio.findById(1L).orElseThrow();
+alumno.setEdad(20);
+repositorio.save(alumno);                    // UPDATE
+```
+
+:::note
+El riesgo de recibir el `id` de un formulario
+Como `save` actualiza cuando el `id` tiene valor, un formulario que enviara un `id` (a mano, o por un
+campo oculto manipulado) podría **sobrescribir un alumno que ya existe** en lugar de crear uno
+nuevo. Es el riesgo de *binding* que vimos en la Unidad 3, y lo trataremos en el ejemplo integrador.
+:::
+
+## 4.6. Probarlo: un componente de pruebas
+
+Para ver los métodos en acción sin escribir todavía controladores ni formularios, usamos la misma
+idea del "*main* falso" de la Unidad 2: un componente cuyo método `@PostConstruct` se ejecuta al
+arrancar la aplicación.
+
+```java
+package es.centro.miproyecto;
+
+import es.centro.miproyecto.models.Alumno;
+import es.centro.miproyecto.models.Turno;
+import es.centro.miproyecto.repositories.AlumnoRepository;
+import jakarta.annotation.PostConstruct;
+import java.time.LocalDate;
+import java.util.Optional;
+import org.springframework.stereotype.Component;
+
+@Component
+public class PruebaRepositorio {
+
+    private final AlumnoRepository repositorio;
+
+    public PruebaRepositorio(AlumnoRepository repositorio) {
+        this.repositorio = repositorio;
+    }
+
+    @PostConstruct
+    public void probar() {
+        // Alta
+        Alumno lucia = repositorio.save(crear("Lucía Márquez", "lucia@centro.es"));
+        Alumno marcos = repositorio.save(crear("Marcos Iglesias", "marcos@centro.es"));
+        System.out.println("Ids asignados: " + lucia.getId() + " y " + marcos.getId());
+
+        // Consulta
+        System.out.println("Total: " + repositorio.count());
+        repositorio.findAll().forEach(a -> System.out.println(a.getId() + " - " + a.getNombre()));
+
+        Optional<Alumno> buscado = repositorio.findById(lucia.getId());
+        System.out.println("¿Existe Lucía? " + buscado.isPresent());
+        System.out.println("¿Existe el id 999? " + repositorio.existsById(999L));
+
+        // Actualización
+        lucia.setEdad(20);
+        repositorio.save(lucia);
+
+        // Borrado (para poder repetir la prueba en el siguiente arranque)
+        repositorio.deleteById(lucia.getId());
+        repositorio.deleteById(marcos.getId());
+        System.out.println("Total tras borrar: " + repositorio.count());
+    }
+
+    private Alumno crear(String nombre, String email) {
+        Alumno alumno = new Alumno();
+        alumno.setNombre(nombre);
+        alumno.setCurso("2DAW");
+        alumno.setEdad(19);
+        alumno.setEmail(email);
+        alumno.setFechaNacimiento(LocalDate.of(2006, 3, 10));
+        alumno.setTurno(Turno.MANANA);
+        return alumno;
+    }
+}
+```
+
+Al arrancar, la consola muestra tanto los mensajes de `println` como las sentencias SQL de
+Hibernate, intercaladas, lo que permite ver qué consulta provoca cada llamada.
+
+:::note
+Si la prueba falla a la mitad
+El campo `email` es `unique`. Si la ejecución se interrumpe antes del borrado final, los alumnos
+quedan guardados en MySQL y el siguiente arranque fallará con `Duplicate entry`. En ese caso, borra
+las filas desde el cliente de MySQL, o arranca con el perfil `h2`, que empieza siempre con la base
+de datos vacía.
+:::
+
+Este componente es solo para aprender: cuando termines de probar, bórralo.
+
+## 4.7. Datos de prueba con `import.sql`
+
+Insertar datos desde código, como hace el componente anterior, sirve para ver los métodos del
+repositorio, pero es incómodo cuando solo se quiere tener **unos cuantos datos de partida** para
+trabajar. Hibernate ofrece un mecanismo más sencillo: si en `src/main/resources` existe un archivo
+llamado **`import.sql`**, ejecuta sus sentencias justo después de crear las tablas.
+
+```sql title="src/main/resources/import.sql"
+-- Datos de prueba
+INSERT INTO alumnos (nombre, curso, edad, email, fecha_nacimiento, turno) VALUES ('Eva Soto', '1DAW', 18, 'eva@centro.es', '2007-05-21', 'MANANA');
+INSERT INTO alumnos (nombre, curso, edad, email, fecha_nacimiento, turno) VALUES ('Carlos Ruiz', '2DAW', 20, 'carlos@centro.es', '2005-11-02', 'TARDE');
+INSERT INTO alumnos (nombre, curso, edad, email, fecha_nacimiento, turno) VALUES ('Marta Gil', '1DAM', 19, 'marta@centro.es', '2006-08-14', 'MANANA');
+```
+
+Reglas del archivo:
+
+- **Cada sentencia debe ir en una sola línea.** Por defecto, Hibernate lee una sentencia por línea, así
+  que una sentencia repartida en varias líneas falla.
+- Los comentarios se escriben con `--` al principio de la línea.
+- Se usan los nombres de la **tabla y de las columnas**, no los de la clase y los atributos
+  (`fecha_nacimiento`, no `fechaNacimiento`).
+- El `id` se omite: lo genera la base de datos al ser autoincremental.
+- Los `enum` guardados con `EnumType.STRING` se escriben como texto (`'MANANA'`), y las fechas en formato
+  `'AAAA-MM-DD'`.
+- El archivo debe guardarse con codificación **UTF-8**. Si las tildes aparecen mal en la base de
+  datos, se puede indicar la codificación con
+  `spring.jpa.properties.hibernate.hbm2ddl.charset_name=UTF-8`.
+
+:::note
+`import.sql` no valida nada
+Las sentencias se ejecutan directamente sobre la base de datos: **no pasan por las validaciones** de
+Bean Validation ni por la entidad. Solo las comprueba la propia base de datos, por lo que los datos
+deben cumplir las restricciones de las columnas (`NOT NULL`, `unique`...), o la aplicación fallará
+al arrancar.
+:::
+
+### Cuándo se ejecuta
+
+Hibernate solo ejecuta `import.sql` cuando **crea** las tablas, es decir, según el valor de `ddl-auto`:
+
+| `ddl-auto` | ¿Se ejecuta `import.sql`? |
+|---|---|
+| `none` | No |
+| `validate` | No |
+| `update` | **No** |
+| `create` | Sí |
+| `create-drop` | Sí |
+
+Esto tiene una consecuencia importante para nuestra configuración:
+
+- **Con el perfil `h2`**, que usa `create-drop`, el archivo se ejecuta en cada arranque, y la base de
+  datos empieza siempre con esos datos.
+- **Con MySQL y `ddl-auto=update`**, el archivo **se ignora**, porque Hibernate no crea las tablas en
+  cada arranque.
+
+Para cargar los datos de prueba en MySQL hay que hacer que Hibernate vuelva a crear las tablas en
+cada arranque, lo que **borra los datos que hubiera**. Una forma ordenada de hacerlo, sin tocar el
+`application.properties` habitual, es otro perfil:
+
+```properties title="src/main/resources/application-datos.properties"
+spring.jpa.hibernate.ddl-auto=create
+```
+
+Arrancando con `--spring.profiles.active=datos`, las tablas se eliminan, se crean de nuevo y se
+cargan los datos de `import.sql`. Con el perfil habitual (`update`) vuelve a conservarse lo que
+haya en la base de datos.
+
+### Comprobar que se han cargado
+
+Basta con listar los alumnos desde el cliente de MySQL (o la consola de H2):
+
+```sql
+SELECT * FROM alumnos;
+```
+
+O desde el componente de pruebas de la sección anterior, con
+`System.out.println(repositorio.count())` al principio de `probar()`. Si se ha ejecutado el archivo,
+el resultado será 3.
+
+:::note
+Sin choques con el componente de pruebas
+Los alumnos de `import.sql` usan correos distintos a los del componente `PruebaRepositorio`
+(`lucia@centro.es` y `marcos@centro.es`) para que no se produzca un `Duplicate entry` al ejecutar ambos.
+:::
+
+:::note
+Y `data.sql`
+Spring Boot tiene su propio mecanismo parecido, un archivo `data.sql`. Se ejecuta con independencia
+de `ddl-auto`, pero hay que activarlo para bases de datos que no sean embebidas
+(`spring.sql.init.mode=always`) y, con `update`, volvería a insertar los datos en cada arranque. Por
+eso aquí usamos `import.sql`, que se ejecuta una sola vez, al crear las tablas.
+:::
+
+## 4.8. Cada llamada es una transacción
+
+Cada método del repositorio se ejecuta dentro de su **propia transacción**: si `save` falla a la
+mitad, no queda nada a medias. Pero dos llamadas seguidas (por ejemplo, guardar un alumno y
+después borrar otro) son **dos transacciones independientes**. Para agrupar varias operaciones de
+forma que se confirmen o se deshagan juntas se necesita `@Transactional`, que veremos en la página
+sobre servicios y transacciones.
+
+## 4.9. Errores habituales
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| `No qualifying bean of type 'AlumnoRepository'` | La interfaz está fuera del paquete de la clase principal, o no extiende `JpaRepository` | Colócala en un subpaquete (`repositories`) y revisa la declaración |
+| `Not a managed type` | La entidad indicada en `JpaRepository<...>` no está en el paquete escaneado | Revisa dónde está la entidad y que lleve `@Entity` |
+| `The given id must not be null` | Se ha llamado a `findById`, `deleteById` o similar con un `id` `null` | Comprueba el valor antes de llamar |
+| `NoSuchElementException: No value present` | Se ha usado `.get()` sobre un `Optional` vacío | Usa `orElseThrow` o comprueba `isPresent()` |
+| `DataIntegrityViolationException` | Se incumple una restricción de la base de datos (columna `NOT NULL`, valor repetido en una columna `unique`) | Revisa los datos del objeto; las validaciones del formulario deberían evitarlo |
+| Los datos de `import.sql` no aparecen | `ddl-auto` es `update` o `none`, y Hibernate solo lo ejecuta al crear las tablas | Arranca con el perfil `datos` (`create`) o con el perfil `h2` |
+| Error al arrancar mencionando `import.sql` | Una sentencia ocupa varias líneas, usa un nombre de columna inexistente o incumple una restricción | Deja cada sentencia en una línea, revisa los nombres de columnas y los valores |
+| Error de compilación `int cannot be converted to Long` en `findById(1)` | El `id` es `Long` y se ha pasado un `int` | Escribe el literal como `1L` |
+| `Provided id of the wrong type` | El tipo del `id` en `JpaRepository<Alumno, ...>` no coincide con el de la entidad | Haz que coincidan |
+
+## 4.10. Resumen
+
+| Concepto | Idea clave |
+|---|---|
+| `JpaRepository<Entidad, TipoId>` | Interfaz vacía que ya trae las operaciones básicas |
+| Implementación | La genera Spring Data JPA al arrancar; se inyecta como cualquier otro *bean* |
+| `save` | Inserta si el `id` es `null` y actualiza si tiene valor; hay que usar el objeto devuelto |
+| `findById` | Devuelve un `Optional`; con `orElseThrow` se responde un 404 si no existe |
+| `findAll`, `count`, `existsById` | Consultas básicas |
+| `deleteById`, `delete`, `deleteAll` | Borrado |
+| `import.sql` | Datos de prueba que Hibernate carga al crear las tablas (`create` y `create-drop`) |
+| Transacciones | Cada llamada es una transacción propia |

@@ -1,0 +1,388 @@
+---
+id: entidades-jpa
+title: 3. Entidades
+sidebar_label: 3. Entidades
+sidebar_position: 3
+description: Cómo convertir una clase Java en una tabla con @Entity, @Table, @Id, @GeneratedValue (IDENTITY y UUID) y @Column. Tipos de datos, enumerados, campos no persistentes, y convivencia con las anotaciones de validación.
+---
+
+# 3. Entidades
+
+Una **entidad** es una clase Java que JPA sabe guardar en una tabla de la base de datos. Cada objeto de
+esa clase se corresponde con una fila, y cada atributo con una columna. En esta página convertimos la
+clase `Alumno` de la Unidad 3 en una entidad.
+
+## 3.1. De clase a entidad: `@Entity`
+
+Basta con anotar la clase con `@Entity` y marcar cuál de sus atributos es la **clave primaria** con
+`@Id`:
+
+```java
+package es.centro.miproyecto.models;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity
+public class Alumno {
+
+    @Id
+    private Long id;
+
+    private String nombre;
+
+    // constructor vacío, getters y setters
+}
+```
+
+Con solo esto y un constructor vacío, Hibernate crea (si `ddl-auto` lo permite) una tabla llamada `alumno`, con una columna
+por cada atributo. Los nombres se derivan automáticamente: Spring Boot pasa de *camelCase* a
+*snake_case* y en minúsculas, de modo que un atributo `fechaNacimiento` genera la columna
+`fecha_nacimiento`.
+
+:::note
+`jakarta.persistence`
+Todas las anotaciones de esta página pertenecen al paquete `jakarta.persistence` (en Spring Boot 2 y
+anteriores era `javax.persistence`).
+:::
+
+## 3.2. El nombre de la tabla: `@Table`
+
+Si el nombre de la tabla debe ser distinto del de la clase, se indica con `@Table`:
+
+```java
+@Entity
+@Table(name = "alumnos")
+public class Alumno {
+    // ...
+}
+```
+
+Es habitual usar nombres de tabla en plural; ambos criterios son válidos mientras se aplique el mismo
+en todo el proyecto.
+
+## 3.3. La clave primaria: `@Id` y `@GeneratedValue`
+
+Toda entidad necesita un `@Id`. Lo normal es que sea un número que genera la propia base de datos, y
+para eso se añade `@GeneratedValue`:
+
+```java
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
+```
+
+- Se usa `Long` (la clase envoltorio) y no `long`, porque un objeto que todavía no se ha guardado
+  **no tiene identificador**: su `id` vale `null`. Es la forma en que JPA distingue un objeto nuevo
+  de uno que ya existe.
+- Tras guardar el objeto, Hibernate rellena el `id` con el valor que ha asignado la base de datos.
+
+La **estrategia** indica cómo se genera el valor:
+
+| Estrategia | Cómo funciona | Cuándo usarla |
+|---|---|---|
+| `IDENTITY` | Columna autoincremental (`AUTO_INCREMENT` en MySQL) | La opción para MySQL |
+| `SEQUENCE` | Usa una secuencia de la base de datos | PostgreSQL u Oracle, que tienen secuencias |
+| `UUID` | Genera un identificador único universal (`UUID`) en Java, sin depender de la base de datos | Cuando no se quiere un contador numérico (ver más abajo) |
+| `AUTO` | Deja que Hibernate elija según la base de datos | Mejor evitarla en MySQL (ver nota) |
+| `TABLE` | Usa una tabla auxiliar para generar los valores | Casos muy concretos |
+
+:::note
+Por qué no `AUTO` con MySQL
+MySQL no tiene secuencias. Con `AUTO`, Hibernate 6 las simula creando una tabla auxiliar por entidad
+(por ejemplo, `alumno_seq`), lo que sorprende a quien esperaba ver un campo autoincremental normal.
+Indicar `IDENTITY` de forma explícita evita el problema.
+:::
+
+### Identificadores `UUID`
+
+Además de un contador numérico, el identificador puede ser un **UUID** (*Universally Unique
+Identifier*): un valor de 128 bits que se escribe como `3f2b8a1e-7c4d-4b9a-9f10-5e6d2a8c1b07` y que,
+a efectos prácticos, nunca se repite. Con `GenerationType.UUID`, es **Hibernate** quien lo genera, en
+Java, justo antes de insertar la fila:
+
+```java
+@Id
+@GeneratedValue(strategy = GenerationType.UUID)
+private UUID id;
+```
+
+El atributo es de tipo `java.util.UUID`, y ese tipo es el que habrá que indicar después en el
+repositorio (`JpaRepository<Alumno, UUID>`) y en los `@PathVariable` de los controladores.
+
+| | `IDENTITY` (`Long`) | `UUID` |
+|---|---|---|
+| Quién genera el valor | La base de datos, al insertar | Hibernate, antes de insertar |
+| Ejemplo | `42` | `3f2b8a1e-7c4d-4b9a-9f10-5e6d2a8c1b07` |
+| Tamaño | 8 bytes | 16 bytes |
+| ¿Se puede adivinar el siguiente? | Sí, son consecutivos | No |
+| ¿Es único entre distintas bases de datos? | No | Sí |
+| Rendimiento de los índices | Mejor: siempre se añade al final | Algo peor: los valores aleatorios se reparten por todo el índice |
+| Comodidad al escribirlo o leerlo | Alta | Baja: es largo |
+
+Un UUID resulta útil cuando los datos se generan en varios sistemas que luego se combinan, o cuando
+no conviene que los identificadores revelen cuántos registros hay ni permitan recorrerlos uno a uno
+cambiando el número de la URL. Hay que tener en cuenta que esto **no sustituye a la seguridad**: que
+un identificador no se pueda adivinar no impide que alguien con acceso a él vea el registro, y los
+permisos hay que comprobarlos igualmente.
+
+## 3.4. Las columnas: `@Column`
+
+Sin ninguna anotación, cada atributo se guarda en una columna con el mismo nombre y un tamaño por
+defecto (255 caracteres para un texto, por ejemplo). Con `@Column` se ajusta:
+
+```java
+@Column(name = "fecha_nacimiento", nullable = false)
+private LocalDate fechaNacimiento;
+
+@Column(nullable = false, length = 50)
+private String nombre;
+
+@Column(nullable = false, unique = true)
+private String email;
+```
+
+| Atributo | Qué hace | Valor por defecto |
+|---|---|---|
+| `name` | Nombre de la columna | El del atributo, en *snake_case* |
+| `nullable` | Si admite `NULL` (`false` equivale a `NOT NULL`) | `true` |
+| `length` | Longitud máxima, para columnas de texto | `255` |
+| `unique` | Si el valor no se puede repetir | `false` |
+| `precision` y `scale` | Dígitos totales y decimales de un `BigDecimal` | `19` y `2` |
+
+## 3.5. Tipos de datos
+
+Hibernate traduce los tipos de Java a los de SQL. Esta tabla es orientativa, porque el tipo exacto
+depende de la base de datos:
+
+| Tipo Java | Tipo SQL habitual |
+|---|---|
+| `String` | `VARCHAR` |
+| `Integer` / `int` | `INT` |
+| `Long` / `long` | `BIGINT` |
+| `Double` / `double` | `DOUBLE` |
+| `BigDecimal` | `DECIMAL` |
+| `Boolean` / `boolean` | `BIT` o `TINYINT` |
+| `LocalDate` | `DATE` |
+| `LocalDateTime` | `DATETIME` |
+
+Para valores monetarios o cualquier cálculo que exija exactitud conviene usar `BigDecimal`, no
+`double`.
+
+### Enumerados: `@Enumerated`
+
+Un `enum` de Java se guarda con `@Enumerated`:
+
+```java
+public enum Turno {
+    MANANA, TARDE
+}
+```
+
+```java
+@Enumerated(EnumType.STRING)
+@Column(nullable = false, length = 10)
+private Turno turno;
+```
+
+Hay dos formas de guardarlo:
+
+| | `EnumType.STRING` | `EnumType.ORDINAL` |
+|---|---|---|
+| Qué se guarda | El nombre (`"TARDE"`) | La posición (`1`) |
+| Legibilidad en la base de datos | Alta | Hay que saber qué número es cada valor |
+| Si se reordena o inserta un valor en el `enum` | Sin consecuencias | **Los datos existentes pasan a significar otra cosa** |
+
+`ORDINAL` es el valor por defecto, pero es una trampa: añadir un valor en mitad del `enum` desplaza
+los números de los siguientes y corrompe los datos ya guardados. **Usa siempre `EnumType.STRING`.**
+
+## 3.6. Atributos que no se guardan: `@Transient`
+
+A veces una clase tiene atributos que solo existen en memoria y no deben ocupar una columna: un
+valor calculado, o una marca que solo se usa en la pantalla. Se marcan con `@Transient`:
+
+```java
+@Transient
+private boolean seleccionado;
+```
+
+JPA los ignora al guardar y al leer. Si se escribe un atributo así sin `@Transient`, Hibernate
+intentará crear una columna para él.
+
+## 3.7. Requisitos de la clase
+
+Para que una clase funcione como entidad debe cumplir unas condiciones:
+
+- Tener un **constructor sin argumentos** (puede ser `protected`). Hibernate lo usa para crear los
+  objetos al leer las filas. Si se escriben otros constructores, hay que añadir también el vacío.
+- **No ser `final`**, ni tener métodos `final`: Hibernate crea clases derivadas (*proxies*) para
+  algunas operaciones, como veremos con las relaciones.
+- Tener un atributo anotado con `@Id`.
+
+Al anotar los atributos (no los métodos *getter*), Hibernate lee y escribe **directamente los
+campos**. Los *getters* y *setters* siguen haciendo falta, pero para el resto de la aplicación: los
+usan Thymeleaf y el *binding* de los formularios.
+
+## 3.8. La entidad `Alumno` completa
+
+Juntando todo, y conservando las anotaciones de validación de la Unidad 3:
+
+```java
+package es.centro.miproyecto.models;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
+
+@Entity
+@Table(name = "alumnos")
+public class Alumno {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(min = 2, max = 50, message = "El nombre debe tener entre 2 y 50 caracteres")
+    @Column(nullable = false, length = 50)
+    private String nombre;
+
+    @NotBlank(message = "Debes elegir un curso")
+    @Column(nullable = false, length = 10)
+    private String curso;
+
+    @NotNull(message = "La edad es obligatoria")
+    @Min(value = 16, message = "La edad mínima es 16 años")
+    @Max(value = 99, message = "La edad máxima es 99 años")
+    @Column(nullable = false)
+    private Integer edad;
+
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "El email no tiene un formato válido")
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @NotNull(message = "La fecha de nacimiento es obligatoria")
+    @Past(message = "La fecha de nacimiento debe ser anterior a hoy")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @Column(name = "fecha_nacimiento", nullable = false)
+    private LocalDate fechaNacimiento;
+
+    @NotNull(message = "Debes elegir un turno")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private Turno turno;
+
+    public Alumno() { }
+
+    // getters y setters de todos los atributos
+}
+```
+
+### Validación y `@Column`: dos cosas distintas
+
+El mismo requisito aparece dos veces: `@NotBlank` y `@Column(nullable = false)`. No es redundancia
+inútil, cada una cumple una función distinta:
+
+| | Validación (`@NotBlank`, `@Size`...) | JPA (`@Column(nullable = false, length = 50)`) |
+|---|---|---|
+| Quién la aplica | Spring, en Java, al validar el formulario | La base de datos, al guardar |
+| Para qué sirve | Avisar al usuario con un mensaje claro | Garantizar la integridad aunque el dato llegue por otra vía |
+| Si se incumple | Error en el formulario, con `th:errors` | Excepción al guardar |
+
+Conviene mantener ambas: la primera da una buena experiencia al usuario, y la segunda es la red de
+seguridad.
+
+:::note
+Ahora la entidad tiene `id`
+La clase `Alumno` de la Unidad 3 no tenía identificador. Con él aparece el riesgo que mencionamos en
+la página de *binding*: si alguien envía un `POST` con `id=1`, el `save` interpretará que se trata
+del alumno 1 y lo **actualizará** en lugar de crear uno nuevo. En el ejemplo integrador veremos cómo
+evitarlo.
+:::
+
+## 3.9. Dónde se colocan las entidades
+
+Spring Boot busca las entidades en el paquete de la clase principal (la anotada con
+`@SpringBootApplication`) y en todos sus subpaquetes. Por eso las colocamos en `models`, que cuelga
+de ese paquete:
+
+```text
+es.centro.miproyecto/
+├── MiProyectoApplication.java
+├── controllers/
+├── services/
+├── repositories/
+└── models/
+    ├── Alumno.java
+    └── Turno.java
+```
+
+## 3.10. Ver la tabla creada
+
+Con la configuración de la página anterior (`ddl-auto=update` y `show-sql=true`), al arrancar la
+aplicación aparece en la consola la sentencia que crea la tabla, parecida a esta (simplificada):
+
+```sql
+create table alumnos (
+    id bigint not null auto_increment,
+    nombre varchar(50) not null,
+    curso varchar(10) not null,
+    edad integer not null,
+    email varchar(255) not null,
+    fecha_nacimiento date not null,
+    turno varchar(10) not null,
+    primary key (id)
+)
+```
+
+Y se puede comprobar desde el cliente de MySQL del contenedor:
+
+```bash
+docker compose exec mysql mysql -ucentro_user -pcentro_pass centro
+```
+
+```sql
+DESCRIBE alumnos;
+```
+
+El orden de las columnas, y la forma exacta de la columna `turno` (puede aparecer como `enum` según la
+versión de Hibernate), pueden variar. Si se usa el perfil `h2`, la tabla se ve en la consola web.
+
+## 3.11. Errores habituales
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| `No identifier specified for entity` | Falta el atributo con `@Id` | Añade `@Id` a la clave primaria |
+| `Not a managed type` | La entidad está fuera del paquete de la clase principal | Muévela a un subpaquete de ese paquete |
+| `Table 'centro.alumnos' doesn't exist` | `ddl-auto` está en `none` o `validate` | Usa `update` mientras desarrollas |
+| `Data truncated for column` / `Data too long` | El valor supera el `length` de la columna | Aumenta el `length` o valida el tamaño con `@Size` |
+| `Duplicate entry '...' for key` | Se repite un valor de una columna `unique` | Controla el valor antes de guardar |
+| `Unknown column` tras cambiar la entidad | La tabla ya existía con otro esquema y `update` no la modifica | En desarrollo, borra la tabla o el volumen y deja que se cree de nuevo |
+
+## 3.12. Resumen
+
+| Anotación | Para qué sirve |
+|---|---|
+| `@Entity` | Marca la clase como entidad |
+| `@Table(name = "...")` | Elige el nombre de la tabla |
+| `@Id` | Marca la clave primaria |
+| `@GeneratedValue(strategy = IDENTITY)` | La base de datos genera el valor (autoincremental) |
+| `@GeneratedValue(strategy = UUID)` | Hibernate genera un identificador `UUID` |
+| `@Column(...)` | Ajusta nombre, longitud, nulabilidad y unicidad de una columna |
+| `@Enumerated(EnumType.STRING)` | Guarda un `enum` por su nombre |
+| `@Transient` | Excluye un atributo de la persistencia |
