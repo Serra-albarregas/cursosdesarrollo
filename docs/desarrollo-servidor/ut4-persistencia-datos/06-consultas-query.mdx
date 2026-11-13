@@ -1,0 +1,322 @@
+---
+id: consultas-query
+title: 6. Consultas con @Query
+sidebar_label: 6. Consultas con @Query
+sidebar_position: 6
+description: Consultas propias con @Query. JPQL frente a SQL, parámetros con @Param, filtros opcionales, resultados que no son entidades, consultas que modifican datos con @Modifying, consultas SQL nativas y cuándo usar cada tipo de consulta.
+---
+
+# 6. Consultas con @Query
+
+Las consultas derivadas del nombre del método son muy cómodas, pero tienen un límite: cuando la
+consulta se complica, el nombre se vuelve ilegible. Para esos casos, Spring Data JPA permite
+**escribir la consulta a mano** con la anotación `@Query`.
+
+## 6.1. Una consulta escrita por nosotros
+
+Con `@Query`, la consulta va en una cadena de texto sobre el método del repositorio:
+
+```java
+public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
+
+    @Query("select a from Alumno a where a.curso = :curso and a.edad >= :edadMinima order by a.nombre")
+    List<Alumno> buscarPorCursoYEdadMinima(@Param("curso") String curso,
+                                           @Param("edadMinima") int edadMinima);
+}
+```
+
+Al llevar `@Query`, Spring **no interpreta el nombre** del método: se puede llamar como se quiera,
+y conviene que describa lo que hace de forma legible (`buscarPorCursoYEdadMinima` en lugar de
+`findByCursoAndEdadGreaterThanEqualOrderByNombre`).
+
+Cuando la consulta es larga, se puede escribir en varias líneas con un **bloque de texto** de Java
+(entre `"""`), que hace que se lea mucho mejor:
+
+```java
+@Query("""
+        select a from Alumno a
+        where a.curso = :curso
+          and a.edad >= :edadMinima
+        order by a.nombre
+        """)
+List<Alumno> buscarPorCursoYEdadMinima(@Param("curso") String curso,
+                                       @Param("edadMinima") int edadMinima);
+```
+
+## 6.2. JPQL: SQL sobre objetos
+
+El lenguaje de estas consultas se llama **JPQL** (*Jakarta Persistence Query Language*). Se parece
+mucho a SQL, con una diferencia fundamental: **consulta clases y atributos, no tablas y columnas**.
+
+| | SQL | JPQL |
+|---|---|---|
+| Qué se consulta | La tabla `alumnos` | La clase `Alumno` |
+| Columnas / atributos | `fecha_nacimiento` | `a.fechaNacimiento` |
+| Seleccionar todo | `select * from alumnos` | `select a from Alumno a` |
+| Alias | Opcional | Necesario (aquí, `a`) |
+| Mayúsculas y minúsculas | Sin distinción | Los nombres de clases y atributos **sí** las distinguen; las palabras clave (`select`, `where`) no |
+| Dependencia de la base de datos | Cada una tiene sus particularidades | Es el mismo para cualquier base de datos |
+
+La misma consulta en los dos lenguajes:
+
+```sql
+-- SQL
+select * from alumnos where curso = '2DAW' order by nombre
+```
+
+```text
+-- JPQL
+select a from Alumno a where a.curso = '2DAW' order by a.nombre
+```
+
+La parte fácil de recordar: **en JPQL se escribe lo que hay en el código Java**: el nombre de la
+clase (`Alumno`) y el de sus atributos (`fechaNacimiento`), nunca el de la tabla o el de las columnas.
+
+:::note
+JPQL y HQL
+Hibernate tiene su propia versión ampliada, llamada HQL, que incluye JPQL y añade algunas funciones.
+Lo que se ejecuta en `@Query` es en realidad HQL, aunque en esta unidad solo usaremos la parte
+común, la de JPQL.
+:::
+
+## 6.3. Parámetros
+
+Los valores variables no se escriben dentro de la cadena, sino que se pasan como **parámetros**. Hay
+dos formas.
+
+### Parámetros nombrados (la recomendada)
+
+Se escribe `:nombre` en la consulta y se asocia al parámetro del método con `@Param`:
+
+```java
+@Query("select a from Alumno a where a.curso = :curso")
+List<Alumno> buscarPorCurso(@Param("curso") String curso);
+```
+
+El texto de `@Param` debe coincidir con el que va tras los dos puntos. Es la forma más clara,
+porque cada parámetro tiene nombre y el orden en que se escriben no importa.
+
+:::note
+¿Y si se olvida `@Param`?
+En un proyecto de Spring Boot creado con Spring Initializr, los nombres de los parámetros del método
+se conservan al compilar, y Spring puede deducirlos sin `@Param`. Aun así, escribirlo es más seguro:
+no depende de la configuración del proyecto y deja el código explícito.
+:::
+
+### Parámetros posicionales
+
+También se puede usar `?1`, `?2`..., que se refieren al primer, segundo... parámetro del método:
+
+```java
+@Query("select a from Alumno a where a.curso = ?1 and a.edad >= ?2")
+List<Alumno> buscarPorCursoYEdad(String curso, int edad);
+```
+
+Es más corto, pero obliga a contar, y un cambio en el orden de los parámetros altera el significado
+sin avisar. Es preferible la forma nombrada.
+
+### Buscar texto con `like`
+
+Los comodines `%` se escriben dentro de la consulta, y se unen al parámetro con `concat`:
+
+```java
+@Query("select a from Alumno a where lower(a.nombre) like lower(concat('%', :texto, '%'))")
+List<Alumno> buscarPorNombre(@Param("texto") String texto);
+```
+
+`lower(...)` en los dos lados hace que la búsqueda no distinga mayúsculas de minúsculas, y funciona
+igual en MySQL y en H2.
+
+### Filtros opcionales
+
+Un patrón muy habitual es un buscador con varios filtros que el usuario puede dejar vacíos. Se
+resuelve comprobando en la propia consulta si el parámetro es `null`:
+
+```java
+@Query("""
+        select a from Alumno a
+        where (:curso is null or a.curso = :curso)
+          and (:edadMinima is null or a.edad >= :edadMinima)
+        order by a.nombre
+        """)
+List<Alumno> filtrar(@Param("curso") String curso, @Param("edadMinima") Integer edadMinima);
+```
+
+Si `curso` llega a `null`, la primera condición se cumple siempre y no filtra; si tiene valor, filtra.
+Con `Integer` (y no `int`) el segundo parámetro también puede ser `null`.
+
+```java
+@GetMapping("/filtrar")
+public String filtrar(@RequestParam(required = false) String curso,
+                      @RequestParam(required = false) Integer edadMinima,
+                      Model model) {
+
+    String cursoFiltro = (curso == null || curso.isBlank()) ? null : curso;
+
+    model.addAttribute("alumnos", repositorio.filtrar(cursoFiltro, edadMinima));
+    return "alumnos";
+}
+```
+
+:::note
+Un texto vacío no es `null`
+Un campo de texto de un formulario que se deja en blanco llega al controlador como `""` (cadena
+vacía), no como `null`. Sin la conversión de `cursoFiltro`, la consulta buscaría alumnos con el curso
+vacío y no devolvería nada. Es el mismo detalle que vimos con `@NotBlank` frente a `@NotNull`.
+:::
+
+## 6.4. Resultados que no son entidades
+
+Una consulta no está obligada a devolver `Alumno`. Según lo que se seleccione, el resultado cambia.
+
+### Un dato suelto
+
+```java
+@Query("select distinct a.curso from Alumno a order by a.curso")
+List<String> listarCursos();
+
+@Query("select count(a) from Alumno a where a.turno = :turno")
+long contarPorTurno(@Param("turno") Turno turno);
+```
+
+El primero devuelve los cursos que existen, sin repetir, lo que sirve, por ejemplo, para rellenar
+un `<select>` de un formulario. El segundo devuelve un número.
+
+### Un objeto propio con varios datos
+
+Si se necesitan varios valores a la vez (por ejemplo, cuántos alumnos hay en cada curso), se define
+una clase sencilla para recogerlos. Un `record` de Java es lo más cómodo:
+
+```java
+package es.centro.miproyecto.models;
+
+public record ResumenCurso(String curso, Long total) { }
+```
+
+Y en la consulta se construye con `select new`, indicando el nombre **completo** de la clase
+(con su paquete):
+
+```java
+@Query("""
+        select new es.centro.miproyecto.models.ResumenCurso(a.curso, count(a))
+        from Alumno a
+        group by a.curso
+        order by a.curso
+        """)
+List<ResumenCurso> resumenPorCurso();
+```
+
+`count` devuelve un `Long`, por eso el segundo componente del `record` es `Long`. Los valores de
+un `record` se leen con el nombre del componente seguido de paréntesis: `resumen.curso()` y
+`resumen.total()`.
+
+## 6.5. Consultas que modifican datos
+
+Una consulta `update` o `delete` escrita a mano necesita dos anotaciones más:
+
+```java
+@Modifying
+@Transactional
+@Query("update Alumno a set a.curso = :nuevo where a.curso = :actual")
+int cambiarCurso(@Param("actual") String actual, @Param("nuevo") String nuevo);
+
+@Modifying
+@Transactional
+@Query("delete from Alumno a where a.curso = :curso")
+int borrarPorCurso(@Param("curso") String curso);
+```
+
+- **`@Modifying`** avisa a Spring de que la consulta no lee datos, sino que los cambia. Sin ella,
+  Spring espera un resultado de lectura y la consulta falla.
+- **`@Transactional`** es necesario porque modificar datos exige una transacción activa
+  (`org.springframework.transaction.annotation.Transactional`; lo veremos en detalle en la página
+  de servicios).
+- El método devuelve un `int` con el **número de filas afectadas**.
+
+Estas consultas se ejecutan como **una única sentencia SQL** sobre la base de datos, sin cargar
+antes los objetos. Es mucho más eficiente que un `deleteBy` derivado (que carga cada alumno y lo
+borra uno a uno), pero con un inconveniente: los objetos que ya estuvieran cargados en memoria no se
+enteran del cambio y pueden quedarse desactualizados. Si hace falta, `@Modifying(clearAutomatically = true)`
+limpia esa memoria tras la consulta.
+
+## 6.6. Consultas SQL nativas
+
+A veces hace falta escribir **SQL puro**, normalmente para aprovechar una función propia de una base
+de datos concreta. Se indica con `nativeQuery = true`:
+
+```java
+@Query(value = "select * from alumnos where curso = :curso", nativeQuery = true)
+List<Alumno> buscarPorCursoNativo(@Param("curso") String curso);
+
+@Query(value = "select * from alumnos order by rand() limit 1", nativeQuery = true)
+Optional<Alumno> alumnoAlAzar();
+```
+
+En una consulta nativa **cambian las reglas**: se usan los nombres de la **tabla** y de las
+**columnas** (`alumnos`, `fecha_nacimiento`), no los de la clase y los atributos. Y se escribe el
+SQL de la base de datos concreta: `rand()` es de MySQL (y de H2), pero PostgreSQL usa `random()`, por
+lo que esa consulta dejaría de funcionar si se cambia de base de datos.
+
+| | JPQL | SQL nativo |
+|---|---|---|
+| Se escribe con | Clases y atributos | Tablas y columnas |
+| Portabilidad entre bases de datos | Total | Ninguna garantizada |
+| ¿Se comprueba al arrancar? | Sí: un error impide arrancar la aplicación | No: el error aparece al ejecutar la consulta |
+| Funciones propias de la base de datos | Solo las comunes | Todas |
+
+## 6.7. Cuál elegir
+
+| Situación | Opción |
+|---|---|
+| Una o dos condiciones sencillas | Consulta derivada del nombre |
+| Más condiciones, filtros opcionales, agrupaciones, `like` combinado, o un nombre de método que se vuelve ilegible | `@Query` con JPQL |
+| Resultados que no son entidades (conteos, resúmenes) | `@Query` con JPQL |
+| Cambios masivos (`update` / `delete`) | `@Query` con `@Modifying` |
+| Una función o característica que solo ofrece tu base de datos | `@Query` con SQL nativo |
+
+Como orden de preferencia: primero la consulta derivada, si cabe; después JPQL; y SQL nativo solo
+cuando no haya más remedio.
+
+## 6.8. Probar las consultas
+
+Con los alumnos de `import.sql` (Eva Soto, 1DAW, 18 años, mañana; Carlos Ruiz, 2DAW, 20, tarde; y
+Marta Gil, 1DAM, 19, mañana):
+
+| Llamada | Resultado |
+|---|---|
+| `buscarPorCursoYEdadMinima("1DAW", 18)` | Eva Soto |
+| `buscarPorNombre("AR")` | Carlos Ruiz, Marta Gil |
+| `filtrar(null, 19)` | Carlos Ruiz, Marta Gil |
+| `filtrar("2DAW", null)` | Carlos Ruiz |
+| `listarCursos()` | `1DAM`, `1DAW`, `2DAW` |
+| `contarPorTurno(Turno.MANANA)` | 2 |
+| `resumenPorCurso()` | `1DAM` → 1, `1DAW` → 1, `2DAW` → 1 |
+
+Se pueden lanzar desde el componente de pruebas de la página de repositorios, y comprobar en la
+consola el SQL que genera Hibernate para cada una.
+
+## 6.9. Errores habituales
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| La aplicación no arranca y el mensaje habla de una entidad que no existe (algo como `Alumnos is not mapped`) | En JPQL se ha escrito el nombre de la tabla en lugar del de la clase | Usa el nombre de la clase: `Alumno` |
+| La aplicación no arranca y el mensaje habla de un atributo desconocido | En JPQL se ha escrito el nombre de una columna (`fecha_nacimiento`) | Usa el nombre del atributo: `fechaNacimiento` |
+| Error al arrancar pidiendo nombres para los parámetros del método | La consulta usa parámetros nombrados y falta `@Param` | Añade `@Param("nombre")` a cada parámetro |
+| Un parámetro nombrado no está enlazado | El texto de `@Param` no coincide con el de la consulta | Haz que los dos nombres coincidan |
+| `TransactionRequiredException` al ejecutar un `update` o `delete` | Falta `@Transactional` en la consulta que modifica | Añade `@Transactional` junto a `@Modifying` |
+| Error por no esperar un resultado de lectura | Falta `@Modifying` | Añádela |
+| `Unknown column` en una consulta nativa | Se ha escrito el nombre del atributo en lugar del de la columna | Usa el nombre de la columna (`fecha_nacimiento`) |
+| Un filtro opcional no devuelve nada | El campo vacío llega como `""` y no como `null` | Convierte el texto vacío a `null` antes de llamar |
+
+## 6.10. Resumen
+
+| Concepto | Idea clave |
+|---|---|
+| `@Query` | Escribe la consulta a mano; el nombre del método es libre |
+| JPQL | Como SQL pero sobre clases y atributos (`select a from Alumno a`) |
+| `:nombre` + `@Param` | Parámetros nombrados, la forma recomendada |
+| Filtros opcionales | `(:param is null or a.atributo = :param)` |
+| `select new` | Construye un objeto propio (por ejemplo, un `record`) con los datos seleccionados |
+| `@Modifying` + `@Transactional` | Necesarias en consultas `update` y `delete` |
+| `nativeQuery = true` | SQL puro, con nombres de tabla y columna, sin garantía de portabilidad |
+| Elección | Derivada si cabe, JPQL si se complica, SQL nativo solo si no hay alternativa |

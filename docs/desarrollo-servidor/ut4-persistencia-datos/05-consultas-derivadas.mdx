@@ -1,0 +1,316 @@
+---
+id: consultas-derivadas
+title: 5. Consultas derivadas del nombre del método
+sidebar_label: 5. Consultas derivadas
+sidebar_position: 5
+description: Cómo Spring Data JPA genera consultas a partir del nombre de un método del repositorio. Estructura del nombre, tipos de retorno, tabla de palabras clave (And, Or, Containing, Between, IgnoreCase, OrderBy, Top...) y errores habituales.
+---
+
+import ConstructorConsultaDerivada from '@site/src/components/Derivadas/ConstructorConsultaDerivada';
+
+# 5. Consultas derivadas del nombre del método
+
+Los métodos que hereda `JpaRepository` cubren las operaciones básicas, pero una aplicación necesita
+consultas propias: los alumnos de un curso, los que tienen más de cierta edad, el que tiene un email
+concreto. Con Spring Data JPA no hay que escribir ninguna consulta: basta con **declarar un método
+en la interfaz cuyo nombre describa lo que se busca**, y Spring genera la consulta a partir de él.
+
+## 5.1. La idea
+
+```java
+public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
+
+    List<Alumno> findByCurso(String curso);
+}
+```
+
+No hay implementación ni consulta escrita. Al arrancar, Spring Data analiza el nombre
+`findByCurso`, entiende que hay que buscar alumnos cuyo atributo `curso` sea igual al parámetro, y
+genera una consulta equivalente a:
+
+```text
+select a from Alumno a where a.curso = ?1
+```
+
+El nombre del método se descompone en partes:
+
+```text
+findByCursoAndTurno
+└─┬─┘└┬┘└──┬──┘└─┬─┘
+  │   │    │     └─ otra condición: el atributo turno
+  │   │    └─ unión de condiciones
+  │   └─ el atributo curso
+  └─ qué se hace con la consulta (find = buscar)
+```
+
+| Parte | Qué indica | Ejemplos |
+|---|---|---|
+| **Prefijo** | Qué se hace | `find...By`, `count...By`, `exists...By`, `delete...By` |
+| **Criterios** | Por qué atributos se filtra, y cómo | `Curso`, `EdadGreaterThan`, `NombreContaining` |
+| **Ordenación** (opcional) | En qué orden se devuelven | `OrderByNombreAsc` |
+
+Los atributos se escriben con la primera letra en mayúscula (`Curso`, `FechaNacimiento`) y deben
+coincidir con los **nombres de los atributos de la entidad**, no con los de las columnas.
+
+## 5.2. Los primeros ejemplos
+
+```java
+public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
+
+    List<Alumno> findByCurso(String curso);
+
+    List<Alumno> findByCursoAndTurno(String curso, Turno turno);
+
+    Optional<Alumno> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+
+    long countByCurso(String curso);
+}
+```
+
+| Método | Qué hace |
+|---|---|
+| `findByCurso(curso)` | Los alumnos de ese curso |
+| `findByCursoAndTurno(curso, turno)` | Los que cumplen **las dos** condiciones |
+| `findByEmail(email)` | El alumno con ese email |
+| `existsByEmail(email)` | `true` si hay algún alumno con ese email |
+| `countByCurso(curso)` | Cuántos alumnos hay en ese curso |
+
+Los parámetros del método se asignan a las condiciones **en el orden en que aparecen** en el nombre:
+en `findByCursoAndTurno(curso, turno)`, el primer parámetro es el curso y el segundo, el turno.
+
+### Qué devolver
+
+El tipo de retorno depende de cuántos resultados se esperan:
+
+| Se espera | Tipo de retorno | Ejemplo |
+|---|---|---|
+| Varios | `List<Alumno>` | `findByCurso` |
+| Uno como máximo | `Optional<Alumno>` | `findByEmail` (el email es `unique`) |
+| Solo saber si existe | `boolean` | `existsByEmail` |
+| Solo contar | `long` | `countByCurso` |
+
+:::note
+Cuidado con devolver un solo `Alumno`
+Si el método devuelve `Alumno` directamente (sin `Optional`) y la consulta encuentra **más de uno**, se
+lanza una excepción (`IncorrectResultSizeDataAccessException`). Si no encuentra ninguno, devuelve
+`null`. Para resultados únicos, usa `Optional`, tal como vimos en la página anterior.
+:::
+
+### Borrar con `deleteBy`
+
+También se puede borrar por criterio:
+
+```java
+@Transactional
+long deleteByCurso(String curso);
+```
+
+Spring carga primero los alumnos que cumplen la condición y los borra uno a uno. Estos métodos
+**necesitan una transacción activa**: si se llaman sin ella, fallan con una `TransactionRequiredException`.
+Por eso se anota el método con `@Transactional`, concepto que desarrollaremos en la página sobre
+servicios y transacciones.
+
+## 5.3. Palabras clave
+
+Para expresar condiciones distintas de la igualdad se añaden palabras clave al nombre:
+
+| Palabra clave | Ejemplo | Qué significa |
+|---|---|---|
+| `And` | `findByCursoAndTurno` | Se cumplen ambas condiciones |
+| `Or` | `findByCursoOrTurno` | Se cumple al menos una |
+| `Not` | `findByCursoNot` | Curso distinto del indicado |
+| `GreaterThan` | `findByEdadGreaterThan(18)` | Edad mayor que 18 |
+| `GreaterThanEqual` | `findByEdadGreaterThanEqual(18)` | Edad mayor o igual que 18 |
+| `LessThan` / `LessThanEqual` | `findByEdadLessThan(18)` | Edad menor que 18 / menor o igual |
+| `Between` | `findByEdadBetween(18, 25)` | Edad entre 18 y 25, **ambos incluidos** |
+| `After` / `Before` | `findByFechaNacimientoBefore(fecha)` | Fecha posterior / anterior a la indicada |
+| `Containing` | `findByNombreContaining("ar")` | El nombre contiene "ar" en cualquier posición |
+| `StartingWith` / `EndingWith` | `findByNombreStartingWith("Ma")` | El nombre empieza / termina por ese texto |
+| `Like` | `findByNombreLike("Ma%")` | Como `Containing`, pero **eres tú quien escribe** los comodines `%` |
+| `IgnoreCase` | `findByNombreContainingIgnoreCase("AR")` | Sin distinguir mayúsculas de minúsculas |
+| `In` / `NotIn` | `findByCursoIn(List.of("1DAW", "1DAM"))` | El valor está (o no) en la lista |
+| `IsNull` / `IsNotNull` | `findByEmailIsNull()` | El atributo es (o no es) nulo |
+| `True` / `False` | `findByActivoTrue()` | Atributos `boolean`; no reciben parámetro |
+| `Distinct` | `findDistinctByCurso(curso)` | Sin resultados repetidos |
+
+### Ordenar: `OrderBy`
+
+Al final del nombre se puede añadir `OrderBy`, el atributo y `Asc` (ascendente) o `Desc` (descendente):
+
+```java
+List<Alumno> findByCursoOrderByNombreAsc(String curso);
+
+List<Alumno> findByTurnoOrderByEdadDesc(Turno turno);
+
+List<Alumno> findByTurnoOrderByCursoAscNombreAsc(Turno turno);   // por curso y, a igualdad, por nombre
+```
+
+### Limitar el número de resultados: `First` y `Top`
+
+```java
+Alumno findFirstByOrderByEdadDesc();                       // el de más edad
+
+List<Alumno> findTop3ByCursoOrderByEdadDesc(String curso);  // los 3 mayores de un curso
+```
+
+:::note
+Mayúsculas y minúsculas: MySQL y H2 no se comportan igual
+La colación (*collation*) por defecto de MySQL no distingue mayúsculas de minúsculas ni tildes, así que
+`findByNombre("eva soto")` encontraría a "Eva Soto". H2, en cambio, **sí** distingue. Una consulta que
+funciona con MySQL puede no devolver nada con el perfil `h2`. Si el resultado no debe depender de la
+base de datos, añade `IgnoreCase`.
+:::
+
+## 5.4. Constructor de consultas derivadas
+
+Esta tabla permite construir el nombre de un método **pulsando celdas**. Se eligen, de izquierda a
+derecha, la acción, el atributo y la condición; opcionalmente, un conector y una segunda condición, y
+la ordenación. Debajo aparecen el nombre resultante, cómo se declararía en la interfaz del repositorio
+y la consulta equivalente.
+
+<ConstructorConsultaDerivada />
+
+Observa cómo cambian las opciones de la columna 3 según el tipo del atributo: `Containing` solo tiene
+sentido para textos, `GreaterThan` para números y `Before` para fechas.
+
+### Retos
+
+Construye con la tabla el método que resuelve cada caso, y comprueba después la solución.
+
+1. Los alumnos del turno de mañana, ordenados de mayor a menor edad.
+2. Saber si ya existe un alumno con un email concreto.
+3. Los alumnos mayores de 18 años de un curso.
+4. Los tres alumnos más jóvenes de un turno.
+5. Cuántos alumnos tienen un texto en el nombre, sin distinguir mayúsculas de minúsculas.
+
+<details>
+<summary>Ver soluciones</summary>
+
+1. `findByTurnoOrderByEdadDesc`
+2. `existsByEmail`
+3. `findByCursoAndEdadGreaterThan`
+4. `findTop3ByTurnoOrderByEdadAsc`
+5. `countByNombreContainingIgnoreCase`
+
+</details>
+
+:::note
+Qué no cubre la tabla
+Para que sea manejable, permite como máximo **dos condiciones** y una ordenación. Es también el tamaño
+a partir del cual, como veremos más adelante en esta página, los nombres empiezan a ser difíciles de leer.
+:::
+
+## 5.5. Probar las consultas
+
+Con los datos de `import.sql` de la página anterior:
+
+| id | nombre | curso | edad | turno |
+|---|---|---|---|---|
+| 1 | Eva Soto | 1DAW | 18 | MANANA |
+| 2 | Carlos Ruiz | 2DAW | 20 | TARDE |
+| 3 | Marta Gil | 1DAM | 19 | MANANA |
+
+Los resultados de algunas consultas serían:
+
+| Llamada | Resultado |
+|---|---|
+| `findByCurso("2DAW")` | Carlos Ruiz |
+| `findByEdadGreaterThan(18)` | Carlos Ruiz, Marta Gil |
+| `findByEdadBetween(19, 20)` | Carlos Ruiz, Marta Gil |
+| `findByNombreContainingIgnoreCase("AR")` | Carlos Ruiz, Marta Gil |
+| `findByCursoIn(List.of("1DAW", "1DAM"))` | Eva Soto, Marta Gil |
+| `findByTurnoOrderByEdadDesc(Turno.MANANA)` | Marta Gil (19), Eva Soto (18) |
+| `findFirstByOrderByEdadDesc()` | Carlos Ruiz |
+| `countByTurno(Turno.MANANA)` | 2 |
+| `existsByEmail("eva@centro.es")` | `true` |
+
+Para verlas funcionar se pueden llamar desde el componente de pruebas de la página anterior, y
+comprobar en la consola la sentencia SQL que genera cada una.
+
+## 5.6. Usarlas en un controlador
+
+### Un buscador
+
+Se combinan con lo visto sobre `@RequestParam`:
+
+```java
+@GetMapping("/buscar")
+public String buscar(@RequestParam(defaultValue = "") String nombre, Model model) {
+    model.addAttribute("alumnos", repositorio.findByNombreContainingIgnoreCase(nombre));
+    return "alumnos";
+}
+```
+
+Con `nombre` vacío, `Containing` con una cadena vacía encuentra a todos, así que la misma ruta
+funciona como listado completo y como buscador.
+
+### Evitar un email repetido
+
+`existsByEmail` permite avisar al usuario con un mensaje claro antes de que la base de datos lance un
+`Duplicate entry`. El método `rejectValue` de `BindingResult` añade un error asociado a un campo,
+exactamente igual que lo haría una anotación de validación:
+
+```java
+@PostMapping("/nuevo")
+public String guardar(@Valid @ModelAttribute("alumno") Alumno alumno,
+                      BindingResult resultado) {
+
+    if (repositorio.existsByEmail(alumno.getEmail())) {
+        resultado.rejectValue("email", "email.duplicado", "Ya existe un alumno con ese email");
+    }
+
+    if (resultado.hasErrors()) {
+        return "alumno-form";
+    }
+
+    repositorio.save(alumno);
+    return "redirect:/alumnos";
+}
+```
+
+El error aparece en la plantilla con el mismo `th:errors="*{email}"` que ya conocemos. Este
+ejemplo vale para el alta; en la edición habrá que excluir al propio alumno de la comprobación, algo
+que veremos en el ejemplo integrador.
+
+## 5.7. Cuando el nombre está mal
+
+Una gran ventaja de este sistema es que **los errores en el nombre del método se detectan al arrancar
+la aplicación**, no cuando se ejecuta la consulta. Si el nombre no se puede interpretar, la
+aplicación ni siquiera arranca y el mensaje señala el método.
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| `No property 'cursos' found for type 'Alumno'` al arrancar | El nombre no coincide con ningún atributo de la entidad (errata, plural, o se ha usado el nombre de la columna) | Escribe el atributo tal y como se llama en la clase; el mensaje suele sugerir el nombre correcto |
+| La aplicación falla al arrancar indicando que faltan argumentos | El método tiene menos parámetros que condiciones en el nombre | Un parámetro por condición, en el mismo orden |
+| `IncorrectResultSizeDataAccessException` | El método devuelve un solo `Alumno` y la consulta encuentra más de uno | Devuelve `List` o `Optional`, o revisa que la condición sea realmente única |
+| `TransactionRequiredException` en un `deleteBy` | El borrado se ejecuta sin transacción | Anota el método con `@Transactional` |
+| `Parameter value [...] did not match expected type` | El tipo del argumento no corresponde con el del atributo | Usa el mismo tipo que el atributo (por ejemplo, un `Turno`, no un `String`) |
+
+## 5.8. Cuándo dejar de usarlas
+
+Combinando palabras clave se pueden construir nombres larguísimos:
+
+```java
+List<Alumno> findByCursoAndTurnoAndEdadGreaterThanAndEmailContainingIgnoreCaseOrderByNombreAsc(
+        String curso, Turno turno, int edad, String email);
+```
+
+Funciona, pero es ilegible y difícil de mantener. Como regla práctica, **cuando el nombre pasa de dos
+o tres condiciones**, conviene escribir la consulta con `@Query`, que veremos en la siguiente
+página.
+
+## 5.9. Resumen
+
+| Concepto | Idea clave |
+|---|---|
+| Consulta derivada | Un método declarado en la interfaz cuyo nombre describe la consulta; Spring la genera |
+| Estructura | Prefijo (`find...By`, `count...By`, `exists...By`, `delete...By`) + criterios + `OrderBy` |
+| Atributos | Se escriben como en la entidad, con la primera letra en mayúscula |
+| Parámetros | Se asignan en el orden en que aparecen en el nombre |
+| Retorno | `List` (varios), `Optional` (uno como máximo), `boolean` (`exists`), `long` (`count`) |
+| Palabras clave | `And`, `Or`, `GreaterThan`, `Between`, `Containing`, `IgnoreCase`, `In`, `OrderBy`, `Top`... |
+| `deleteBy` | Necesita `@Transactional` |
+| Errores | Se detectan al arrancar la aplicación |
+| Límite | Con más de dos o tres condiciones, mejor `@Query` |

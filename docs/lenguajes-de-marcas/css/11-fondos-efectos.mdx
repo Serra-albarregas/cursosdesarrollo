@@ -1,0 +1,892 @@
+---
+sidebar_position: 11
+title: "Fondos y efectos"
+---
+
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+Esta página reúne lo que decora una caja por dentro y por fuera: fondos, degradados, esquinas redondeadas, sombras, transparencias y efectos de cristal. Al final, las transiciones permiten suavizar cualquiera de estos cambios en vez de que ocurran de golpe.
+
+## Fondos
+
+Ya hemos usado `background-color` en muchas páginas. Un elemento también puede tener una **imagen de fondo** con `background-image`, que se coloca detrás del contenido y se controla con otras cuatro propiedades: `background-repeat`, `background-position`, `background-size` y `background-attachment`.
+
+:::note
+Para no depender de archivos, los ejemplos de esta página usan imágenes SVG escritas directamente dentro del CSS (`url("data:image/svg+xml,...")`). En un proyecto real escribirías simplemente `url("imagen.jpg")`, con la ruta de tu archivo. Para no repetir esa imagen en cada regla, la guardamos en una variable CSS (`--tile`, `--escena`), como vimos en la página de colores y unidades.
+:::
+
+### `background-repeat`
+
+Por defecto, una imagen de fondo se repite como un mosaico hasta cubrir todo el elemento.
+
+- `repeat`: se repite en horizontal y en vertical (valor por defecto).
+- `no-repeat`: se muestra una sola vez.
+- `repeat-x`: se repite solo en horizontal.
+- `repeat-y`: se repite solo en vertical.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja r1"><span>repeat</span></div>
+<div class="caja r2"><span>no-repeat</span></div>
+<div class="caja r3"><span>repeat-x</span></div>
+<div class="caja r4"><span>repeat-y</span></div>`}
+  initialCss={`:root {
+    --tile: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><circle cx='20' cy='20' r='10' fill='%23e76f51'/></svg>");
+}
+
+.caja {
+    display: inline-block;
+    width: 130px;
+    height: 90px;
+    margin: 4px;
+    border: 1px solid #999;
+    background-image: var(--tile);
+}
+
+span {
+    background-color: white;
+    padding: 2px 4px;
+    font-size: 0.75rem;
+}
+
+.r1 { background-repeat: repeat; }
+.r2 { background-repeat: no-repeat; }
+.r3 { background-repeat: repeat-x; }
+.r4 { background-repeat: repeat-y; }`}
+  layout="stacked"
+/>
+
+### `background-position`
+
+Indica dónde se coloca la imagen dentro del elemento. Admite palabras clave (`center`, `top`, `right`, `bottom`, `left`, y combinaciones como `top right`), medidas (`20px 10px`, primero la horizontal y luego la vertical) y porcentajes.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja p1"><span>center</span></div>
+<div class="caja p2"><span>top right</span></div>
+<div class="caja p3"><span>20px 10px</span></div>
+<div class="caja p4"><span>75% 25%</span></div>`}
+  initialCss={`:root {
+    --tile: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><circle cx='20' cy='20' r='10' fill='%23e76f51'/></svg>");
+}
+
+.caja {
+    display: inline-block;
+    width: 130px;
+    height: 90px;
+    margin: 4px;
+    border: 1px solid #999;
+    background-image: var(--tile);
+    background-repeat: no-repeat;
+}
+
+span {
+    background-color: white;
+    padding: 2px 4px;
+    font-size: 0.75rem;
+}
+
+.p1 { background-position: center; }
+.p2 { background-position: top right; }
+.p3 { background-position: 20px 10px; }
+.p4 { background-position: 75% 25%; }`}
+  layout="stacked"
+/>
+
+:::tip
+Con porcentajes, `50% 50%` es lo mismo que `center`. Un porcentaje alinea ese punto de la imagen con ese mismo punto del elemento: por eso `100%` pega la imagen al borde derecho (su borde derecho coincide con el del elemento), en vez de sacarla fuera.
+:::
+
+### `background-size`
+
+Controla el tamaño de la imagen de fondo. Los valores más importantes son:
+
+- `auto`: la imagen conserva su tamaño original (valor por defecto).
+- `cover`: la imagen se escala lo justo para **cubrir todo** el elemento, sin dejar huecos, aunque eso recorte una parte.
+- `contain`: la imagen se escala lo justo para que **quepa entera**, aunque eso deje huecos vacíos a los lados.
+- Una medida o un porcentaje (`60px 60px`, `50% auto`): tamaño concreto. Si das dos valores que no respetan la proporción de la imagen, esta se deforma.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja t1"><span>auto</span></div>
+<div class="caja t2"><span>cover</span></div>
+<div class="caja t3"><span>contain</span></div>
+<div class="caja t4"><span>60px 60px</span></div>`}
+  initialCss={`:root {
+    --escena: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='150'><rect width='300' height='150' fill='%232a9d8f'/><circle cx='80' cy='75' r='45' fill='%23e9c46a'/><rect x='170' y='40' width='100' height='70' fill='%23e76f51'/></svg>");
+}
+
+.caja {
+    display: inline-block;
+    vertical-align: top;
+    width: 150px;
+    height: 220px;
+    margin: 4px;
+    border: 1px solid #999;
+    background-color: #eee;
+    background-image: var(--escena);
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+span {
+    background-color: white;
+    padding: 2px 4px;
+    font-size: 0.75rem;
+}
+
+.t1 { background-size: auto; }
+.t2 { background-size: cover; }
+.t3 { background-size: contain; }
+.t4 { background-size: 60px 60px; }`}
+  layout="stacked"
+/>
+
+La imagen original mide 300x150 (el doble de ancha que alta) y las cajas son más altas que anchas (150x220). Con `auto` se ve a su tamaño real: se corta por los lados y sobran franjas arriba y abajo (el gris de fondo). Con `cover` se amplía hasta llenar toda la caja, y por eso se recorta mucho por los lados. Con `contain` se ve completa, más pequeña, y sobran franjas arriba y abajo. Con `60px 60px` se deforma.
+
+### `background-attachment`
+
+Define si el fondo se desplaza junto con el contenido al hacer scroll o se queda fijo respecto a la ventana.
+
+- `scroll`: el fondo se mueve con el elemento (valor por defecto).
+- `fixed`: el fondo se queda fijo respecto a la ventana, y el elemento funciona como una "ventana" por la que se ve.
+
+<HtmlCssPlayground
+  initialHtml={`<p>Desplázate hacia abajo dentro de esta demo.</p>
+<div class="banda">Banda con fondo fixed</div>
+<div class="relleno">Contenido de relleno</div>`}
+  initialCss={`:root {
+    --escena: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='150'><rect width='300' height='150' fill='%232a9d8f'/><circle cx='80' cy='75' r='45' fill='%23e9c46a'/><rect x='170' y='40' width='100' height='70' fill='%23e76f51'/></svg>");
+}
+
+.banda {
+    height: 120px;
+    padding: 8px;
+    color: white;
+    font-weight: bold;
+    background-image: var(--escena);
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.relleno {
+    height: 500px;
+    padding: 8px;
+    background-color: #f4f4f4;
+}`}
+/>
+
+Al hacer scroll, la banda no arrastra la imagen consigo: va mostrando partes distintas de la misma imagen, que permanece quieta detrás.
+
+:::note
+`background-attachment: fixed` no se comporta igual en todos los navegadores móviles (en varios se ignora), así que conviene no depender de él para algo importante.
+:::
+
+## Degradados
+
+Un degradado es una imagen generada por el propio CSS, sin necesidad de ningún archivo. Se usa como valor de `background-image` (o de la abreviatura `background`), **no** de `background-color`.
+
+### `linear-gradient`
+
+Pasa de un color a otro en línea recta. Su sintaxis es `linear-gradient(dirección, color1, color2, ...)`:
+
+- La **dirección** puede ser una palabra (`to right`, `to bottom right`...) o un ángulo (`90deg`). `0deg` apunta hacia arriba y los ángulos crecen en sentido horario: `90deg` hacia la derecha, `180deg` hacia abajo. Si se omite, es `to bottom`.
+- Cada color puede llevar una **posición** (`red 30%`). Si dos colores seguidos tienen la misma posición, no hay degradado entre ellos, sino un corte limpio.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja g1">por defecto</div>
+<div class="caja g2">to right</div>
+<div class="caja g3">135deg, 3 colores</div>
+<div class="caja g4">con posiciones</div>
+<div class="caja g5">corte limpio</div>
+<div class="caja g6">transparencia</div>`}
+  initialCss={`.caja {
+    display: inline-block;
+    width: 130px;
+    height: 90px;
+    margin: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 0.8rem;
+    text-shadow: 0 0 3px black;
+    border: 1px solid #999;
+}
+
+.g1 { background-image: linear-gradient(#e76f51, #2a9d8f); }
+.g2 { background-image: linear-gradient(to right, #e76f51, #2a9d8f); }
+.g3 { background-image: linear-gradient(135deg, #e76f51, #e9c46a, #2a9d8f); }
+.g4 { background-image: linear-gradient(to right, #e76f51 0%, #e76f51 30%, #2a9d8f 70%, #2a9d8f 100%); }
+.g5 { background-image: linear-gradient(to right, #e76f51 50%, #2a9d8f 50%); }
+.g6 { background-image: linear-gradient(90deg, rgba(231, 111, 81, 1), rgba(231, 111, 81, 0)); }`}
+  layout="stacked"
+/>
+
+### `radial-gradient` y `conic-gradient`
+
+- `radial-gradient`: los colores se reparten desde un punto central hacia fuera, en forma de elipse (por defecto) o de círculo (`circle`). Con `at` se cambia el centro: `radial-gradient(circle at 70% 30%, white, teal)`.
+- `conic-gradient`: los colores se reparten girando alrededor de un punto central, como las agujas de un reloj. Con posiciones iguales se consiguen sectores: la base de los gráficos de tarta hechos solo con CSS.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="forma f1">elipse</div>
+<div class="forma f2">círculo</div>
+<div class="forma f3">esfera</div>
+<div class="forma f4">cónico</div>
+<div class="forma f5">tarta</div>`}
+  initialCss={`.forma {
+    display: inline-block;
+    width: 110px;
+    height: 110px;
+    margin: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 0.75rem;
+    text-shadow: 0 0 3px black;
+}
+
+.f1 { background-image: radial-gradient(#e9c46a, #e76f51); }
+.f2 { background-image: radial-gradient(circle, #e9c46a, #e76f51); }
+.f3 {
+    background-image: radial-gradient(circle at 70% 30%, white, #1b5e56);
+    border-radius: 50%;
+}
+.f4 {
+    background-image: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+    border-radius: 50%;
+}
+.f5 {
+    background-image: conic-gradient(#2a9d8f 0 40%, #e9c46a 40% 70%, #e76f51 70% 100%);
+    border-radius: 50%;
+}`}
+  layout="stacked"
+/>
+
+### Degradados repetidos
+
+`repeating-linear-gradient` y `repeating-radial-gradient` repiten el patrón indicado hasta cubrir todo el elemento. Son perfectos para rayas y tramas.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja rayas"></div>
+<div class="caja lineas"></div>
+<div class="caja anillos"></div>`}
+  initialCss={`.caja {
+    display: inline-block;
+    width: 130px;
+    height: 90px;
+    margin: 4px;
+    border: 1px solid #999;
+}
+
+.rayas {
+    background-image: repeating-linear-gradient(45deg, #2a9d8f 0 10px, #e9f5f3 10px 20px);
+}
+
+.lineas {
+    background-image: repeating-linear-gradient(90deg, #e76f51 0 4px, white 4px 16px);
+}
+
+.anillos {
+    background-image: repeating-radial-gradient(circle, #e9c46a 0 8px, white 8px 16px);
+}`}
+  layout="stacked"
+/>
+
+## Varios fondos y la abreviatura `background`
+
+### Varias capas de fondo
+
+`background-image` admite una lista de imágenes separadas por comas: se dibujan como capas, y **la primera de la lista queda encima**. Un uso muy habitual es poner un degradado oscuro semitransparente sobre una foto, para que el texto blanco se lea bien:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="portada">
+    <h3>Título legible sobre la imagen</h3>
+</div>`}
+  initialCss={`:root {
+    --escena: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='150'><rect width='300' height='150' fill='%232a9d8f'/><circle cx='80' cy='75' r='45' fill='%23e9c46a'/><rect x='170' y='40' width='100' height='70' fill='%23e76f51'/></svg>");
+}
+
+.portada {
+    height: 150px;
+    padding: 16px;
+    color: white;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.1)), var(--escena);
+    background-size: cover;
+    background-position: center;
+}
+
+.portada h3 {
+    margin: 0;
+}`}
+  layout="stacked"
+/>
+
+Las otras propiedades (`background-size`, `background-position`, `background-repeat`...) también admiten una lista, con un valor por capa. Si das un solo valor, se aplica a todas las capas.
+
+### La abreviatura `background`
+
+`background` resume en una sola propiedad todas las anteriores. Los valores pueden ir en casi cualquier orden, con una excepción: si se incluye tamaño, va **después de la posición y separado por una barra**.
+
+```css
+background: #2a9d8f url("imagen.jpg") no-repeat center / cover;
+/*           color   imagen             repetición posición / tamaño */
+```
+
+:::warning
+Al usar `background`, todo lo que no escribas vuelve a su valor por defecto. Por eso, si pones `background-size: cover` y **después** una regla `background: ...` sobre el mismo elemento, el tamaño se pierde. Con el orden contrario funciona.
+:::
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja mal">background-size antes de background</div>
+<div class="caja bien">background-size después</div>`}
+  initialCss={`:root {
+    --escena: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='150'><rect width='300' height='150' fill='%232a9d8f'/><circle cx='80' cy='75' r='45' fill='%23e9c46a'/><rect x='170' y='40' width='100' height='70' fill='%23e76f51'/></svg>");
+}
+
+.caja {
+    display: inline-block;
+    vertical-align: top;
+    width: 150px;
+    height: 220px;
+    margin: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    border: 1px solid #999;
+    color: black;
+    font-size: 0.75rem;
+}
+
+.mal {
+    background-size: cover;
+    background: var(--escena) no-repeat center;
+}
+
+.bien {
+    background: var(--escena) no-repeat center;
+    background-size: cover;
+}`}
+  layout="stacked"
+/>
+
+## `border-radius`
+
+Redondea las esquinas de una caja. Con un valor, afecta a las cuatro; con varios, sigue el mismo orden que `margin` pero empezando por la esquina superior izquierda y girando en sentido horario:
+
+| Valores | Significado |
+|---|---|
+| `border-radius: 10px;` | Las cuatro esquinas |
+| `border-radius: 10px 30px;` | Superior izquierda e inferior derecha / superior derecha e inferior izquierda |
+| `border-radius: 10px 30px 0;` | Superior izquierda / superior derecha e inferior izquierda / inferior derecha |
+| `border-radius: 10px 30px 0 50%;` | Superior izquierda, superior derecha, inferior derecha, inferior izquierda |
+
+También se puede dar una esquina por separado (`border-top-left-radius`, `border-top-right-radius`...). Con porcentajes, el radio se calcula respecto al tamaño de la caja, por eso `50%` en un cuadrado da un círculo y en un rectángulo una elipse. Un valor muy grande (`999px`) en un rectángulo da una "píldora".
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja c1">10px</div>
+<div class="caja c2">50%</div>
+<div class="caja c3 ancha">50%</div>
+<div class="caja c4 ancha">999px</div>
+<div class="caja c5">0 40px</div>
+<div class="caja c6">50% / 20%</div>`}
+  initialCss={`.caja {
+    display: inline-block;
+    vertical-align: top;
+    width: 100px;
+    height: 100px;
+    margin: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    background-color: teal;
+    color: white;
+    font-size: 0.8rem;
+    line-height: 88px;
+    text-align: center;
+}
+
+.ancha {
+    width: 170px;
+    height: 60px;
+    line-height: 48px;
+}
+
+.c1 { border-radius: 10px; }
+.c2 { border-radius: 50%; }
+.c3 { border-radius: 50%; }
+.c4 { border-radius: 999px; }
+.c5 { border-radius: 0 40px; }
+.c6 { border-radius: 50% / 20%; }`}
+  layout="stacked"
+/>
+
+:::tip
+`border-radius` redondea el fondo y el borde del elemento, pero no recorta a sus hijos. Si dentro hay una imagen que debe seguir las esquinas redondeadas, añade `overflow: hidden` al elemento redondeado.
+:::
+
+## `box-shadow`
+
+Ya la usamos en la página de imágenes. Su sintaxis completa es:
+
+```css
+box-shadow: desplazamiento-x desplazamiento-y desenfoque extensión color;
+```
+
+- **Desplazamiento x / y:** cuánto se mueve la sombra respecto a la caja (valores negativos la llevan a la izquierda o arriba).
+- **Desenfoque:** cuánto se difumina el borde de la sombra (`0` es un borde duro).
+- **Extensión (`spread`):** cuánto crece o se encoge la sombra respecto al tamaño de la caja.
+- La palabra `inset` delante la convierte en una sombra **interior**.
+- Se pueden poner **varias sombras** separadas por comas; la primera queda encima.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="caja s1">suave</div>
+<div class="caja s2">anillo</div>
+<div class="caja s3">dura</div>
+<div class="caja s4">inset</div>
+<div class="caja s5">varias</div>`}
+  initialCss={`body {
+    padding: 12px;
+    background-color: #e9e9e9;
+}
+
+.caja {
+    display: inline-block;
+    vertical-align: top;
+    width: 100px;
+    height: 80px;
+    margin: 10px;
+    padding: 6px;
+    box-sizing: border-box;
+    background-color: white;
+    font-size: 0.8rem;
+}
+
+.s1 { box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4); }
+.s2 { box-shadow: 0 0 0 4px teal; }
+.s3 { box-shadow: 6px 6px 0 #2a9d8f; }
+.s4 { box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5); }
+.s5 { box-shadow: 0 0 0 4px white, 0 0 0 8px teal, 4px 4px 12px rgba(0, 0, 0, 0.4); }`}
+  layout="stacked"
+/>
+
+La sombra "anillo" no tiene desplazamiento ni desenfoque, solo extensión: es una forma sencilla de dibujar un borde que no ocupa espacio. En la sombra "varias", los dos primeros anillos (blanco y teal) se apilan, y la tercera sombra suave queda por debajo.
+
+:::note
+Una `box-shadow` **no forma parte del modelo de caja**: no ocupa espacio ni empuja a los elementos vecinos (igual que `outline`), y sigue la forma de la caja, incluidas las esquinas redondeadas. Para que una sombra siga la silueta real de una imagen con transparencia, existe `filter: drop-shadow()`, que vimos en la página de filtros.
+:::
+
+## `opacity`
+
+`opacity` hace transparente un elemento, con un número de `0` (invisible) a `1` (totalmente opaco). Afecta al elemento **entero**: fondo, borde, texto e hijos. Si solo quieres que sea transparente el color de fondo, usa un color con canal alfa (`rgba()`, como vimos en colores y unidades).
+
+<HtmlCssPlayground
+  initialHtml={`<div class="fondo">
+    <div class="caja">normal</div>
+    <div class="caja op">opacity: 0.5</div>
+    <div class="caja alfa">fondo rgba(…, 0.5)</div>
+</div>`}
+  initialCss={`.fondo {
+    padding: 10px;
+    background-image: repeating-linear-gradient(45deg, #ccc 0 10px, #eee 10px 20px);
+}
+
+.caja {
+    display: inline-block;
+    width: 120px;
+    margin: 4px;
+    padding: 12px;
+    box-sizing: border-box;
+    background-color: teal;
+    color: white;
+    font-weight: bold;
+}
+
+.op {
+    opacity: 0.5;
+}
+
+.alfa {
+    background-color: rgba(0, 128, 128, 0.5);
+}`}
+  layout="stacked"
+/>
+
+En la segunda caja, todo es semitransparente, también el texto. En la tercera, solo lo es el fondo: el texto sigue siendo totalmente opaco. Detrás se ven las rayas, que dejan claro cuánto se transparenta cada una.
+
+Un elemento con `opacity: 0` es invisible, pero **sigue ahí**. Compara las tres formas de esconder un elemento:
+
+| | Ocupa espacio | Recibe clics |
+|---|---|---|
+| `opacity: 0` | Sí | Sí |
+| `visibility: hidden` | Sí | No |
+| `display: none` | No | No |
+
+## `backdrop-filter`
+
+En la página de filtros vimos que `filter` aplica el efecto al propio elemento. `backdrop-filter` aplica el efecto a **lo que hay detrás** del elemento, es decir, a la parte del fondo que queda visible a través de él. Con `blur()` se consigue el típico efecto de "cristal esmerilado".
+
+Hace falta que el elemento tenga un fondo semitransparente, porque si fuera opaco no se vería nada de lo que hay detrás. Y, por supuesto, que haya algo detrás: normalmente un panel colocado encima de una imagen con `position`.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="escena">
+    <div class="panel">Sin backdrop-filter</div>
+</div>
+<div class="escena">
+    <div class="panel cristal">Con backdrop-filter: blur(6px)</div>
+</div>`}
+  initialCss={`:root {
+    --escena: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='150'><rect width='300' height='150' fill='%232a9d8f'/><circle cx='80' cy='75' r='45' fill='%23e9c46a'/><rect x='170' y='40' width='100' height='70' fill='%23e76f51'/></svg>");
+}
+
+.escena {
+    position: relative;
+    width: 300px;
+    height: 150px;
+    margin-bottom: 8px;
+    background-image: var(--escena);
+}
+
+.panel {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    right: 40px;
+    bottom: 30px;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.25);
+    color: white;
+    font-weight: bold;
+}
+
+.cristal {
+    backdrop-filter: blur(6px);
+}`}
+  layout="stacked"
+/>
+
+Los dos paneles tienen exactamente el mismo fondo semitransparente. En el segundo, el círculo y el rectángulo que quedan debajo se ven difuminados, y en el primero se ven nítidos.
+
+:::note
+Algunas versiones antiguas de Safari necesitan además el prefijo `-webkit-backdrop-filter`. Aparte de `blur()`, admite las mismas funciones que `filter` (`brightness()`, `saturate()`...), y es habitual combinarlas, por ejemplo `blur(8px) saturate(150%)`.
+:::
+
+## Texto con degradado: `background-clip`
+
+`background-clip` decide hasta dónde se pinta el fondo de un elemento: `border-box` (por defecto, hasta el borde), `padding-box` (hasta el relleno), `content-box` (solo bajo el contenido) o `text` (solo bajo las **letras**). Combinado con un texto transparente, permite rellenar el texto con un degradado:
+
+<HtmlCssPlayground
+  initialHtml={`<h2 class="titulo">Texto con degradado</h2>`}
+  initialCss={`.titulo {
+    display: inline-block;
+    font-size: 2.5rem;
+    background-image: linear-gradient(90deg, #e76f51, #2a9d8f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}`}
+/>
+
+El texto se pone `transparent` para que se vea el fondo a través de las letras. El título es `inline-block` para que el degradado mida solo lo que mide el texto; si fuera un bloque normal, el degradado se repartiría por todo el ancho de la línea y las letras solo mostrarían su primera parte. Durante años `background-clip: text` solo funcionó con el prefijo `-webkit-`, por eso se ve en muchos códigos; hoy ya funciona sin él, pero escribir las dos líneas no hace daño.
+
+## Transiciones
+
+Normalmente, cuando una propiedad cambia de valor (por ejemplo, al pasar el ratón por encima de un botón), el cambio es instantáneo. Una **transición** hace que ese cambio ocurra de forma gradual durante un tiempo, pasando por todos los valores intermedios.
+
+Una transición solo hace falta declararla una vez, y se activa sola cada vez que la propiedad cambia: con `:hover`, `:focus`, `:checked`, al añadir una clase con JavaScript...
+
+### Primera transición
+
+<HtmlCssPlayground
+  initialHtml={`<button class="boton">Pasa el ratón</button>`}
+  initialCss={`.boton {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: teal;
+    color: white;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.boton:hover {
+    background-color: darkorange;
+}`}
+/>
+
+La línea `transition: background-color 0.3s;` dice: "cuando cambie `background-color`, hazlo durante 0,3 segundos". Sin ella, el color saltaría de golpe.
+
+### Las propiedades de una transición
+
+Una transición se describe con cuatro propiedades, aunque casi siempre se escriben juntas en la abreviatura `transition`:
+
+| Propiedad | Qué indica | Valor por defecto |
+|---|---|---|
+| `transition-property` | Qué propiedad(es) se animan | `all` |
+| `transition-duration` | Cuánto dura | `0s` (sin transición) |
+| `transition-timing-function` | Cómo se reparte la velocidad durante la transición | `ease` |
+| `transition-delay` | Cuánto espera antes de empezar | `0s` |
+
+```css
+transition: background-color 0.3s ease-in-out 0.1s;
+/*          propiedad        duración función   retraso */
+```
+
+Los tiempos se escriben en segundos (`0.3s`) o milisegundos (`300ms`). Si en la abreviatura hay dos tiempos, el primero es siempre la duración y el segundo el retraso.
+
+:::tip
+Las transiciones de interfaz suelen durar entre 150 y 400 milisegundos. Más cortas casi no se aprecian y más largas hacen que la página se sienta lenta.
+:::
+
+### Dónde se escribe la transición
+
+Importa en qué regla se escribe. La transición que se aplica es la del estado **al que se llega**. Compara estos dos botones, con una duración exagerada de 1 segundo:
+
+<HtmlCssPlayground
+  initialHtml={`<button class="boton b-base">En la regla base</button>
+<button class="boton b-hover">Solo en :hover</button>`}
+  initialCss={`.boton {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: teal;
+    color: white;
+    font-size: 1rem;
+}
+
+.b-base {
+    transition: background-color 1s;
+}
+
+.b-base:hover {
+    background-color: darkorange;
+}
+
+.b-hover:hover {
+    background-color: darkorange;
+    transition: background-color 1s;
+}`}
+/>
+
+El primer botón se anima al entrar y al salir. El segundo se anima al entrar, pero **vuelve de golpe** al salir: cuando el ratón se va, la regla `:hover` deja de aplicarse, y el estado al que se vuelve (la regla base) no tiene ninguna transición. Por eso, lo habitual es escribir la transición en la regla base.
+
+### Funciones de temporización
+
+`transition-timing-function` decide cómo varía la velocidad a lo largo del recorrido:
+
+| Valor | Comportamiento |
+|---|---|
+| `linear` | Velocidad constante |
+| `ease` | Valor por defecto: arranca con suavidad, acelera pronto y frena despacio al final |
+| `ease-in` | Empieza lento y acelera |
+| `ease-out` | Empieza rápido y frena al final |
+| `ease-in-out` | Lento al principio y al final, más rápido en el medio |
+| `cubic-bezier(a, b, c, d)` | Una curva personalizada |
+| `steps(n)` | En vez de moverse de forma continua, avanza a saltos, en `n` pasos |
+
+<HtmlCssPlayground
+  initialHtml={`<div class="pistas">
+    <p>Pasa el ratón por esta zona</p>
+    <div class="barra linear">linear</div>
+    <div class="barra ease">ease</div>
+    <div class="barra ease-in">ease-in</div>
+    <div class="barra ease-out">ease-out</div>
+    <div class="barra ease-in-out">ease-in-out</div>
+    <div class="barra pasos">steps(5)</div>
+</div>`}
+  initialCss={`.pistas {
+    padding: 8px;
+    border: 1px solid #ccc;
+}
+
+.barra {
+    width: 20%;
+    margin-bottom: 4px;
+    padding: 4px;
+    box-sizing: border-box;
+    background-color: teal;
+    color: white;
+    font-size: 0.8rem;
+    transition-property: width;
+    transition-duration: 2s;
+}
+
+.pistas:hover .barra {
+    width: 100%;
+}
+
+.linear { transition-timing-function: linear; }
+.ease { transition-timing-function: ease; }
+.ease-in { transition-timing-function: ease-in; }
+.ease-out { transition-timing-function: ease-out; }
+.ease-in-out { transition-timing-function: ease-in-out; }
+.pasos { transition-timing-function: steps(5); }`}
+  layout="stacked"
+/>
+
+Todas las barras tardan lo mismo en llegar al final (2 segundos), pero lo hacen de forma distinta: la de `linear` avanza a ritmo constante, `ease-in` va ganando velocidad y `ease-out` la va perdiendo, y la de `steps(5)` avanza en cinco saltos. En las herramientas de desarrollador de los navegadores hay un editor visual para diseñar tu propia curva con `cubic-bezier()`.
+
+### Retraso con `transition-delay`
+
+El retraso es útil para encadenar efectos. Aquí, las tres cajas tienen la misma transición, pero cada una espera un poco más antes de empezar:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="fila">
+    <div class="punto p1"></div>
+    <div class="punto p2"></div>
+    <div class="punto p3"></div>
+</div>`}
+  initialCss={`.fila {
+    padding: 8px;
+    border: 1px solid #ccc;
+}
+
+.punto {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    margin: 4px;
+    border-radius: 4px;
+    background-color: teal;
+    transition: background-color 0.4s, border-radius 0.4s;
+}
+
+.fila:hover .punto {
+    background-color: darkorange;
+    border-radius: 50%;
+}
+
+.p2 { transition-delay: 0.3s; }
+.p3 { transition-delay: 0.6s; }`}
+/>
+
+### Varias propiedades a la vez
+
+Para animar varias propiedades, se separan con comas, y cada una puede tener su propia duración y su propia curva:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="tarjeta">Pasa el ratón por encima</div>`}
+  initialCss={`.tarjeta {
+    width: 220px;
+    padding: 16px;
+    background-color: white;
+    border: 2px solid teal;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, border-radius 0.6s, box-shadow 0.3s;
+}
+
+.tarjeta:hover {
+    background-color: #e0f7f7;
+    border-radius: 24px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}`}
+/>
+
+También existe `transition: all 0.3s;`, que anima **cualquier** propiedad que cambie. Es cómoda, pero tiene un riesgo: si más adelante otra regla cambia una propiedad que no pensabas animar (el ancho, un margen...), esa propiedad también se animará, a veces con efectos extraños. Es preferible listar solo las propiedades que quieres animar.
+
+### Qué se puede animar y qué no
+
+Una transición necesita poder calcular valores intermedios, así que solo funciona con propiedades que los tienen:
+
+- **Sí se animan:** colores, medidas (`width`, `height`, `margin`, `padding`, `border-radius`...), porcentajes, números (`opacity`) y sombras (`box-shadow`, `text-shadow`).
+- **No se animan:** `display` (no hay punto intermedio entre `none` y `block`), `height: auto` (no se puede calcular un valor intermedio entre un número y `auto`) y los degradados de `background-image`, que cambian de golpe.
+
+Para esconder y mostrar un elemento con suavidad, en vez de cambiar `display`, se anima `opacity`.
+
+Para los degradados hay un truco muy usado: dibujar un degradado el doble de ancho que el elemento (`background-size: 200%`) y animar `background-position`, de forma que el elemento va mostrando una parte distinta del degradado:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="boton-grad">Pasa el ratón</div>`}
+  initialCss={`.boton-grad {
+    display: inline-block;
+    padding: 12px 24px;
+    color: white;
+    font-weight: bold;
+    background-image: linear-gradient(90deg, #2a9d8f, #e76f51);
+    background-size: 200% 100%;
+    background-position: left;
+    transition: background-position 0.6s;
+}
+
+.boton-grad:hover {
+    background-position: right;
+}`}
+/>
+
+### Casos prácticos
+
+**Resaltar un campo de formulario al enfocarlo.** Si se quita el `outline` por defecto, hay que dar otro indicador de foco visible, como aquí:
+
+<HtmlCssPlayground
+  initialHtml={`<input type="text" class="campo" placeholder="Haz clic aquí">`}
+  initialCss={`.campo {
+    padding: 8px;
+    border: 2px solid #aaaaaa;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.campo:focus {
+    border-color: teal;
+    box-shadow: 0 0 0 4px rgba(0, 128, 128, 0.25);
+}`}
+/>
+
+**Mostrar un texto sobre una imagen al pasar el ratón.** Une posicionamiento (`position: absolute` con `inset: 0`), `opacity` y una transición:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="foto">
+    <div class="pie">Texto sobre la imagen</div>
+</div>`}
+  initialCss={`:root {
+    --escena: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='150'><rect width='300' height='150' fill='%232a9d8f'/><circle cx='80' cy='75' r='45' fill='%23e9c46a'/><rect x='170' y='40' width='100' height='70' fill='%23e76f51'/></svg>");
+}
+
+.foto {
+    position: relative;
+    width: 300px;
+    height: 150px;
+    background-image: var(--escena);
+}
+
+.pie {
+    position: absolute;
+    inset: 0;
+    padding-top: 60px;
+    box-sizing: border-box;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.foto:hover .pie {
+    opacity: 1;
+}`}
+  layout="stacked"
+/>
+
+**Pasar de blanco y negro a color.** Una transición también funciona con `filter`:
+
+<HtmlCssPlayground
+  initialHtml={`<div class="galeria"></div>`}
+  initialCss={`:root {
+    --escena: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='150'><rect width='300' height='150' fill='%232a9d8f'/><circle cx='80' cy='75' r='45' fill='%23e9c46a'/><rect x='170' y='40' width='100' height='70' fill='%23e76f51'/></svg>");
+}
+
+.galeria {
+    width: 300px;
+    height: 150px;
+    background-image: var(--escena);
+    filter: grayscale(100%);
+    transition: filter 0.5s;
+}
+
+.galeria:hover {
+    filter: grayscale(0%);
+}`}
+  layout="stacked"
+/>
+
+:::note
+Una transición solo va de un valor A a un valor B cuando algo cambia. Para movimientos que se repiten solos, o que pasan por varios pasos intermedios, existen las animaciones con `@keyframes`, que son otra herramienta distinta.
+:::

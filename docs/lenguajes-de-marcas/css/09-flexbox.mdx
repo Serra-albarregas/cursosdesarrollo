@@ -1,0 +1,615 @@
+---
+sidebar_position: 9
+title: "Flexbox"
+---
+
+import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+export const base = `:root {
+    --red-color: rgb(253, 145, 145);
+    --blue-color: rgb(149, 149, 238);
+    --dark-color: rgb(68, 68, 68);
+    --grey-color: rgb(119, 119, 119);
+    --light-color: rgb(221, 221, 221);
+}
+
+.item {
+    background-color: var(--light-color);
+    border: 2px solid var(--grey-color);
+    height: 50px;
+    width: 50px;
+    font-size: 1.2em;
+    align-content: center;
+    text-align: center;
+    font-weight: bold;
+    color: var(--dark-color);
+}
+`;
+
+# Flexbox
+
+Las cajas flexibles, o **flexbox**, son un modelo de maquetación de CSS pensado para distribuir y alinear elementos dentro de un contenedor de forma eficiente, incluso cuando el tamaño de los elementos no se conoce de antemano o cambia dinámicamente. Es la herramienta habitual para barras de navegación, filas de tarjetas, centrado de contenido y, en general, cualquier diseño en una sola dimensión.
+
+## Qué es flexbox y vocabulario básico
+
+Flexbox es un layout **unidimensional**: coloca los elementos en una fila o en una columna. Antes de su aparición, estos diseños se resolvían con `float` o `inline-block`, técnicas pensadas para otros fines y difíciles de controlar.
+
+Para usar flexbox se necesitan dos piezas:
+
+- **Contenedor flex**: el elemento al que se aplica `display: flex`.
+- **Elementos flex**: los hijos directos del contenedor. Los nietos no se ven afectados.
+
+Además, todo contenedor flex tiene dos ejes:
+
+| Eje | Descripción | Por defecto |
+| --- | --- | --- |
+| Eje principal | Dirección en la que se colocan los elementos | Horizontal (de izquierda a derecha) |
+| Eje transversal | Perpendicular al eje principal | Vertical (de arriba a abajo) |
+
+Los `div` son elementos de bloque, así que normalmente se apilan uno debajo de otro. Al aplicar `display: flex` al contenedor, sus hijos pasan a colocarse en fila:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<p>Sin flexbox</p>
+<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>
+
+<p>Con flexbox</p>
+<div class="contenedor flex">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    padding: 5px;
+}
+
+.flex {
+    display: flex;
+}`}
+/>
+
+## Crear un contenedor: `flex` e `inline-flex`
+
+El valor `display: flex` convierte el elemento en un contenedor flexible de tipo bloque: ocupa todo el ancho disponible y empieza en una nueva línea. El valor `display: inline-flex` hace lo mismo, pero el contenedor se comporta como un elemento en línea y solo ocupa lo que necesita su contenido.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor flex">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>
+
+<div class="contenedor inline-flex">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>
+
+<div class="contenedor inline-flex">
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.flex {
+    display: flex;
+}
+
+.inline-flex {
+    display: inline-flex;
+}`}
+/>
+
+Observa que los dos contenedores `inline-flex` se colocan uno junto al otro, mientras que el contenedor `flex` ocupa toda la línea.
+
+## Dirección de los ejes: `flex-direction`
+
+La propiedad `flex-direction` determina la dirección del eje principal y, por tanto, cómo se colocan los elementos.
+
+| Valor | Descripción |
+| --- | --- |
+| `row` | Fila, de izquierda a derecha (valor por defecto) |
+| `row-reverse` | Fila, de derecha a izquierda |
+| `column` | Columna, de arriba a abajo |
+| `column-reverse` | Columna, de abajo a arriba |
+
+Al cambiar la dirección también cambian los ejes: con `column`, el eje principal pasa a ser el vertical y el transversal el horizontal.
+
+<HtmlCssPlayground
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+    flex-direction: row-reverse;
+}`}
+/>
+
+:::note[Pruébalo]
+Cambia `row-reverse` por `column` o `column-reverse` y observa el resultado.
+:::
+
+## Flex multilínea: `flex-wrap`
+
+Por defecto, todos los elementos se mantienen en una única línea y, si no caben, se encogen. La propiedad `flex-wrap` permite que pasen a una nueva línea cuando falta espacio.
+
+| Valor | Descripción |
+| --- | --- |
+| `nowrap` | Los elementos permanecen en una sola línea (valor por defecto) |
+| `wrap` | Los elementos pasan a una nueva línea cuando no caben |
+| `wrap-reverse` | Igual que `wrap`, pero las líneas se apilan en sentido inverso |
+
+En este ejemplo el contenedor mide 250px, lo que no basta para seis elementos en una fila:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+    width: 250px;
+    flex-wrap: wrap;
+}`}
+/>
+
+:::note[Pruébalo]
+Cambia `wrap` por `nowrap` y verás cómo los elementos se comprimen para caber en una sola línea.
+:::
+
+Existe un atajo, `flex-flow`, que combina `flex-direction` y `flex-wrap` en una sola declaración. Por ejemplo, `flex-flow: column wrap;`.
+
+## Separación entre elementos: `gap`
+
+Las propiedades `column-gap` y `row-gap` controlan el espacio entre columnas y entre filas, respectivamente. Se aplican en el contenedor y son más cómodas y consistentes que añadir márgenes a cada elemento, porque el espacio solo aparece **entre** elementos y no en los extremos.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+    width: 250px;
+    flex-wrap: wrap;
+    column-gap: 20px;
+    row-gap: 10px;
+}`}
+/>
+
+La propiedad `gap` es el atajo de las dos anteriores: `gap: 10px 20px;` equivale a `row-gap: 10px` y `column-gap: 20px`, y con un solo valor se aplica el mismo a ambas.
+
+## Alineación en el eje principal: `justify-content`
+
+La propiedad `justify-content` distribuye los elementos a lo largo del **eje principal** (horizontal por defecto) cuando sobra espacio en el contenedor.
+
+| Valor | Descripción |
+| --- | --- |
+| `start` | Los elementos se agrupan al principio del contenedor |
+| `end` | Los elementos se agrupan al final del contenedor |
+| `center` | Los elementos se agrupan en el centro |
+| `space-between` | Espacio igual entre elementos; el primero y el último tocan los bordes |
+| `space-around` | Espacio igual a ambos lados de cada elemento |
+| `space-evenly` | Espacio idéntico entre elementos y en los extremos |
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<p>start</p>
+<div class="contenedor start">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>
+
+<p>end</p>
+<div class="contenedor end">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>
+
+<p>center</p>
+<div class="contenedor center">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>
+
+<p>space-between</p>
+<div class="contenedor space-between">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>
+
+<p>space-around</p>
+<div class="contenedor space-around">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>
+
+<p>space-evenly</p>
+<div class="contenedor space-evenly">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+}
+
+p {
+    margin: 10px 0 4px;
+}
+
+.start { justify-content: start; }
+.end { justify-content: end; }
+.center { justify-content: center; }
+.space-between { justify-content: space-between; }
+.space-around { justify-content: space-around; }
+.space-evenly { justify-content: space-evenly; }`}
+/>
+
+## Alineación en el eje transversal: `align-items` y `align-self`
+
+La propiedad `align-items` alinea los elementos a lo largo del **eje transversal** (vertical por defecto). Se aplica en el contenedor y afecta a todos los elementos.
+
+| Valor | Descripción |
+| --- | --- |
+| `start` | Alinea los elementos al inicio del eje transversal |
+| `end` | Alinea los elementos al final del eje transversal |
+| `center` | Centra los elementos en el eje transversal |
+| `stretch` | Estira los elementos para ocupar todo el espacio disponible (valor por defecto) |
+| `baseline` | Alinea los elementos según la línea base de su texto |
+
+Con `align-self` se puede sobrescribir la alineación de un único elemento, aplicando la propiedad directamente sobre él. Admite los mismos valores que `align-items`, además de `auto`, que significa «usar lo que diga el contenedor».
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item self">SELF</div>
+</div>`}
+  initialCss={base + `
+/* Altura mínima en lugar de fija, para que stretch tenga efecto */
+.item {
+    height: auto;
+    min-height: 50px;
+}
+
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+    height: 200px;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.self {
+    align-self: end;
+}`}
+/>
+
+:::note[Pruébalo]
+Prueba con `align-items: stretch` y fíjate en cómo los elementos ocupan toda la altura del contenedor. Cambia también el valor de `align-self`.
+:::
+
+## Alineación de varias líneas: `align-content`
+
+Cuando hay `flex-wrap: wrap` y los elementos ocupan varias líneas, la propiedad `align-content` controla cómo se reparten **las líneas** dentro del contenedor a lo largo del eje transversal. Admite los mismos valores que `justify-content`, además de `stretch`.
+
+Es importante distinguirla de `align-items`: esta última alinea los elementos dentro de su línea, mientras que `align-content` distribuye las líneas completas. Solo tiene efecto si el contenedor tiene más espacio que el ocupado por las líneas y hay más de una línea.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+    flex-wrap: wrap;
+    width: 250px;
+    height: 220px;
+    align-content: space-between;
+}`}
+/>
+
+## Orden de los elementos: `order`
+
+La propiedad `order` se aplica a los **elementos** y permite cambiar su orden visual sin modificar el HTML. Todos los elementos tienen `order: 0` por defecto. Se colocan de menor a mayor valor y, si dos elementos tienen el mismo valor, se respeta el orden en el que aparecen en el código.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item item1">1</div>
+    <div class="item item2">2</div>
+    <div class="item item3">3</div>
+    <div class="item item4">4</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+    column-gap: 20px;
+}
+
+.item1 {
+    order: 2;
+}
+
+.item2 {
+    order: 2;
+}
+
+.item3 {
+    order: 0;
+}
+
+.item4 {
+    order: 1;
+}`}
+/>
+
+El resultado visual es 3, 4, 1, 2. Los elementos 1 y 2 comparten el mismo `order`, así que mantienen su orden relativo del HTML.
+
+:::warning
+`order` solo cambia lo que se ve, no el orden del documento. Los lectores de pantalla y la navegación con el teclado siguen el orden del HTML, así que conviene no abusar de esta propiedad en contenido que deba leerse en secuencia.
+:::
+
+## Tamaño de los elementos: `flex-grow`, `flex-shrink` y `flex-basis`
+
+Estas tres propiedades se aplican a los elementos y controlan cómo se reparte el espacio:
+
+| Propiedad | Descripción | Valor por defecto |
+| --- | --- | --- |
+| `flex-grow` | Cuánto crece el elemento para repartirse el espacio **sobrante** | `0` (no crece) |
+| `flex-shrink` | Cuánto se encoge el elemento cuando **falta** espacio | `1` (se encoge) |
+| `flex-basis` | Tamaño inicial del elemento en el eje principal, antes de repartir el espacio | `auto` |
+
+### `flex-grow`
+
+El espacio sobrante se reparte proporcionalmente al valor de `flex-grow` de cada elemento. En el ejemplo, el segundo elemento recibe una parte del espacio y el tercero recibe dos:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item item1">grow 0</div>
+    <div class="item item2">grow 1</div>
+    <div class="item item3">grow 2</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+}
+
+.item1 {
+    flex-grow: 0;
+}
+
+.item2 {
+    flex-grow: 1;
+}
+
+.item3 {
+    flex-grow: 2;
+}`}
+/>
+
+### `flex-shrink` y `flex-basis`
+
+Aquí el contenedor mide 300px y cada elemento tiene una base de 150px, así que no caben. Los elementos se encogen, salvo el que tiene `flex-shrink: 0`:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item no-encoge">3</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+    width: 300px;
+}
+
+.item {
+    flex-basis: 150px;
+}
+
+.no-encoge {
+    flex-shrink: 0;
+}`}
+/>
+
+### El atajo `flex`
+
+Lo habitual es escribir las tres propiedades en una sola, en este orden: `flex: grow shrink basis`. Algunos valores muy usados:
+
+| Valor | Equivale a | Efecto |
+| --- | --- | --- |
+| `flex: 1` | `1 1 0` | El elemento crece y se encoge, repartiendo el espacio a partes iguales |
+| `flex: 2` | `2 1 0` | Recibe el doble de espacio que un elemento con `flex: 1` |
+| `flex: none` | `0 0 auto` | Mantiene su tamaño y no crece ni se encoge |
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item doble">3 (doble)</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: flex;
+    column-gap: 10px;
+}
+
+.item {
+    flex: 1;
+}
+
+.doble {
+    flex: 2;
+}`}
+/>
+
+## Ejemplos prácticos
+
+### Barra de navegación
+
+Un margen automático en un elemento flex absorbe todo el espacio libre. Con `margin-right: auto` en el logo, el resto de enlaces se empujan hacia la derecha:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<nav class="barra">
+    <span class="logo">Mi web</span>
+    <a href="#">Inicio</a>
+    <a href="#">Cursos</a>
+    <a href="#">Contacto</a>
+</nav>`}
+  initialCss={`.barra {
+    display: flex;
+    align-items: center;
+    column-gap: 20px;
+    padding: 10px 20px;
+    background-color: #2c3e50;
+}
+
+.barra a {
+    color: white;
+    text-decoration: none;
+}
+
+.logo {
+    margin-right: auto;
+    font-weight: bold;
+    font-size: 1.3em;
+    color: white;
+}`}
+/>
+
+### Centrado perfecto
+
+Combinando `justify-content` y `align-items` con el valor `center` se centra un elemento tanto horizontal como verticalmente, algo que históricamente era muy complicado en CSS:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="caja">Centrado</div>
+</div>`}
+  initialCss={`.contenedor {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    background-color: rgb(149, 149, 238);
+}
+
+.caja {
+    padding: 20px 40px;
+    background-color: white;
+    font-weight: bold;
+}`}
+/>
+
+### Tarjetas que se reorganizan
+
+Con `flex-wrap`, `gap` y una base mínima en `flex`, las tarjetas se adaptan al ancho disponible sin necesidad de reglas adicionales. Cada tarjeta intenta medir al menos 150px, crece para repartir el espacio sobrante y pasa a la línea siguiente cuando ya no cabe:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="tarjetas">
+    <div class="tarjeta">Tarjeta 1</div>
+    <div class="tarjeta">Tarjeta 2</div>
+    <div class="tarjeta">Tarjeta 3</div>
+    <div class="tarjeta">Tarjeta 4</div>
+    <div class="tarjeta">Tarjeta 5</div>
+</div>`}
+  initialCss={`.tarjetas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tarjeta {
+    flex: 1 1 150px;
+    padding: 20px;
+    text-align: center;
+    background-color: rgb(253, 145, 145);
+    border: 2px solid rgb(68, 68, 68);
+}`}
+/>
+
+## Resumen
+
+### Propiedades del contenedor
+
+| Propiedad | Función |
+| --- | --- |
+| `display: flex` / `inline-flex` | Crea el contenedor flex |
+| `flex-direction` | Dirección del eje principal |
+| `flex-wrap` | Permite o impide que los elementos pasen a otra línea |
+| `flex-flow` | Atajo de `flex-direction` y `flex-wrap` |
+| `gap`, `column-gap`, `row-gap` | Espacio entre elementos |
+| `justify-content` | Alineación en el eje principal |
+| `align-items` | Alineación en el eje transversal |
+| `align-content` | Distribución de varias líneas en el eje transversal |
+
+### Propiedades de los elementos
+
+| Propiedad | Función |
+| --- | --- |
+| `order` | Orden visual del elemento |
+| `flex-grow` | Capacidad de crecer para ocupar espacio sobrante |
+| `flex-shrink` | Capacidad de encogerse cuando falta espacio |
+| `flex-basis` | Tamaño inicial en el eje principal |
+| `flex` | Atajo de `flex-grow`, `flex-shrink` y `flex-basis` |
+| `align-self` | Alineación propia en el eje transversal |

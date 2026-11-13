@@ -3,7 +3,7 @@ id: repositorios-crud
 title: 4. Repositorios y operaciones CRUD
 sidebar_label: 4. Repositorios y CRUD
 sidebar_position: 4
-description: La interfaz JpaRepository y su jerarquía, métodos heredados (save, findById, findAll, deleteById, count, existsById), el tratamiento de Optional, cómo decide save entre insertar y actualizar, y datos de prueba con import.sql.
+description: La interfaz JpaRepository y su jerarquía, métodos heredados (save, findById, findAll, deleteById, count, existsById), el tratamiento de Optional con ejemplos de las distintas formas de procesarlo, cómo decide save entre insertar y actualizar, y datos de prueba con import.sql.
 ---
 
 # 4. Repositorios y operaciones CRUD
@@ -106,17 +106,74 @@ contiene el alumno, o que está vacía.
 Optional<Alumno> resultado = repositorio.findById(7L);
 ```
 
-Formas habituales de trabajar con él:
+La ventaja respecto a `null` es que el tipo **obliga a plantearse el caso de que no haya valor**: no se
+puede escribir `resultado.getNombre()` directamente, porque `Optional` no es un `Alumno`. Hay que
+abrir la caja de alguna manera, y existen varias.
 
-| Forma | Cuándo usarla |
-|---|---|
-| `resultado.isPresent()` / `resultado.isEmpty()` | Para preguntar si hay valor |
-| `resultado.ifPresent(alumno -> ...)` | Para hacer algo solo si existe |
-| `resultado.orElse(valorPorDefecto)` | Para usar un valor alternativo si no existe |
-| `resultado.orElseThrow(() -> new ...)` | Para lanzar una excepción si no existe |
+### Una misma tarea, de varias formas
 
-La última es la más útil en un controlador: si el alumno no existe, hay que responder con un error
-**404**.
+Para comparar los estilos, resolvemos el mismo problema con cada uno: **obtener el nombre del alumno
+con id 7, o `"Desconocido"` si no existe**.
+
+**1. Con `isPresent()` y `get()`.** Es el estilo más parecido a comprobar un `null`:
+
+```java
+Optional<Alumno> resultado = repositorio.findById(7L);
+
+String nombre;
+if (resultado.isPresent()) {
+    nombre = resultado.get().getNombre();
+} else {
+    nombre = "Desconocido";
+}
+```
+
+Funciona y se entiende a la primera, pero es largo, y `get()` solo es seguro si se ha comprobado antes
+`isPresent()`. Si se olvida, lanza una excepción. Los entornos de desarrollo suelen avisar de ello.
+
+**2. Con `map` y `orElse`.** Se encadenan las operaciones sin abrir la caja explícitamente:
+
+```java
+String nombre = repositorio.findById(7L)
+        .map(Alumno::getNombre)
+        .orElse("Desconocido");
+```
+
+- `map` aplica una función al valor **si existe**, y devuelve otro `Optional` con el resultado
+  (aquí, un `Optional<String>` con el nombre). Si la caja estaba vacía, sigue vacía y la función ni
+  se ejecuta.
+- `orElse` abre la caja: devuelve el valor, o el que se le indica si está vacía.
+
+Hace en tres líneas lo mismo que el estilo anterior en nueve, y es la forma que se recomienda cuando se
+quiere **obtener un valor** a partir del `Optional`.
+
+**3. Con `ifPresent` e `ifPresentOrElse`.** Cuando no se quiere obtener un valor sino **hacer algo**
+(mostrar un mensaje, llamar a otro método):
+
+```java
+// Solo si existe
+repositorio.findById(7L)
+        .ifPresent(alumno -> System.out.println("Encontrado: " + alumno.getNombre()));
+
+// Con alternativa si no existe
+repositorio.findById(7L).ifPresentOrElse(
+        alumno -> System.out.println("Encontrado: " + alumno.getNombre()),
+        () -> System.out.println("No existe ningún alumno con ese id"));
+```
+
+El primer argumento es lo que se hace si hay valor, y el segundo (`() -> ...`), lo que se hace si la
+caja está vacía.
+
+**4. Con `orElseThrow`.** Cuando el valor **es obligatorio** y su ausencia es un error:
+
+```java
+Alumno alumno = repositorio.findById(7L)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "No existe el alumno 7"));
+```
+
+Si existe, devuelve el alumno; si no, lanza la excepción que se indica. Es la opción más habitual en un
+controlador, porque `ResponseStatusException` hace que la respuesta HTTP sea un **404**:
 
 ```java
 @GetMapping("/{id}")
@@ -130,14 +187,73 @@ public String detalle(@PathVariable Long id, Model model) {
 }
 ```
 
-`ResponseStatusException` es una excepción de Spring que hace que la respuesta HTTP tenga el código
-indicado.
+### Otros métodos útiles
+
+**`orElse` y `orElseGet`.** Los dos devuelven un valor alternativo, pero se diferencian en **cuándo se
+calcula** ese valor:
+
+```java
+Alumno a1 = repositorio.findById(id).orElse(new Alumno());      // new Alumno() se ejecuta siempre
+Alumno a2 = repositorio.findById(id).orElseGet(Alumno::new);    // solo si la caja está vacía
+```
+
+Con `orElse`, el argumento se evalúa **siempre**, haya valor o no. Con `orElseGet`, se le pasa una
+función que solo se ejecuta si la caja está vacía. Para valores baratos da igual, pero si calcular el
+alternativo es costoso (crear un objeto grande, hacer otra consulta), conviene `orElseGet`.
+
+**`filter`.** Deja pasar el valor solo si cumple una condición; si no, devuelve un `Optional` vacío:
+
+```java
+Optional<Alumno> mayor = repositorio.findById(7L)
+        .filter(alumno -> alumno.getEdad() >= 18);
+```
+
+**`map` devolviendo una vista.** Combinado con `orElse`, permite resolver un controlador sin
+condicionales:
+
+```java
+@GetMapping("/{id}")
+public String detalle(@PathVariable Long id, Model model) {
+    return repositorio.findById(id)
+            .map(alumno -> {
+                model.addAttribute("alumno", alumno);
+                return "alumno-detalle";
+            })
+            .orElse("redirect:/alumnos");
+}
+```
+
+Si el alumno existe, se añade al modelo y se devuelve la vista; si no, se redirige al listado. Es
+correcto, pero cuando la función de `map` crece resulta menos legible que `orElseThrow`.
+
+### Resumen de los métodos
+
+| Método | Qué hace | Cuándo usarlo |
+|---|---|---|
+| `isPresent()` / `isEmpty()` | Indica si hay valor (`boolean`) | Para decidir con un `if` cuando la lógica es larga |
+| `get()` | Devuelve el valor; lanza una excepción si está vacío | **Evitarlo**: obliga a comprobar antes |
+| `ifPresent(accion)` | Ejecuta una acción si hay valor | Hacer algo solo si existe |
+| `ifPresentOrElse(accion, alternativa)` | Ejecuta una acción u otra | Hacer algo distinto si no existe |
+| `map(funcion)` | Transforma el valor, si existe | Obtener un dato derivado (el nombre, un DTO...) |
+| `filter(condicion)` | Mantiene el valor solo si cumple la condición | Descartar valores que no sirven |
+| `orElse(valor)` | Devuelve el valor o uno alternativo | Alternativa simple y barata |
+| `orElseGet(funcion)` | Devuelve el valor o uno calculado al momento | Alternativa costosa de crear |
+| `orElseThrow(excepcion)` | Devuelve el valor o lanza una excepción | El valor es obligatorio (404) |
+| `orElseThrow()` | Devuelve el valor o lanza `NoSuchElementException` | Cuando no importa el tipo de excepción |
+
+### Cuál elegir
+
+- **El valor es obligatorio** (por ejemplo, la ficha de un alumno): `orElseThrow`.
+- **Se necesita un valor, y hay una alternativa razonable**: `map` y `orElse` (o `orElseGet`).
+- **Solo hay que hacer algo si existe**: `ifPresent` o `ifPresentOrElse`.
+- **La lógica de cada rama es larga**: `isPresent()` con un `if` es aceptable, pero evita `get()` salvo
+  justo después de comprobarlo.
 
 :::note
-Evita `.get()`
-`Optional` también tiene un método `get()`, pero si la caja está vacía lanza una excepción
-(`NoSuchElementException: No value present`) que acaba en un error 500 poco explicativo. Usa
-`orElseThrow` con una excepción que diga qué ha pasado.
+Pasa a la vista el valor, no el `Optional`
+Al añadir datos al modelo, `model.addAttribute("alumno", ...)` debe recibir el `Alumno` ya extraído
+(con `orElseThrow`, `orElse`...), no el `Optional<Alumno>`. Thymeleaf no sabe abrir la caja y las
+expresiones como `${alumno.nombre}` fallarían.
 :::
 
 ## 4.5. `save`: ¿insertar o actualizar?

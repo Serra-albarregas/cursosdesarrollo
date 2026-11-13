@@ -1,0 +1,348 @@
+---
+id: ordenacion-paginacion
+title: 7. Ordenación y paginación
+sidebar_label: 7. Ordenación y paginación
+sidebar_position: 7
+description: Ordenar resultados con Sort, dividirlos en páginas con Pageable, PageRequest y Page, recibir la página como parámetro en el controlador, y mostrar los controles de paginación y los encabezados ordenables en Thymeleaf.
+---
+
+# 7. Ordenación y paginación
+
+Un listado con tres alumnos se ve entero en pantalla. Uno con tres mil, no. Las aplicaciones reales
+**ordenan** sus listados y los reparten en **páginas**, de forma que el servidor solo recupera de la
+base de datos los registros que se van a mostrar. En esta página vemos cómo hacerlo con Spring Data
+JPA, y cómo mostrar los controles en Thymeleaf.
+
+## 7.1. Ordenar con `Sort`
+
+En la página de consultas derivadas vimos `OrderBy` dentro del nombre del método, que fija la
+ordenación para siempre. Con `Sort`, el orden se decide **al llamar**, y puede cambiar según lo que
+pida el usuario.
+
+```java
+Sort porNombre = Sort.by("nombre");                          // ascendente (por defecto)
+Sort porEdadDesc = Sort.by("edad").descending();             // descendente
+Sort doble = Sort.by("curso").ascending()
+                 .and(Sort.by("nombre").descending());       // por curso y, a igualdad, por nombre
+```
+
+Los nombres que se pasan son los **atributos de la entidad** (`fechaNacimiento`), no las columnas
+(`fecha_nacimiento`).
+
+`JpaRepository` ya incluye una versión de `findAll` que acepta un `Sort`:
+
+```java
+List<Alumno> alumnos = repositorio.findAll(Sort.by("nombre"));
+```
+
+Y cualquier consulta derivada o escrita con `@Query` (en JPQL) puede recibir un `Sort` como **último
+parámetro**:
+
+```java
+List<Alumno> findByCurso(String curso, Sort sort);
+
+@Query("select a from Alumno a where lower(a.nombre) like lower(concat('%', :texto, '%'))")
+List<Alumno> buscarPorNombre(@Param("texto") String texto, Sort sort);
+```
+
+## 7.2. Paginar con `Pageable`
+
+Para dividir los resultados en páginas se usa un objeto `Pageable`, que indica **qué página** se
+quiere y **cuántos elementos** caben en cada una. Se crea con `PageRequest`:
+
+```java
+Pageable pageable = PageRequest.of(0, 5);                          // página 0, 5 por página
+Pageable ordenada = PageRequest.of(0, 5, Sort.by("nombre"));       // y además ordenada
+```
+
+:::note
+Las páginas empiezan en 0
+El primer argumento de `PageRequest.of` es el número de página, y **la primera página es la 0**, no
+la 1. Es una fuente constante de errores de uno en uno: para el usuario, la página "1" será la 0 del
+código.
+:::
+
+`JpaRepository` también incluye un `findAll` que acepta un `Pageable`, y que devuelve un objeto
+`Page<Alumno>`:
+
+```java
+Page<Alumno> pagina = repositorio.findAll(PageRequest.of(0, 5, Sort.by("nombre")));
+```
+
+Las consultas derivadas y las de `@Query` pueden hacer lo mismo declarando el `Pageable` como último
+parámetro y `Page` como tipo de retorno:
+
+```java
+Page<Alumno> findByCurso(String curso, Pageable pageable);
+
+@Query("select a from Alumno a where lower(a.nombre) like lower(concat('%', :texto, '%'))")
+Page<Alumno> buscarPorNombre(@Param("texto") String texto, Pageable pageable);
+```
+
+## 7.3. El objeto `Page`
+
+`Page` no contiene solo los alumnos de la página: trae también la información necesaria para
+construir los controles de paginación.
+
+| Método | Qué devuelve |
+|---|---|
+| `getContent()` | La lista de alumnos de esta página |
+| `getNumber()` | El número de esta página (empezando en 0) |
+| `getSize()` | El tamaño de página solicitado |
+| `getNumberOfElements()` | Cuántos elementos tiene realmente esta página (la última puede tener menos) |
+| `getTotalElements()` | El total de elementos de **todas** las páginas |
+| `getTotalPages()` | Cuántas páginas hay en total |
+| `isFirst()` / `isLast()` | Si es la primera / la última página |
+| `hasPrevious()` / `hasNext()` | Si existe página anterior / siguiente |
+
+Por ejemplo, con 23 alumnos en la base de datos y páginas de 5 elementos:
+
+| Página (`getNumber()`) | Elementos (`getNumberOfElements()`) | `isFirst()` | `isLast()` |
+|---|---|---|---|
+| 0 | 5 | `true` | `false` |
+| 1 | 5 | `false` | `false` |
+| 2 | 5 | `false` | `false` |
+| 3 | 5 | `false` | `false` |
+| 4 | 3 | `false` | `true` |
+
+Con esos datos, `getTotalElements()` vale 23 y `getTotalPages()` vale 5.
+
+### Qué ejecuta Hibernate
+
+Pedir un `Page` provoca **dos** consultas: una que recupera los elementos de la página (con `limit`
+y el desplazamiento correspondiente) y otra, `select count(*)`, para saber cuántos hay en total.
+
+### `Page`, `Slice` y `List`
+
+| Tipo de retorno | Información que incluye | Consultas |
+|---|---|---|
+| `Page<T>` | Elementos y total (páginas, número de elementos) | 2: elementos y recuento |
+| `Slice<T>` | Elementos y si hay una página siguiente | 1 |
+| `List<T>` | Solo los elementos | 1 |
+
+`Page` es lo que hace falta cuando se quiere mostrar "página 2 de 5". `Slice` es más barato y basta
+para un botón de "cargar más".
+
+:::note
+`@Query` con `Pageable`
+Para las consultas en JPQL, Spring genera la consulta de recuento a partir de la propia consulta. En
+las consultas **nativas**, o en las muy complejas (con agrupaciones, por ejemplo), hay que indicarla
+con el atributo `countQuery` de `@Query`.
+:::
+
+## 7.4. Recibir la página en el controlador
+
+El número de página y el tamaño llegan desde la URL, como parámetros (`?pagina=2&tamano=5`), y se
+recogen con `@RequestParam`, tal como vimos en la Unidad 2:
+
+```java
+@GetMapping
+public String listar(@RequestParam(name = "pagina", defaultValue = "0") int numero,
+                     @RequestParam(defaultValue = "5") int tamano,
+                     Model model) {
+
+    Pageable pageable = PageRequest.of(numero, tamano, Sort.by("nombre"));
+    Page<Alumno> pagina = repositorio.findAll(pageable);
+
+    model.addAttribute("pagina", pagina);
+    return "alumnos";
+}
+```
+
+El valor por defecto (`defaultValue = "0"`) hace que, si no se indica página, se muestre la primera.
+
+### No fiarse de lo que llega
+
+El usuario puede escribir lo que quiera en la URL, y `PageRequest.of` lanza una excepción si recibe
+valores incorrectos (página negativa, tamaño cero). Conviene **acotarlos** antes de usarlos:
+
+```java
+int paginaSegura = Math.max(numero, 0);
+int tamanoSeguro = Math.min(Math.max(tamano, 1), 50);   // entre 1 y 50 elementos
+
+Pageable pageable = PageRequest.of(paginaSegura, tamanoSeguro, Sort.by("nombre"));
+```
+
+Limitar el tamaño máximo es importante: sin él, `?tamano=1000000` obligaría al servidor a cargar
+toda la tabla.
+
+Tampoco hay problema si se pide una página que no existe (por ejemplo, la 99 cuando solo hay 5): el
+resultado es un `Page` con la lista vacía, aunque `getTotalPages()` seguirá indicando el total real.
+
+:::note
+`Pageable` directamente como parámetro
+Spring Data también permite pedir el `Pageable` directamente en el método del controlador, y
+construirlo él mismo a partir de los parámetros `page`, `size` y `sort` de la URL
+(`?page=1&size=5&sort=nombre,desc`):
+
+```java
+@GetMapping
+public String listar(@PageableDefault(size = 5, sort = "nombre") Pageable pageable, Model model) {
+    model.addAttribute("pagina", repositorio.findAll(pageable));
+    return "alumnos";
+}
+```
+
+Es más corto, pero también más delicado: el usuario puede pedir ordenar por cualquier nombre, y uno
+que no exista provoca un error 500. Por eso, en esta unidad construimos nosotros el `Pageable`.
+:::
+
+## 7.5. Controles de paginación en Thymeleaf
+
+El controlador deja el `Page` en el modelo con el nombre `pagina`. En la plantilla, los métodos del
+`Page` se usan como propiedades: `getContent()` es `pagina.content`, `getTotalPages()` es
+`pagina.totalPages`, y así con los demás.
+
+### La tabla
+
+```html
+<table>
+    <tr th:each="alumno : ${pagina.content}">
+        <td th:text="${alumno.nombre}">Nombre</td>
+        <td th:text="${alumno.curso}">Curso</td>
+        <td th:text="${alumno.edad}">Edad</td>
+    </tr>
+</table>
+
+<p th:if="${pagina.totalElements == 0}">No hay alumnos.</p>
+```
+
+El bucle recorre `pagina.content`, la lista de los alumnos de **esa** página, no todos.
+
+### Los enlaces anterior, siguiente y numerados
+
+```html
+<nav th:if="${pagina.totalPages > 1}">
+
+    <a th:if="${!pagina.first}"
+       th:href="@{/alumnos(pagina=${pagina.number - 1}, tamano=${pagina.size})}">« Anterior</a>
+
+    <th:block th:each="i : ${#numbers.sequence(0, pagina.totalPages - 1)}">
+        <strong th:if="${i == pagina.number}" th:text="${i + 1}">1</strong>
+        <a th:if="${i != pagina.number}"
+           th:href="@{/alumnos(pagina=${i}, tamano=${pagina.size})}"
+           th:text="${i + 1}">1</a>
+    </th:block>
+
+    <a th:if="${!pagina.last}"
+       th:href="@{/alumnos(pagina=${pagina.number + 1}, tamano=${pagina.size})}">Siguiente »</a>
+
+</nav>
+```
+
+Cómo funciona:
+
+- `th:if="${pagina.totalPages > 1}"` oculta los controles si todo cabe en una sola página.
+- `Anterior` y `Siguiente` solo aparecen si existe esa página (`!pagina.first`, `!pagina.last`).
+- `#numbers.sequence(0, pagina.totalPages - 1)` genera la lista de números de página, y se recorre
+  con `th:each`. La página actual se muestra en negrita y sin enlace; las demás, como enlace.
+- Los enlaces usan la expresión `@{...}` de la Unidad 2, con los parámetros entre paréntesis. Se
+  muestra `i + 1` al usuario porque, para él, la primera página es la 1.
+
+### Un texto informativo
+
+```html
+<p th:if="${pagina.totalElements > 0}"
+   th:text="|Mostrando ${pagina.number * pagina.size + 1} a
+             ${pagina.number * pagina.size + pagina.numberOfElements}
+             de ${pagina.totalElements} alumnos|">
+    Mostrando 1 a 5 de 23 alumnos
+</p>
+```
+
+:::note
+Muchas páginas
+Con cientos de páginas, mostrar todos los números es inviable. Una solución sencilla es limitarse
+a las cercanas a la actual, añadiendo una condición al `th:each`: por ejemplo,
+`th:if="${i >= pagina.number - 2 and i <= pagina.number + 2}"` en los enlaces numerados.
+:::
+
+## 7.6. Ordenar desde la tabla
+
+Los encabezados de la tabla pueden ser enlaces que ordenan por esa columna, alternando entre
+ascendente y descendente. El controlador recibe además el campo y el sentido:
+
+```java
+private static final List<String> ORDENABLES = List.of("nombre", "curso", "edad");
+
+@GetMapping
+public String listar(@RequestParam(name = "pagina", defaultValue = "0") int numero,
+                     @RequestParam(defaultValue = "5") int tamano,
+                     @RequestParam(defaultValue = "nombre") String orden,
+                     @RequestParam(defaultValue = "asc") String direccion,
+                     Model model) {
+
+    if (!ORDENABLES.contains(orden)) {
+        orden = "nombre";
+    }
+
+    Sort sort = direccion.equalsIgnoreCase("desc")
+            ? Sort.by(orden).descending()
+            : Sort.by(orden).ascending();
+
+    Pageable pageable = PageRequest.of(Math.max(numero, 0), Math.min(Math.max(tamano, 1), 50), sort);
+
+    model.addAttribute("pagina", repositorio.findAll(pageable));
+    model.addAttribute("orden", orden);
+    model.addAttribute("direccion", direccion);
+    return "alumnos";
+}
+```
+
+La lista `ORDENABLES` es una **lista blanca**: solo se acepta ordenar por los campos que se han
+previsto. Cualquier otro valor se sustituye por uno seguro, en lugar de llegar tal cual a la
+consulta.
+
+En la plantilla, cada encabezado enlaza con la misma página, cambiando el campo y alternando el sentido
+si ya estaba ordenado por él:
+
+```html
+<th>
+    <a th:href="@{/alumnos(orden='nombre', direccion=${orden == 'nombre' and direccion == 'asc' ? 'desc' : 'asc'}, tamano=${pagina.size})}">Nombre</a>
+</th>
+<th>
+    <a th:href="@{/alumnos(orden='edad', direccion=${orden == 'edad' and direccion == 'asc' ? 'desc' : 'asc'}, tamano=${pagina.size})}">Edad</a>
+</th>
+```
+
+Al cambiar el orden se vuelve a la primera página (no se indica `pagina`, y su valor por defecto es 0).
+Y los enlaces de los controles de paginación del apartado anterior deben **conservar** el orden
+actual, añadiendo `orden=${orden}` y `direccion=${direccion}` a sus parámetros.
+
+## 7.7. Probar con datos suficientes
+
+Con los tres alumnos de `import.sql` no se aprecia la paginación. Para tener más datos, se puede
+añadir un bucle al componente de pruebas de la página de repositorios, sin la parte que borra:
+
+```java
+for (int i = 1; i <= 23; i++) {
+    repositorio.save(crear("Alumno " + String.format("%02d", i), "alumno" + i + "@centro.es"));
+}
+```
+
+Con 23 alumnos y páginas de 5 se obtienen 5 páginas, la última con 3 elementos, como en el ejemplo
+de la tabla del apartado 7.3.
+
+## 7.8. Errores habituales
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| `Page index must not be less than zero` | Se ha pedido una página negativa | Acota el valor con `Math.max(numero, 0)` |
+| `Page size must not be less than one` | Se ha pedido un tamaño de página de 0 o negativo | Acota el tamaño |
+| `No property 'x' found for type 'Alumno'` al ordenar | Se ordena por un nombre que no es un atributo (o por el nombre de una columna) | Usa nombres de atributos; valida el campo con una lista blanca |
+| Algunos elementos se repiten o desaparecen al cambiar de página | Se ordena por un campo con valores repetidos (por ejemplo, `curso`) y el orden entre iguales no es estable | Añade al final un campo único: `Sort.by("curso").and(Sort.by("id"))` |
+| El usuario ve la página 0 como "página 0" | No se ha sumado 1 para mostrarla | Muestra `numero + 1` |
+| Una página vacía sin mensaje | Se ha pedido una página posterior a la última | Muestra un aviso o redirige a la última página |
+
+## 7.9. Resumen
+
+| Concepto | Idea clave |
+|---|---|
+| `Sort` | Define el orden: `Sort.by("nombre").descending()` |
+| `Pageable` / `PageRequest.of(pagina, tamano, sort)` | Pide una página concreta; las páginas empiezan en 0 |
+| `Page<T>` | Los elementos de la página y la información para los controles (total, número de páginas...) |
+| `Slice<T>` | Como `Page`, sin recuento total: una consulta menos |
+| En consultas propias | `Sort` o `Pageable` como último parámetro; `Page` o `Slice` como retorno |
+| Controlador | Recibir `pagina` y `tamano` con `@RequestParam`, y acotar sus valores |
+| Orden desde la URL | Validar el campo con una lista blanca |
+| Thymeleaf | `pagina.content`, `pagina.totalPages`, `pagina.first`, `pagina.last` y `#numbers.sequence` |

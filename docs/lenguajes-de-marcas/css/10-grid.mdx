@@ -1,0 +1,515 @@
+---
+sidebar_position: 10
+title: "Grid"
+---
+
+import HtmlPlayground from '@site/src/components/Playground/HtmlPlayground';
+import HtmlCssPlayground from '@site/src/components/Playground/HtmlCssPlayground';
+
+export const base = `:root {
+    --red-color: rgb(253, 145, 145);
+    --blue-color: rgb(149, 149, 238);
+    --dark-color: rgb(68, 68, 68);
+    --grey-color: rgb(119, 119, 119);
+    --light-color: rgb(221, 221, 221);
+}
+
+.item {
+    background-color: var(--light-color);
+    border: 2px solid var(--grey-color);
+    min-height: 50px;
+    font-size: 1.2em;
+    align-content: center;
+    text-align: center;
+    font-weight: bold;
+    color: var(--dark-color);
+}
+`;
+
+# Grid
+
+CSS Grid es un sistema de maquetación pensado para colocar elementos en una **cuadrícula bidimensional**: filas y columnas a la vez. Mientras que flexbox reparte los elementos en una sola dimensión (una fila o una columna), grid permite definir la estructura completa de una página o de un componente y situar cada elemento en la celda que se desee.
+
+:::tip
+Los ejemplos de esta página son editables. Cambia los valores del CSS y observa cómo se modifica el resultado.
+:::
+
+## Qué es grid y vocabulario básico
+
+Igual que en flexbox, hay dos piezas: el **contenedor grid** (el elemento con `display: grid`) y los **elementos grid** (sus hijos directos). Además, conviene conocer estos términos:
+
+| Término | Descripción |
+| --- | --- |
+| Pista (track) | Una fila o una columna de la cuadrícula |
+| Celda | La intersección de una fila y una columna |
+| Línea | Cada una de las líneas que separan las pistas; se numeran desde 1 |
+| Área | Región rectangular formada por una o más celdas |
+| Gap | Espacio entre pistas |
+
+Un grid de 3 columnas tiene **4 líneas verticales** (numeradas del 1 al 4), y uno de 2 filas tiene **3 líneas horizontales**.
+
+## Crear un contenedor: `grid` e `inline-grid`
+
+Al aplicar `display: grid` el elemento se convierte en un contenedor de tipo bloque. Con `display: inline-grid` el contenedor se comporta como un elemento en línea. Por sí solo, `display: grid` apila los elementos en una única columna; hay que definir las columnas para obtener la cuadrícula.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}`}
+/>
+
+## Definir columnas y filas
+
+Las propiedades `grid-template-columns` y `grid-template-rows` definen el tamaño de cada pista, separando los valores por espacios. Se pueden usar distintas unidades:
+
+| Valor | Descripción |
+| --- | --- |
+| `100px`, `10rem` | Tamaño fijo |
+| `25%` | Porcentaje del ancho (o alto) del contenedor |
+| `1fr` | Fracción del espacio sobrante: `2fr` recibe el doble que `1fr` |
+| `auto` | Se ajusta al contenido y ocupa el espacio disponible |
+| `minmax(100px, 1fr)` | Tamaño mínimo y máximo de la pista |
+| `repeat(3, 1fr)` | Repite un patrón: equivale a `1fr 1fr 1fr` |
+
+La unidad `fr` es la más característica de grid: reparte el espacio libre del contenedor de forma proporcional. En este ejemplo la primera columna mide 100px, y las otras dos se reparten el resto en proporción 1 a 2:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: 100px 1fr 2fr;
+    grid-template-rows: 80px 50px;
+    gap: 10px;
+}`}
+/>
+
+Los elementos se colocan automáticamente, de izquierda a derecha y de arriba a abajo, según se van encontrando en el HTML. Como hay dos filas definidas y seis elementos con tres columnas, todo encaja exactamente.
+
+## Separación entre pistas: `gap`
+
+Igual que en flexbox, `column-gap` y `row-gap` controlan el espacio entre columnas y entre filas, y `gap` es el atajo de ambas: `gap: 10px 20px;` equivale a `row-gap: 10px` y `column-gap: 20px`.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 30px;
+    row-gap: 10px;
+}`}
+/>
+
+## Colocar elementos por líneas
+
+Por defecto, cada elemento ocupa una celda. Con `grid-column` y `grid-row` se indica entre qué líneas se extiende un elemento, con la sintaxis `línea-inicial / línea-final`. También se puede usar `span` para indicar cuántas pistas ocupa.
+
+| Declaración | Descripción |
+| --- | --- |
+| `grid-column: 1 / 3` | Desde la línea 1 hasta la 3 (ocupa 2 columnas) |
+| `grid-column: 2 / span 2` | Empieza en la línea 2 y ocupa 2 columnas |
+| `grid-column: 1 / -1` | De la primera a la última línea (toda la fila) |
+| `grid-row: 1 / 3` | Ocupa 2 filas |
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item a">A</div>
+    <div class="item b">B</div>
+    <div class="item c">C</div>
+    <div class="item">D</div>
+    <div class="item">E</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 60px);
+    gap: 8px;
+}
+
+.a {
+    grid-column: 1 / 3;
+    background-color: var(--red-color);
+}
+
+.b {
+    grid-column: 3 / 5;
+    grid-row: 1 / 3;
+    background-color: var(--blue-color);
+}
+
+.c {
+    grid-column: 1 / span 2;
+}`}
+/>
+
+:::note[Pruébalo]
+Cambia los números de línea de los elementos A, B y C y observa cómo se recolocan los demás.
+:::
+
+## Áreas con nombre: `grid-template-areas`
+
+Una forma más visual de definir la estructura es dar nombre a las áreas. Con `grid-template-areas` se «dibuja» la cuadrícula con texto, una cadena por fila, y después cada elemento indica en qué área va con `grid-area`. Repetir un nombre hace que el área ocupe varias celdas, y un punto (`.`) deja una celda vacía.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item cabecera">Cabecera</div>
+    <div class="item menu">Menú</div>
+    <div class="item principal">Principal</div>
+    <div class="item lateral">Lateral</div>
+    <div class="item pie">Pie</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
+    grid-template-rows: 60px 120px 50px;
+    grid-template-areas:
+        "cabecera cabecera cabecera"
+        "menu principal lateral"
+        "pie pie pie";
+    gap: 10px;
+}
+
+.cabecera { grid-area: cabecera; }
+.menu { grid-area: menu; }
+.principal { grid-area: principal; }
+.lateral { grid-area: lateral; }
+.pie { grid-area: pie; }`}
+/>
+
+## Pistas implícitas: `grid-auto-rows` y `grid-auto-flow`
+
+Si hay más elementos de los que caben en la cuadrícula definida, grid crea automáticamente filas (o columnas) adicionales, llamadas **pistas implícitas**. Su tamaño se controla con `grid-auto-rows` y `grid-auto-columns`. Es muy útil cuando no se sabe cuántos elementos habrá.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+    <div class="item">7</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 60px;
+    gap: 10px;
+}`}
+/>
+
+La propiedad `grid-auto-flow` controla el algoritmo de colocación automática:
+
+| Valor | Descripción |
+| --- | --- |
+| `row` | Rellena fila por fila (valor por defecto) |
+| `column` | Rellena columna por columna |
+| `dense` | Rellena los huecos libres con elementos posteriores, aunque cambie el orden visual |
+
+En este ejemplo, el elemento 4 ocupa 3 columnas y no cabe en el hueco que dejó el 3, así que queda un espacio vacío. Con `dense`, el elemento 5 sube a rellenar ese hueco:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item ancho3">2</div>
+    <div class="item ancho2">3</div>
+    <div class="item ancho3">4</div>
+    <div class="item">5</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 50px;
+    grid-auto-flow: dense;
+    gap: 8px;
+}
+
+.ancho2 { grid-column: span 2; }
+.ancho3 { grid-column: span 3; }`}
+/>
+
+:::note[Pruébalo]
+Elimina la línea `grid-auto-flow: dense;` y fíjate en el hueco que aparece.
+:::
+
+## Alineación de los elementos dentro de su celda
+
+Estas propiedades alinean cada elemento dentro de **su propia celda**:
+
+| Propiedad | Se aplica en | Eje |
+| --- | --- | --- |
+| `justify-items` | Contenedor | Horizontal (en línea) |
+| `align-items` | Contenedor | Vertical (de bloque) |
+| `place-items` | Contenedor | Atajo de `align-items` y `justify-items` |
+| `justify-self` | Elemento | Horizontal |
+| `align-self` | Elemento | Vertical |
+
+Los valores habituales son `start`, `end`, `center` y `stretch` (por defecto, el elemento ocupa toda la celda). Para que la alineación sea visible, los elementos de este ejemplo tienen un tamaño fijo menor que la celda:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item self">SELF</div>
+</div>`}
+  initialCss={base + `
+.item {
+    width: 60px;
+    min-height: 0;
+    height: 40px;
+}
+
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 100px;
+    justify-items: center;
+    align-items: center;
+}
+
+.self {
+    justify-self: end;
+    align-self: start;
+}`}
+/>
+
+## Alineación de la cuadrícula en el contenedor
+
+Cuando la cuadrícula es más pequeña que el contenedor (por ejemplo, con columnas de tamaño fijo), se puede controlar dónde se coloca el conjunto de pistas con `justify-content` (horizontal) y `align-content` (vertical). Admiten los valores `start`, `end`, `center`, `space-between`, `space-around` y `space-evenly`.
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: repeat(2, 60px);
+    height: 250px;
+    gap: 10px;
+    justify-content: space-around;
+    align-content: center;
+}`}
+/>
+
+## Grid adaptable sin media queries
+
+La combinación de `repeat()` con `auto-fit` y `minmax()` crea cuadrículas que se adaptan al ancho disponible sin escribir media queries:
+
+```css
+grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+```
+
+Esto se lee así: «crea tantas columnas como quepan, cada una de al menos 120px, y reparte el espacio sobrante entre ellas a partes iguales».
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="item">1</div>
+    <div class="item">2</div>
+    <div class="item">3</div>
+    <div class="item">4</div>
+    <div class="item">5</div>
+    <div class="item">6</div>
+</div>`}
+  initialCss={base + `
+.contenedor {
+    background-color: var(--dark-color);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}`}
+/>
+
+:::note[Pruébalo]
+Redimensiona la ventana del navegador y observa cómo cambia el número de columnas. También puedes cambiar `auto-fit` por `auto-fill`: la diferencia se nota cuando hay pocos elementos, ya que `auto-fill` conserva las columnas vacías y `auto-fit` las colapsa para que los elementos ocupen todo el ancho.
+:::
+
+## Ejemplos prácticos
+
+### Centrado perfecto
+
+Con grid, centrar un elemento en ambos ejes requiere solo dos declaraciones:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="contenedor">
+    <div class="caja">Centrado</div>
+</div>`}
+  initialCss={`.contenedor {
+    display: grid;
+    place-items: center;
+    height: 200px;
+    background-color: rgb(149, 149, 238);
+}
+
+.caja {
+    padding: 20px 40px;
+    background-color: white;
+    font-weight: bold;
+}`}
+/>
+
+### Formulario en dos columnas
+
+Una columna `auto` para las etiquetas y otra `1fr` para los campos alinea todos los controles sin necesidad de tablas:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<form class="formulario">
+    <label for="nombre">Nombre</label>
+    <input type="text" id="nombre">
+
+    <label for="email">Correo electrónico</label>
+    <input type="email" id="email">
+
+    <label for="mensaje">Mensaje</label>
+    <textarea id="mensaje" rows="3"></textarea>
+
+    <button type="submit">Enviar</button>
+</form>`}
+  initialCss={`.formulario {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px 15px;
+    align-items: center;
+    max-width: 500px;
+}
+
+button {
+    grid-column: 2;
+    justify-self: start;
+}`}
+/>
+
+### Galería con una imagen destacada
+
+Un elemento puede ocupar varias filas y columnas a la vez. Aquí la primera caja es el doble de grande que las demás:
+
+<HtmlCssPlayground
+  layout="stacked"
+  initialHtml={`<div class="galeria">
+    <div class="foto destacada">1</div>
+    <div class="foto">2</div>
+    <div class="foto">3</div>
+    <div class="foto">4</div>
+    <div class="foto">5</div>
+    <div class="foto">6</div>
+    <div class="foto">7</div>
+</div>`}
+  initialCss={`.galeria {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 80px;
+    gap: 8px;
+}
+
+.foto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    background-color: rgb(253, 145, 145);
+    border: 2px solid rgb(68, 68, 68);
+}
+
+.destacada {
+    grid-column: span 2;
+    grid-row: span 2;
+    background-color: rgb(149, 149, 238);
+}`}
+/>
+
+## ¿Flexbox o grid?
+
+No son excluyentes: se usan juntos con frecuencia (grid para la estructura general de la página y flexbox para alinear el contenido de cada componente).
+
+| Criterio | Flexbox | Grid |
+| --- | --- | --- |
+| Dimensiones | Una (fila o columna) | Dos (filas y columnas) |
+| Enfoque | Parte del contenido | Parte de la estructura |
+| Ideal para | Barras de navegación, filas de botones, alineación de componentes | Layouts de página, galerías, formularios, paneles |
+| Control del tamaño | Los elementos determinan el reparto | La cuadrícula determina el tamaño |
+
+## Resumen
+
+### Propiedades del contenedor
+
+| Propiedad | Función |
+| --- | --- |
+| `display: grid` / `inline-grid` | Crea el contenedor grid |
+| `grid-template-columns` | Define las columnas |
+| `grid-template-rows` | Define las filas |
+| `grid-template-areas` | Define la estructura mediante áreas con nombre |
+| `gap`, `column-gap`, `row-gap` | Espacio entre pistas |
+| `grid-auto-rows`, `grid-auto-columns` | Tamaño de las pistas implícitas |
+| `grid-auto-flow` | Algoritmo de colocación automática |
+| `justify-items`, `align-items`, `place-items` | Alineación de los elementos en su celda |
+| `justify-content`, `align-content` | Alineación de la cuadrícula dentro del contenedor |
+
+### Propiedades de los elementos
+
+| Propiedad | Función |
+| --- | --- |
+| `grid-column` | Líneas de columna entre las que se extiende |
+| `grid-row` | Líneas de fila entre las que se extiende |
+| `grid-area` | Área con nombre, o atajo de las cuatro líneas |
+| `justify-self`, `align-self`, `place-self` | Alineación propia dentro de su celda |
+| `order` | Orden visual del elemento |
